@@ -1,0 +1,164 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmarketpulse001"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.09, 0.12, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
+theme_override_font_sizes/font_size = 24
+text = "MARKET PULSE"
+
+[node name="TimeLabel" type="Label" parent="MarginContainer/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Time: 09:30"
+horizontal_alignment = 2
+
+[node name="AccountBar" type="HBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="CashLabel" type="Label" parent="MarginContainer/VBox/AccountBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Cash: $10,000.00"
+
+[node name="PortfolioLabel" type="Label" parent="MarginContainer/VBox/AccountBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Portfolio: $10,000.00"
+
+[node name="PLLabel" type="Label" parent="MarginContainer/VBox/AccountBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "P/L: $0.00"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="ContentSplit" type="HSplitContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 400
+
+[node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/VBox/ContentSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="StocksHeader" type="Label" parent="MarginContainer/VBox/ContentSplit/LeftPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 14
+text = "STOCKS"
+
+[node name="StockScroll" type="ScrollContainer" parent="MarginContainer/VBox/ContentSplit/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StockPanels" type="VBoxContainer" parent="MarginContainer/VBox/ContentSplit/LeftPanel/StockScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="RightPanel" type="VBoxContainer" parent="MarginContainer/VBox/ContentSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NewsHeader" type="Label" parent="MarginContainer/VBox/ContentSplit/RightPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 14
+text = "NEWS FEED"
+
+[node name="NewsScroll" type="ScrollContainer" parent="MarginContainer/VBox/ContentSplit/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NewsFeed" type="RichTextLabel" parent="MarginContainer/VBox/ContentSplit/RightPanel/NewsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_following = true
+theme_override_font_sizes/normal_font_size = 13
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="OutputHeader" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 14
+text = "CONSOLE"
+
+[node name="OutputScroll" type="ScrollContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 120)
+size_flags_vertical = 3
+
+[node name="OutputLog" type="RichTextLabel" parent="MarginContainer/VBox/OutputScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_following = true
+theme_override_font_sizes/normal_font_size = 13
+
+[node name="CommandInput" type="LineEdit" parent="MarginContainer/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+placeholder_text = "Enter command (BUY A 50, STATUS, HELP...)"
+clear_button_enabled = true
+
+[node name="TickTimer" type="Timer" parent="."]
+unique_name_in_owner = true

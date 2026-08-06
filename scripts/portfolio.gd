@@ -1,0 +1,110 @@
+class_name Portfolio
+extends RefCounted
+
+const STARTING_CASH := 10000.0
+const FIXED_COMMISSION := 2.0
+const PERCENT_COMMISSION := 0.002
+
+var cash: float = STARTING_CASH
+var holdings: Dictionary = {}
+var trade_history: Array[Dictionary] = []
+var total_commissions: float = 0.0
+
+
+func _init() -> void:
+	pass
+
+
+func get_shares(symbol: String) -> int:
+	return holdings.get(symbol, 0)
+
+
+func get_holdings_value(stocks: Dictionary) -> float:
+	var total := 0.0
+	for symbol in holdings:
+		if stocks.has(symbol):
+			total += holdings[symbol] * stocks[symbol].price
+	return total
+
+
+func get_portfolio_value(stocks: Dictionary) -> float:
+	return cash + get_holdings_value(stocks)
+
+
+func get_profit_loss(stocks: Dictionary) -> float:
+	return get_portfolio_value(stocks) - STARTING_CASH
+
+
+func get_profit_loss_pct(stocks: Dictionary) -> float:
+	return (get_profit_loss(stocks) / STARTING_CASH) * 100.0
+
+
+func calculate_commission(trade_value: float) -> float:
+	return FIXED_COMMISSION + trade_value * PERCENT_COMMISSION
+
+
+func buy(symbol: String, shares: int, ask_price: float) -> Dictionary:
+	if shares <= 0:
+		return {"success": false, "message": "Share amount must be positive."}
+
+	var trade_value := shares * ask_price
+	var commission := calculate_commission(trade_value)
+	var total_cost := trade_value + commission
+
+	if total_cost > cash:
+		var max_affordable := int((cash - FIXED_COMMISSION) / (ask_price * (1.0 + PERCENT_COMMISSION)))
+		return {
+			"success": false,
+			"message": "Insufficient funds. You can afford at most %d shares." % maxi(max_affordable, 0),
+		}
+
+	cash -= total_cost
+	total_commissions += commission
+	holdings[symbol] = get_shares(symbol) + shares
+
+	var trade := {
+		"type": "BUY",
+		"symbol": symbol,
+		"shares": shares,
+		"price": ask_price,
+		"commission": commission,
+	}
+	trade_history.append(trade)
+
+	return {
+		"success": true,
+		"message": "Bought %d shares of %s at $%.2f (commission: $%.2f)" % [shares, symbol, ask_price, commission],
+	}
+
+
+func sell(symbol: String, shares: int, bid_price: float) -> Dictionary:
+	if shares <= 0:
+		return {"success": false, "message": "Share amount must be positive."}
+
+	var owned := get_shares(symbol)
+	if shares > owned:
+		return {"success": false, "message": "You only own %d shares of %s." % [owned, symbol]}
+
+	var trade_value := shares * bid_price
+	var commission := calculate_commission(trade_value)
+	var proceeds := trade_value - commission
+
+	cash += proceeds
+	total_commissions += commission
+	holdings[symbol] = owned - shares
+	if holdings[symbol] == 0:
+		holdings.erase(symbol)
+
+	var trade := {
+		"type": "SELL",
+		"symbol": symbol,
+		"shares": shares,
+		"price": bid_price,
+		"commission": commission,
+	}
+	trade_history.append(trade)
+
+	return {
+		"success": true,
+		"message": "Sold %d shares of %s at $%.2f (commission: $%.2f)" % [shares, symbol, bid_price, commission],
+	}
