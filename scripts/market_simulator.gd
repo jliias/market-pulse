@@ -36,6 +36,7 @@ var premarket_events: Array[NewsEvent] = []
 var mood_hold: float = 0.0
 var mood_hold_ticks: int = 0
 var calendar_day: int = 0
+var regime: MarketRegime = MarketRegime.new()
 
 
 func _init() -> void:
@@ -66,12 +67,29 @@ func prepare() -> void:
 	tick_count = 0
 	session_minutes = 9
 	session_seconds = 25
-	market_sentiment = randf_range(-0.25, 0.25)
+	market_sentiment = regime.opening_sentiment()
 	mood_hold = 0.0
 	mood_hold_ticks = 0
 	premarket_events.clear()
 	news_feed.clear()
 	chain_director.calendar_day = calendar_day
+
+	var climate_line: String = regime.take_climate_headline()
+	if not climate_line.is_empty():
+		var climate_event := NewsEvent.new(
+			get_time_string(),
+			climate_line,
+			[],
+			0.2 if regime.climate == MarketRegime.CLIMATE_BULL else (-0.2 if regime.climate == MarketRegime.CLIMATE_BEAR else 0.0),
+			0.0,
+			0,
+			false,
+			true,
+			"macro",
+			"system"
+		)
+		news_feed.append(climate_event)
+		premarket_events.append(climate_event)
 
 	var chain_briefing: Array[NewsEvent] = chain_director.collect_premarket(get_stock_list(), get_time_string())
 	var avoid: Array[String] = chain_director.occupied_subjects()
@@ -87,6 +105,9 @@ func prepare() -> void:
 		news_feed.append(event)
 		premarket_events.append(event)
 		_apply_premarket_news(event)
+		var weather_note: NewsEvent = _maybe_shift_regime(event, true)
+		if weather_note != null:
+			premarket_events.append(weather_note)
 
 	opening_index = _current_index()
 
@@ -133,6 +154,7 @@ func tick() -> Array[NewsEvent]:
 	tick_count += 1
 	_advance_time()
 	_drift_market_sentiment()
+	regime.tick()
 
 	var new_events: Array[NewsEvent] = []
 
@@ -160,7 +182,8 @@ func tick() -> Array[NewsEvent]:
 		news_feed.append(chain_event)
 		new_events.append(chain_event)
 		_apply_news(chain_event)
-	elif randf() < 0.055:
+		_push_regime_note(chain_event, new_events)
+	elif randf() < regime.news_roll_chance():
 		var event: NewsEvent = null
 		if randf() < 0.18:
 			event = chain_director.try_start(get_stock_list(), get_time_string(), false)
@@ -169,9 +192,10 @@ func tick() -> Array[NewsEvent]:
 		news_feed.append(event)
 		new_events.append(event)
 		_apply_news(event)
+		_push_regime_note(event, new_events)
 
 	for symbol in stocks:
-		stocks[symbol].tick(market_sentiment)
+		stocks[symbol].tick(market_sentiment, regime.tick_modifiers())
 
 	if news_feed.size() > 50:
 		news_feed.remove_at(0)
@@ -204,7 +228,9 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 		if not stocks.has(symbol):
 			continue
 		var stock: Stock = stocks[symbol]
-		var result: Dictionary = stock.interpret_news(event.impact, true, market_sentiment, event.category)
+		var result: Dictionary = stock.interpret_news(
+			event.impact, true, market_sentiment, event.category, regime.climate, regime.weather
+		)
 		var actual_move: float = float(result["move"])
 		if absf(actual_move) < 0.008:
 			actual_move = event.impact * randf_range(0.55, 0.9)
@@ -235,7 +261,9 @@ func _apply_news(event: NewsEvent) -> void:
 		if not stocks.has(symbol):
 			continue
 		var stock: Stock = stocks[symbol]
-		var result: Dictionary = stock.interpret_news(event.impact, event.is_major, market_sentiment, event.category)
+		var result: Dictionary = stock.interpret_news(
+			event.impact, event.is_major, market_sentiment, event.category, regime.climate, regime.weather
+		)
 		var actual_move: float = float(result["move"])
 		var reaction_text: String = str(result["reaction"])
 		stock.apply_news_impact(actual_move, event.duration_ticks, event.is_major, event.lasting)
@@ -306,6 +334,47 @@ func _summarize_industry_reaction(applied_moves: PackedFloat32Array, headline_im
 	if ignore_count > 0 or fade_count > 0:
 		return "Uneven reaction across %s names." % label
 	return "The %s group leans with the headline." % label
+
+
+func _push_regime_note(source: NewsEvent, into: Array[NewsEvent]) -> void:
+	var note: NewsEvent = _maybe_shift_regime(source, false)
+	if note != null:
+		into.append(note)
+
+
+func _maybe_shift_regime(event: NewsEvent, premarket: bool) -> NewsEvent:
+	var kind: String = regime.consider_event(event)
+	if kind.is_empty():
+		return null
+	var headline: String
+	match kind:
+		MarketRegime.WEATHER_PANIC:
+			headline = "Panic hits the tape — sellers chase every downtick."
+			market_sentiment = clampf(market_sentiment - 0.28, -1.0, 1.0)
+		MarketRegime.WEATHER_EUPHORIA:
+			headline = "Euphoria hits the tape — buyers chase every uptick."
+			market_sentiment = clampf(market_sentiment + 0.28, -1.0, 1.0)
+		_:
+			headline = "High-volatility session: ranges expand and the tape gets noisy."
+	if premarket and not headline.begins_with("PREMARKET"):
+		headline = "PREMARKET: " + headline
+	var note := NewsEvent.new(
+		get_time_string(),
+		headline,
+		[],
+		-1.0 if kind == MarketRegime.WEATHER_PANIC else (1.0 if kind == MarketRegime.WEATHER_EUPHORIA else 0.0),
+		0.0,
+		0,
+		false,
+		premarket,
+		"macro",
+		"system",
+		"moderate",
+		false,
+		""
+	)
+	news_feed.append(note)
+	return note
 
 
 func _nudge_market_mood(event: NewsEvent, impulse: float) -> void:

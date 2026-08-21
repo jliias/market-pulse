@@ -185,7 +185,14 @@ func in_industry(industry_name: String) -> bool:
 	return sector == industry_name or industries.has(industry_name)
 
 
-func interpret_news(headline_impact: float, is_major: bool, market_sentiment: float, news_category: String = "general") -> Dictionary:
+func interpret_news(
+	headline_impact: float,
+	is_major: bool,
+	market_sentiment: float,
+	news_category: String = "general",
+	climate: String = "normal",
+	weather: String = ""
+) -> Dictionary:
 	var headline_sign: float = signf(headline_impact)
 	var headline_size: float = absf(headline_impact)
 	if headline_sign == 0.0 or headline_size <= 0.0:
@@ -224,6 +231,35 @@ func interpret_news(headline_impact: float, is_major: bool, market_sentiment: fl
 		fade_chance += 0.18
 	elif category == "rumor" and speculation_factor < 0.35:
 		fade_chance += 0.12
+
+	match weather:
+		"panic":
+			if headline_sign > 0.0:
+				fade_chance += 0.24
+				alignment *= 0.72
+			else:
+				fade_chance = maxf(fade_chance - 0.12, 0.0)
+				alignment *= 1.22
+		"euphoria":
+			if headline_sign < 0.0:
+				fade_chance += 0.22
+				alignment *= 0.74
+			else:
+				fade_chance = maxf(fade_chance - 0.1, 0.0)
+				alignment *= 1.2
+		"high_vol":
+			alignment *= randf_range(0.75, 1.35)
+	match climate:
+		"bull":
+			if headline_sign > 0.0:
+				alignment *= 1.12
+			else:
+				fade_chance += 0.08
+		"bear":
+			if headline_sign < 0.0:
+				alignment *= 1.12
+			else:
+				fade_chance += 0.1
 
 	if is_major:
 		ignore_chance *= 0.45
@@ -387,14 +423,18 @@ func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = 
 			trend = Trend.BEARISH
 
 
-func tick(p_market_sentiment: float = 0.0) -> void:
+func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
 	var news_move: float = _consume_news_or_revert()
+	var vol_mult: float = float(p_regime.get("vol_mult", 1.0))
+	var flip_mult: float = float(p_regime.get("flip_mult", 1.0))
+	var regime_drift: float = float(p_regime.get("drift", 0.0))
+	var volume_mult: float = float(p_regime.get("volume_mult", 1.0))
 
-	if randf() < trend_flip_chance:
+	if randf() < trend_flip_chance * flip_mult:
 		trend = Trend.values()[randi() % Trend.size()]
 
-	var base_random: float = randf_range(-0.00028, 0.00028) * volatility
+	var base_random: float = randf_range(-0.00028, 0.00028) * volatility * vol_mult
 	var trend_move: float = _get_trend_drift() * volatility
 	var momentum_move: float = clampf(momentum * 0.1, -0.00012, 0.00012)
 	var growth_bias: float = (growth - 0.5) * 0.00003
@@ -410,11 +450,12 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 	else:
 		lasting_bias = 0.0
 
-	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias
+	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias + regime_drift
 	organic_change *= lerpf(0.92, 1.08, speculation_factor)
-	if speculation_factor > 0.8 and randf() < 0.012:
+	if speculation_factor > 0.8 and randf() < 0.012 * flip_mult:
 		organic_change += randf_range(-0.0011, 0.0011)
-	var organic_cap: float = MAX_NORMAL_TICK_CHANGE * clampf(volatility, 0.5, 1.6)
+	var cap_mult: float = clampf(lerpf(1.0, 1.4, (vol_mult - 1.0) / 0.7), 1.0, 1.45)
+	var organic_cap: float = MAX_NORMAL_TICK_CHANGE * clampf(volatility, 0.5, 1.6) * cap_mult
 	organic_change = clampf(organic_change, -organic_cap, organic_cap)
 
 	var total_change: float = organic_change + news_move
@@ -428,7 +469,7 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 	momentum = clampf(momentum * 0.82 + total_change * 1.5, -0.002, 0.002)
 	price = clampf(price * (1.0 + total_change), MIN_PRICE, MAX_PRICE)
 
-	var tick_volume: int = randi_range(25000, 70000) + int(abs(total_change) * 9000000.0 * popularity)
+	var tick_volume: int = int(float(randi_range(25000, 70000) + int(abs(total_change) * 9000000.0 * popularity)) * volume_mult)
 	last_tick_volume = tick_volume
 	volume += tick_volume
 

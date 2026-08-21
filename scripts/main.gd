@@ -140,6 +140,7 @@ func _apply_launch_mode() -> void:
 	else:
 		portfolio.reset_new_game()
 		market.chain_director.reset()
+		market.regime.reset()
 	SaveManager.launch_mode = "new"
 
 
@@ -307,6 +308,7 @@ func _end_session() -> void:
 	trade_message_label.text = result_text
 	market.chain_director.calendar_day = market.calendar_day
 	market.chain_director.on_session_end()
+	market.regime.on_day_close()
 	portfolio.days_played += 1
 	SaveManager.save_game(portfolio, market)
 	_update_ui()
@@ -414,12 +416,8 @@ func _update_ui() -> void:
 	_refresh_portfolio()
 	_refresh_trade_panel()
 
-	var mood := "NORMAL"
-	if market.market_sentiment > 0.25:
-		mood = "BULLISH"
-	elif market.market_sentiment < -0.25:
-		mood = "CAUTIOUS"
-	market_status_label.text = "MARKET STATUS:  %s" % mood
+	market_status_label.text = "MARKET STATUS:  %s" % market.regime.status_text()
+	market_status_label.add_theme_color_override("font_color", market.regime.status_color())
 	update_speed_label.text = "UPDATE SPEED: 1 SECOND"
 
 

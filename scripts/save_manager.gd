@@ -32,7 +32,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 2,
+		"version": 3,
 		"cash": portfolio.cash,
 		"holdings": holdings,
 		"avg_cost": avg_cost,
@@ -40,6 +40,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		"total_commissions": portfolio.total_commissions,
 		"stock_prices": prices,
 		"event_chains": market.chain_director.serialize(),
+		"regime": market.regime.serialize(),
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -69,6 +70,10 @@ static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictio
 		market.chain_director.deserialize(data["event_chains"])
 	else:
 		market.chain_director.reset()
+	if data.has("regime") and typeof(data["regime"]) == TYPE_DICTIONARY:
+		market.regime.deserialize(data["regime"])
+	else:
+		market.regime.reset()
 
 
 static func summary_text() -> String:
