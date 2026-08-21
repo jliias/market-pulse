@@ -129,6 +129,21 @@ func interpret_news(headline_impact: float, is_major: bool, market_sentiment: fl
 	return {"move": actual_move, "reaction": reaction}
 
 
+func roll_to_next_day() -> void:
+	previous_close = price
+	news_move_remaining = 0.0
+	news_move_ticks = 0
+	news_initial_ticks = 0
+	news_is_major = false
+	momentum = 0.0
+	volume = randi_range(800000, 2500000)
+	price_history = PackedFloat32Array()
+	volume_history = PackedInt32Array()
+	last_tick_volume = randi_range(40000, 90000)
+	_update_spread()
+	_record_history()
+
+
 func apply_overnight_gap(gap_pct: float, is_major: bool = true) -> void:
 	price = clampf(price * (1.0 + gap_pct), MIN_PRICE, MAX_PRICE)
 	momentum = clampf(gap_pct * 0.4, -0.002, 0.002)

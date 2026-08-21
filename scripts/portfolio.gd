@@ -10,6 +10,7 @@ var holdings: Dictionary = {}
 var avg_cost: Dictionary = {}
 var trade_history: Array[Dictionary] = []
 var total_commissions: float = 0.0
+var day_start_value: float = STARTING_CASH
 
 
 func _init() -> void:
@@ -57,12 +58,20 @@ func get_portfolio_value(stocks: Dictionary) -> float:
 	return cash + get_holdings_value(stocks)
 
 
+func mark_day_start(stocks: Dictionary) -> void:
+	day_start_value = get_portfolio_value(stocks)
+	if day_start_value < 0.01:
+		day_start_value = STARTING_CASH
+
+
 func get_profit_loss(stocks: Dictionary) -> float:
-	return get_portfolio_value(stocks) - STARTING_CASH
+	return get_portfolio_value(stocks) - day_start_value
 
 
 func get_profit_loss_pct(stocks: Dictionary) -> float:
-	return (get_profit_loss(stocks) / STARTING_CASH) * 100.0
+	if day_start_value <= 0.0:
+		return 0.0
+	return (get_profit_loss(stocks) / day_start_value) * 100.0
 
 
 func calculate_commission(trade_value: float) -> float:

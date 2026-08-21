@@ -147,6 +147,7 @@ func _begin_session() -> void:
 	awaiting_open = true
 	preopen_remaining = PREOPEN_SECONDS
 	market.prepare()
+	portfolio.mark_day_start(market.stocks)
 	news_feed.clear()
 	selected_symbol = MarketSimulator.SYMBOL_ORDER[0]
 	_set_buy_mode(true)
@@ -264,9 +265,7 @@ func _end_session() -> void:
 
 
 func _restart_session() -> void:
-	market = MarketSimulator.new()
-	portfolio = Portfolio.new()
-	_build_watchlist()
+	market.roll_to_next_day()
 	_begin_session()
 
 
@@ -304,7 +303,7 @@ func _update_ui() -> void:
 
 	for symbol in watchlist_cards:
 		var card: WatchlistCard = watchlist_cards[symbol]
-		card.refresh(market.stocks[symbol])
+		card.refresh(market.stocks[symbol], portfolio.get_shares(symbol))
 		card.set_selected(symbol == selected_symbol)
 
 	_refresh_selected_stock()

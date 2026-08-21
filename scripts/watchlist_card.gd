@@ -11,6 +11,7 @@ var _selected: bool = false
 @onready var price_label: Label = %PriceLabel
 @onready var change_label: Label = %ChangeLabel
 @onready var volume_label: Label = %VolumeLabel
+@onready var owned_label: Label = %OwnedLabel
 @onready var mini_chart: PriceChart = %MiniChart
 @onready var highlight: ColorRect = %Highlight
 
@@ -27,7 +28,7 @@ func set_selected(on: bool) -> void:
 	_apply_style()
 
 
-func refresh(stock: Stock) -> void:
+func refresh(stock: Stock, owned_shares: int = 0) -> void:
 	symbol = stock.symbol
 	ticker_label.text = stock.symbol
 	name_label.text = stock.company_name
@@ -38,6 +39,12 @@ func refresh(stock: Stock) -> void:
 	change_label.text = "%s$%.2f (%s%.2f%%)" % [sign, absf(change), sign, absf(pct)]
 	change_label.add_theme_color_override("font_color", Color(0.35, 0.85, 0.45) if change >= 0.0 else Color(0.95, 0.38, 0.38))
 	volume_label.text = "Volume: %s" % _format_volume(stock.volume)
+	if owned_shares > 0:
+		owned_label.text = "Owned: %d" % owned_shares
+		owned_label.add_theme_color_override("font_color", Color(0.9, 0.75, 0.25, 1))
+	else:
+		owned_label.text = "Owned: 0"
+		owned_label.add_theme_color_override("font_color", Color(0.65, 0.68, 0.74, 1))
 	var slice: Dictionary = stock.get_chart_slice(24, 1)
 	mini_chart.compact = true
 	mini_chart.set_series(slice["prices"], slice["volumes"])

@@ -44,6 +44,11 @@ func _setup_stocks() -> void:
 	stocks["NMIN"] = Stock.new("NMIN", "North Mining Ltd", 512.80, 1.15, "Materials", "Large Cap")
 
 
+func roll_to_next_day() -> void:
+	for symbol in SYMBOL_ORDER:
+		stocks[symbol].roll_to_next_day()
+
+
 func prepare() -> void:
 	is_running = false
 	is_closed = false
