@@ -5,6 +5,13 @@ const CARD_SCENE := preload("res://scenes/watchlist_card.tscn")
 const NARROW_WIDTH := 1100.0
 const TIMEFRAMES := ["1M", "5M", "15M", "1H", "1D"]
 const TF_POINTS := {"1M": 20, "5M": 60, "15M": 120, "1H": 180, "1D": 400}
+const UI_BORDER := 1
+const TRADE_BORDER := 3
+const UI_ACCENT := Color(0.78, 0.82, 0.9)
+const TRADE_ACCENT := Color(0.45, 0.86, 0.98)
+const BUY_ACCENT := Color(0.32, 0.92, 0.48)
+const SELL_ACCENT := Color(0.98, 0.42, 0.42)
+const SELECTED_ACCENT := Color(0.9, 0.75, 0.25)
 
 var market := MarketSimulator.new()
 var portfolio := Portfolio.new()
@@ -90,6 +97,7 @@ func _connect_controls() -> void:
 	new_day_button.pressed.connect(_restart_session)
 	%SettingsButton.pressed.connect(func() -> void: settings_dialog.popup_centered())
 	%MenuButton.pressed.connect(func() -> void: menu_dialog.popup_centered())
+	_style_ui_buttons()
 
 
 func _build_timeframe_buttons() -> void:
@@ -103,13 +111,12 @@ func _build_timeframe_buttons() -> void:
 		button.button_pressed = tf == timeframe
 		button.pressed.connect(_on_timeframe_pressed.bind(tf))
 		timeframe_buttons.add_child(button)
+	_style_timeframe_buttons()
 
 
 func _on_timeframe_pressed(tf: String) -> void:
 	timeframe = tf
-	for child in timeframe_buttons.get_children():
-		var button := child as Button
-		button.button_pressed = button.text == tf
+	_style_timeframe_buttons()
 	_refresh_chart()
 
 
@@ -334,10 +341,8 @@ func _refresh_trade_panel() -> void:
 	var px: float = stock.ask if buy_mode else stock.bid
 	trade_price_label.text = "$%.2f" % px
 	qty_label.text = str(quantity)
-	buy_mode_button.modulate = Color(0.55, 1.0, 0.65) if buy_mode else Color(1, 1, 1)
-	sell_mode_button.modulate = Color(1.0, 0.6, 0.6) if not buy_mode else Color(1, 1, 1)
 	place_order_button.text = "PLACE BUY ORDER" if buy_mode else "PLACE SELL ORDER"
-	_style_place_order_button()
+	_style_trade_buttons()
 
 	var estimate: Dictionary = portfolio.estimate(quantity, px)
 	est_price_label.text = "Estimated price: $%.2f" % px
@@ -349,36 +354,66 @@ func _refresh_trade_panel() -> void:
 		final_total_label.text = "Total proceeds: $%.2f" % float(estimate["proceeds"])
 
 
-func _style_place_order_button() -> void:
-	var accent := Color(0.32, 0.92, 0.48) if buy_mode else Color(0.98, 0.42, 0.42)
-	if place_order_button.disabled:
-		accent = Color(accent.r, accent.g, accent.b, 0.4)
+func _style_ui_buttons() -> void:
+	_apply_button_style(%SettingsButton, UI_ACCENT, UI_BORDER)
+	_apply_button_style(%MenuButton, UI_ACCENT, UI_BORDER)
+	_apply_button_style(end_session_button, UI_ACCENT, UI_BORDER)
+	_apply_button_style(new_day_button, SELECTED_ACCENT, UI_BORDER)
 
-	place_order_button.add_theme_color_override("font_color", accent)
-	place_order_button.add_theme_color_override("font_hover_color", accent.lightened(0.15))
-	place_order_button.add_theme_color_override("font_pressed_color", accent.darkened(0.1))
-	place_order_button.add_theme_color_override("font_disabled_color", Color(accent.r, accent.g, accent.b, 0.45))
+
+func _style_timeframe_buttons() -> void:
+	for child in timeframe_buttons.get_children():
+		var button := child as Button
+		button.button_pressed = button.text == timeframe
+		var accent: Color = SELECTED_ACCENT if button.text == timeframe else UI_ACCENT
+		_apply_button_style(button, accent, UI_BORDER, button.text == timeframe)
+
+
+func _style_trade_buttons() -> void:
+	_apply_button_style(buy_mode_button, BUY_ACCENT, TRADE_BORDER, buy_mode)
+	_apply_button_style(sell_mode_button, SELL_ACCENT, TRADE_BORDER, not buy_mode)
+	_apply_button_style(%QtyMinusButton, TRADE_ACCENT, TRADE_BORDER)
+	_apply_button_style(%QtyPlusButton, TRADE_ACCENT, TRADE_BORDER)
+	_apply_button_style(%Qty10Button, TRADE_ACCENT, TRADE_BORDER, quantity == 10)
+	_apply_button_style(%Qty20Button, TRADE_ACCENT, TRADE_BORDER, quantity == 20)
+	_apply_button_style(%Qty50Button, TRADE_ACCENT, TRADE_BORDER, quantity == 50)
+	_apply_button_style(%Qty100Button, TRADE_ACCENT, TRADE_BORDER, quantity == 100)
+	_apply_button_style(%QtyMaxButton, TRADE_ACCENT, TRADE_BORDER)
+	var order_accent: Color = BUY_ACCENT if buy_mode else SELL_ACCENT
+	_apply_button_style(place_order_button, order_accent, TRADE_BORDER, true)
 	place_order_button.add_theme_font_size_override("font_size", 18)
 
-	for state in ["normal", "hover", "pressed", "disabled"]:
+
+func _apply_button_style(button: Button, accent: Color, border: int, emphasized: bool = false) -> void:
+	var fill: float = 0.2 if emphasized else 0.08
+	if button.disabled:
+		accent = Color(accent.r, accent.g, accent.b, 0.4)
+		fill = 0.05
+
+	button.add_theme_color_override("font_color", accent)
+	button.add_theme_color_override("font_hover_color", accent.lightened(0.12))
+	button.add_theme_color_override("font_pressed_color", accent.darkened(0.08))
+	button.add_theme_color_override("font_disabled_color", Color(accent.r, accent.g, accent.b, 0.45))
+
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var box := StyleBoxFlat.new()
-		box.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
+		box.bg_color = Color(accent.r, accent.g, accent.b, fill)
 		box.border_color = accent
-		box.set_border_width_all(3)
-		box.set_corner_radius_all(8)
-		box.content_margin_left = 12
-		box.content_margin_right = 12
-		box.content_margin_top = 10
-		box.content_margin_bottom = 10
+		box.set_border_width_all(border)
+		box.set_corner_radius_all(6)
+		box.content_margin_left = 10
+		box.content_margin_right = 10
+		box.content_margin_top = 6
+		box.content_margin_bottom = 6
 		if state == "hover":
-			box.bg_color = Color(accent.r, accent.g, accent.b, 0.22)
-			box.set_border_width_all(4)
+			box.bg_color = Color(accent.r, accent.g, accent.b, fill + 0.1)
+			box.set_border_width_all(border + 1)
 		elif state == "pressed":
-			box.bg_color = Color(accent.r, accent.g, accent.b, 0.3)
+			box.bg_color = Color(accent.r, accent.g, accent.b, fill + 0.16)
 		elif state == "disabled":
 			box.border_color = Color(accent.r, accent.g, accent.b, 0.35)
 			box.bg_color = Color(0.12, 0.13, 0.16, 1.0)
-		place_order_button.add_theme_stylebox_override(state, box)
+		button.add_theme_stylebox_override(state, box)
 
 
 func _add_news_to_feed(event: NewsEvent) -> void:

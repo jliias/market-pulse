@@ -53,7 +53,7 @@ func _on_gui_input(event: InputEvent) -> void:
 func _apply_style() -> void:
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color(0.14, 0.16, 0.22, 1.0) if _selected else Color(0.11, 0.12, 0.16, 1.0)
-	box.border_color = Color(0.9, 0.75, 0.25, 0.9) if _selected else Color(0.22, 0.24, 0.3, 1.0)
+	box.border_color = Color(0.9, 0.75, 0.25, 0.95) if _selected else Color(0.78, 0.82, 0.9, 0.7)
 	box.set_border_width_all(2 if _selected else 1)
 	box.set_corner_radius_all(8)
 	box.content_margin_left = 10
