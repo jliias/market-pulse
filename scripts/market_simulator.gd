@@ -111,6 +111,21 @@ func stop() -> void:
 	is_running = false
 
 
+func simulate_until_close() -> Array[NewsEvent]:
+	if is_closed:
+		return []
+	if not is_running:
+		is_running = true
+	var caught_up: Array[NewsEvent] = []
+	var guard: int = 0
+	while not is_closed and guard < 500:
+		guard += 1
+		var batch: Array[NewsEvent] = tick()
+		for event in batch:
+			caught_up.append(event)
+	return caught_up
+
+
 func tick() -> Array[NewsEvent]:
 	if not is_running or is_closed:
 		return []

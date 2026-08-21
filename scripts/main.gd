@@ -69,13 +69,18 @@ var menu_confirm_open := false
 @onready var tick_timer: Timer = %TickTimer
 @onready var settings_dialog: AcceptDialog = %SettingsDialog
 @onready var menu_dialog: ConfirmationDialog = %MenuDialog
+@onready var end_session_dialog: ConfirmationDialog = %EndSessionDialog
 @onready var open_countdown_overlay: CenterContainer = %OpenCountdownOverlay
 @onready var open_countdown_label: Label = %OpenCountdownLabel
+@onready var closed_overlay: CenterContainer = %ClosedOverlay
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		SaveManager.save_game(portfolio, market)
+		if session_active:
+			_end_session()
+		else:
+			SaveManager.save_game(portfolio, market)
 
 
 func _ready() -> void:
@@ -114,13 +119,16 @@ func _connect_controls() -> void:
 	buy_mode_button.pressed.connect(func() -> void: _set_buy_mode(true))
 	sell_mode_button.pressed.connect(func() -> void: _set_buy_mode(false))
 	place_order_button.pressed.connect(_place_order)
-	end_session_button.pressed.connect(_end_session)
+	end_session_button.pressed.connect(_confirm_end_session)
 	new_day_button.pressed.connect(_restart_session)
 	%SettingsButton.pressed.connect(func() -> void: settings_dialog.popup_centered())
 	%MenuButton.pressed.connect(_confirm_return_to_menu)
 	menu_dialog.confirmed.connect(_return_to_menu)
-	menu_dialog.canceled.connect(_cancel_return_to_menu)
+	menu_dialog.canceled.connect(_cancel_confirm_dialog)
 	menu_dialog.get_cancel_button().text = "Stay"
+	end_session_dialog.confirmed.connect(_end_session)
+	end_session_dialog.canceled.connect(_cancel_confirm_dialog)
+	end_session_dialog.get_cancel_button().text = "Stay"
 	_style_ui_buttons()
 
 
@@ -186,6 +194,7 @@ func _begin_session() -> void:
 	place_order_button.disabled = true
 	tick_timer.stop()
 	open_countdown_overlay.visible = true
+	closed_overlay.visible = false
 	_refresh_open_countdown()
 	_update_ui()
 
@@ -195,6 +204,7 @@ func _open_market() -> void:
 		return
 	awaiting_open = false
 	open_countdown_overlay.visible = false
+	closed_overlay.visible = false
 	var open_bell: NewsEvent = market.open()
 	_add_news_to_feed(open_bell)
 	place_order_button.disabled = false
@@ -269,9 +279,13 @@ func _place_order() -> void:
 func _end_session() -> void:
 	if not session_active:
 		return
+	menu_confirm_open = false
+	var left_before_close: bool = not market.is_closed
+	_run_tape_to_close()
 	session_active = false
 	awaiting_open = false
 	open_countdown_overlay.visible = false
+	closed_overlay.visible = true
 	market.stop()
 	tick_timer.stop()
 	place_order_button.disabled = true
@@ -281,12 +295,16 @@ func _end_session() -> void:
 	var player_pct := portfolio.get_profit_loss_pct(market.stocks)
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(player_pct)
+	var result_text: String
 	if alpha_pct > 0.05:
-		trade_message_label.text = "Closed. You beat the market by %+.1f%%." % alpha_pct
+		result_text = "Closed. You beat the market by %+.1f%%." % alpha_pct
 	elif alpha_pct < -0.05:
-		trade_message_label.text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
+		result_text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
 	else:
-		trade_message_label.text = "Closed. You matched the tape."
+		result_text = "Closed. You matched the tape."
+	if left_before_close:
+		result_text = "Tape run to the close. " + result_text
+	trade_message_label.text = result_text
 	market.chain_director.calendar_day = market.calendar_day
 	market.chain_director.on_session_end()
 	portfolio.days_played += 1
@@ -294,13 +312,46 @@ func _end_session() -> void:
 	_update_ui()
 
 
-func _confirm_return_to_menu() -> void:
-	menu_confirm_open = true
+func _run_tape_to_close() -> void:
 	tick_timer.stop()
+	open_countdown_overlay.visible = false
+	if awaiting_open:
+		awaiting_open = false
+		if not market.is_closed and not market.is_running:
+			var open_bell: NewsEvent = market.open()
+			_add_news_to_feed(open_bell)
+	if market.is_closed:
+		return
+	var remaining: Array[NewsEvent] = market.simulate_until_close()
+	for event in remaining:
+		_add_news_to_feed(event)
+
+
+func _confirm_end_session() -> void:
+	if not session_active:
+		return
+	if market.is_closed:
+		_end_session()
+		return
+	_pause_for_confirm()
+	end_session_dialog.popup_centered()
+
+
+func _confirm_return_to_menu() -> void:
+	_pause_for_confirm()
+	if session_active and not market.is_closed:
+		menu_dialog.dialog_text = "Are you sure you want to return to the menu?\n\nThe rest of the trading day will be marked to the close. Your cash and holdings will be saved."
+	else:
+		menu_dialog.dialog_text = "Return to the menu?\n\nYour cash and holdings are already saved."
 	menu_dialog.popup_centered()
 
 
-func _cancel_return_to_menu() -> void:
+func _pause_for_confirm() -> void:
+	menu_confirm_open = true
+	tick_timer.stop()
+
+
+func _cancel_confirm_dialog() -> void:
 	menu_confirm_open = false
 	if session_active and not awaiting_open and not market.is_closed:
 		tick_timer.start()

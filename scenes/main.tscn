@@ -188,6 +188,26 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 1.6
 script = ExtResource("2_chart")
 
+[node name="ClosedOverlay" type="CenterContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ClosedOverlayLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.72)
+theme_override_font_sizes/font_size = 42
+text = "Market closed"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
@@ -408,5 +428,14 @@ title = "Return to Menu"
 ok_button_text = "Return to Menu"
 dialog_text = "Are you sure you want to return to the menu?
 
-This will end the current trading day. Your cash and holdings will be saved."
+If the market is still open, the rest of the day will be marked to the close. Your cash and holdings will be saved."
+dialog_autowrap = true
+
+[node name="EndSessionDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "End Session"
+ok_button_text = "End Session"
+dialog_text = "Are you sure you want to end the session?
+
+The rest of the trading day will be marked to the close. Your cash and holdings will be saved."
 dialog_autowrap = true
