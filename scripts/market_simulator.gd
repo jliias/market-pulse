@@ -231,11 +231,9 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 		var result: Dictionary = stock.interpret_news(
 			event.impact, true, market_sentiment, event.category, regime.climate, regime.weather
 		)
-		var actual_move: float = float(result["move"])
-		if absf(actual_move) < 0.008:
-			actual_move = event.impact * randf_range(0.55, 0.9)
-		stock.apply_overnight_gap(actual_move, event.is_major, event.lasting)
-		var reaction_text: String = str(result["reaction"])
+		stock.apply_interpreted_news(result, event.duration_ticks, event.is_major, event.lasting, true)
+		var actual_move: float = float(result.get("move", 0.0)) + float(result.get("delay_move", 0.0))
+		var reaction_text: String = str(result.get("reaction", ""))
 		if actual_move * event.impact < 0.0:
 			reaction_text = "Futures fade the print — the gap may not hold."
 		elif absf(actual_move) < absf(event.impact) * 0.45:
@@ -264,10 +262,10 @@ func _apply_news(event: NewsEvent) -> void:
 		var result: Dictionary = stock.interpret_news(
 			event.impact, event.is_major, market_sentiment, event.category, regime.climate, regime.weather
 		)
-		var actual_move: float = float(result["move"])
-		var reaction_text: String = str(result["reaction"])
-		stock.apply_news_impact(actual_move, event.duration_ticks, event.is_major, event.lasting)
-		applied_moves.append(actual_move)
+		var actual_move: float = float(result.get("move", 0.0))
+		var reaction_text: String = str(result.get("reaction", ""))
+		stock.apply_interpreted_news(result, event.duration_ticks, event.is_major, event.lasting, false)
+		applied_moves.append(actual_move + float(result.get("delay_move", 0.0)))
 		if not reaction_text.is_empty() and not reactions.has(reaction_text):
 			reactions.append(reaction_text)
 

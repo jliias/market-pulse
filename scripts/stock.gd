@@ -107,6 +107,11 @@ var revert_remaining: float = 0.0
 var revert_ticks: int = 0
 var lasting_bias: float = 0.0
 var lasting_ticks: int = 0
+var pending_news_move: float = 0.0
+var pending_news_delay: int = 0
+var pending_news_duration: int = 12
+var pending_news_major: bool = false
+var pending_news_lasting: bool = false
 
 var previous_close: float
 var last_tick_volume: int = 0
@@ -196,92 +201,167 @@ func interpret_news(
 	var headline_sign: float = signf(headline_impact)
 	var headline_size: float = absf(headline_impact)
 	if headline_sign == 0.0 or headline_size <= 0.0:
-		return {"move": 0.0, "reaction": ""}
+		return {"move": 0.0, "reaction": "", "delay_move": 0.0, "delay_ticks": 0}
 
 	var category: String = news_category if news_category != "" else "general"
 	var category_mult: float = float(news_sensitivity.get(category, news_sensitivity.get("general", 1.0)))
-
 	var combined_mood: float = clampf(market_sentiment * 0.65 + sentiment * 0.35, -1.0, 1.0)
-	var alignment: float = clampf(0.55 + headline_sign * combined_mood * 0.5, 0.08, 1.2)
+	var day_pct: float = get_day_change_pct()
 
-	var ignore_chance: float = 0.07 if is_major else 0.2
-	if headline_sign > 0.0 and combined_mood > 0.3:
-		ignore_chance += 0.12
-	elif headline_sign < 0.0 and combined_mood < -0.3:
-		ignore_chance += 0.08
-	if trend == Trend.SIDEWAYS:
-		ignore_chance += 0.04
-	if category == "rumor":
-		ignore_chance += lerpf(0.22, -0.12, speculation_factor)
-	elif category == "earnings":
-		ignore_chance += lerpf(-0.04, 0.10, speculation_factor)
-
-	var fade_chance: float = 0.04 if is_major else 0.08
-	if headline_sign > 0.0:
-		fade_chance += maxf(0.0, -combined_mood) * 0.4
-		if trend == Trend.BEARISH:
-			fade_chance += 0.14
-		if market_sentiment < -0.2:
-			fade_chance += 0.1
+	var priced_in: float = 0.1 if is_major else 0.18
+	priced_in += randf_range(-0.04, 0.06)
+	if headline_sign < 0.0:
+		priced_in += 0.08
+		if combined_mood < -0.25 or day_pct < -1.2:
+			priced_in += 0.16
+		if climate == "bear" or weather == "panic":
+			priced_in += 0.08
 	else:
-		fade_chance += maxf(0.0, combined_mood) * 0.28
-		if trend == Trend.BULLISH:
+		if combined_mood > 0.35 or day_pct > 1.4:
+			priced_in += 0.12
+		if climate == "bull" or weather == "euphoria":
+			priced_in += 0.06
+	if category == "rumor":
+		priced_in += lerpf(0.16, -0.06, speculation_factor)
+	if category_mult < 0.5:
+		priced_in += 0.14
+
+	var delay_chance: float = 0.14 if is_major else 0.1
+	if headline_sign > 0.0:
+		delay_chance += 0.12
+	if speculation_factor < 0.4:
+		delay_chance += 0.08
+	if weather == "high_vol":
+		delay_chance += 0.06
+
+	var fade_chance: float = 0.06 if is_major else 0.11
+	fade_chance += randf_range(-0.03, 0.05)
+	if headline_sign > 0.0:
+		fade_chance += maxf(0.0, -combined_mood) * 0.35
+		if trend == Trend.BEARISH or climate == "bear" or weather == "panic":
+			fade_chance += 0.12
+	else:
+		fade_chance += maxf(0.0, combined_mood) * 0.25
+		if trend == Trend.BULLISH or climate == "bull" or weather == "euphoria":
 			fade_chance += 0.1
 	if category == "earnings" and speculation_factor > 0.7:
-		fade_chance += 0.18
-	elif category == "rumor" and speculation_factor < 0.35:
-		fade_chance += 0.12
+		fade_chance += 0.14
 
-	match weather:
-		"panic":
-			if headline_sign > 0.0:
-				fade_chance += 0.24
-				alignment *= 0.72
-			else:
-				fade_chance = maxf(fade_chance - 0.12, 0.0)
-				alignment *= 1.22
-		"euphoria":
-			if headline_sign < 0.0:
-				fade_chance += 0.22
-				alignment *= 0.74
-			else:
-				fade_chance = maxf(fade_chance - 0.1, 0.0)
-				alignment *= 1.2
-		"high_vol":
-			alignment *= randf_range(0.75, 1.35)
-	match climate:
-		"bull":
-			if headline_sign > 0.0:
-				alignment *= 1.12
-			else:
-				fade_chance += 0.08
-		"bear":
-			if headline_sign < 0.0:
-				alignment *= 1.12
-			else:
-				fade_chance += 0.1
+	var surprise_chance: float = 0.07 if is_major else 0.1
+	if weather == "high_vol":
+		surprise_chance += 0.08
 
 	if is_major:
-		ignore_chance *= 0.45
-		fade_chance *= 0.5
-	if category_mult < 0.5:
-		ignore_chance = clampf(ignore_chance + 0.18, 0.0, 0.7)
+		priced_in *= 0.55
+		fade_chance *= 0.55
+		surprise_chance *= 0.7
+	priced_in = clampf(priced_in, 0.04, 0.48)
+	fade_chance = clampf(fade_chance, 0.03, 0.42)
+	delay_chance = clampf(delay_chance, 0.05, 0.38)
 
-	if randf() < ignore_chance:
+	var roll: float = randf()
+	if roll < priced_in:
+		var drip: float = headline_sign * headline_size * randf_range(0.0, 0.12) * category_mult
+		if randf() < 0.35:
+			drip = 0.0
 		return {
-			"move": 0.0,
-			"reaction": _ignore_reaction(category),
+			"move": drip,
+			"delay_move": 0.0,
+			"delay_ticks": 0,
+			"reaction": _priced_in_reaction(headline_sign, category),
 		}
 
-	if randf() < fade_chance:
-		var fade_move: float = -headline_sign * headline_size * randf_range(0.25, 0.7) * maxf(category_mult, 0.4)
-		return {"move": fade_move, "reaction": _fade_reaction(category, headline_sign)}
+	roll -= priced_in
+	if roll < fade_chance:
+		var fade_scale: float = randf_range(0.18, 0.85) * maxf(category_mult, 0.35)
+		return {
+			"move": -headline_sign * headline_size * fade_scale,
+			"delay_move": 0.0,
+			"delay_ticks": 0,
+			"reaction": _fade_reaction(category, headline_sign),
+		}
 
-	var actual_move: float = headline_impact * alignment * category_mult * randf_range(0.65, 1.05)
+	roll -= fade_chance
+	if roll < surprise_chance:
+		return _surprise_reaction(headline_sign, headline_size, category_mult, category)
+
+	roll -= surprise_chance
+	if roll < delay_chance:
+		var later: float = headline_impact * category_mult * randf_range(0.45, 1.25)
+		var now: float = later * randf_range(0.0, 0.28)
+		return {
+			"move": now,
+			"delay_move": later - now,
+			"delay_ticks": randi_range(8, 42),
+			"reaction": _delay_reaction(headline_sign),
+		}
+
+	var follow: float = headline_impact * category_mult * randf_range(0.28, 1.55)
+	follow *= randf_range(0.85, 1.15)
 	if speculation_factor > 0.75:
-		actual_move *= randf_range(0.7, 1.45)
-	var reaction: String = _follow_reaction(category, headline_sign, alignment, actual_move)
-	return {"move": actual_move, "reaction": reaction}
+		follow *= randf_range(0.55, 1.7)
+	if weather == "high_vol":
+		follow *= randf_range(0.6, 1.6)
+	if randf() < 0.22:
+		var split: float = follow * randf_range(0.25, 0.55)
+		return {
+			"move": split,
+			"delay_move": follow - split,
+			"delay_ticks": randi_range(6, 24),
+			"reaction": _stagger_reaction(headline_sign, follow),
+		}
+	return {
+		"move": follow,
+		"delay_move": 0.0,
+		"delay_ticks": 0,
+		"reaction": _follow_reaction(category, headline_sign, 0.7, follow),
+	}
+
+
+func _priced_in_reaction(headline_sign: float, category: String) -> String:
+	if headline_sign < 0.0:
+		return "Already in the price — the bad news does not land a fresh hit."
+	if category == "rumor":
+		return "Little reaction — traders treat it as already priced in."
+	return "Buyers hesitate — the good news does not pay immediately."
+
+
+func _delay_reaction(headline_sign: float) -> String:
+	if headline_sign > 0.0:
+		return "Muted at first — desks wait to see if the bid is real."
+	return "Slow to react — the tape has not fully digested the headline."
+
+
+func _stagger_reaction(headline_sign: float, actual_move: float) -> String:
+	if headline_sign > 0.0 and actual_move > 0.0:
+		return "A partial bid — the rest may leak in later, or not."
+	if headline_sign < 0.0 and actual_move < 0.0:
+		return "Only a partial hit — more selling could still show up."
+	return "Uneven tape — the headline is not trading one-for-one."
+
+
+func _surprise_reaction(headline_sign: float, headline_size: float, category_mult: float, category: String) -> Dictionary:
+	var kind: float = randf()
+	if kind < 0.4:
+		return {
+			"move": -headline_sign * headline_size * randf_range(0.4, 1.1) * maxf(category_mult, 0.4),
+			"delay_move": 0.0,
+			"delay_ticks": 0,
+			"reaction": "Unexpected tape — flow goes the other way.",
+		}
+	if kind < 0.7:
+		return {
+			"move": headline_sign * headline_size * randf_range(1.4, 2.2) * category_mult,
+			"delay_move": -headline_sign * headline_size * randf_range(0.3, 0.8),
+			"delay_ticks": randi_range(5, 16),
+			"reaction": "Knee-jerk overreaction — this may not hold.",
+		}
+	return {
+		"move": headline_sign * headline_size * randf_range(-0.4, 0.4),
+		"delay_move": headline_sign * headline_size * category_mult * randf_range(0.5, 1.2),
+		"delay_ticks": randi_range(10, 36),
+		"reaction": _delay_reaction(headline_sign) if category != "rumor" else "Choppy reaction — the rumor is not clean.",
+	}
 
 
 func _ignore_reaction(category: String) -> String:
@@ -345,6 +425,11 @@ func roll_to_next_day() -> void:
 	revert_ticks = 0
 	lasting_bias = 0.0
 	lasting_ticks = 0
+	pending_news_move = 0.0
+	pending_news_delay = 0
+	pending_news_duration = 12
+	pending_news_major = false
+	pending_news_lasting = false
 	momentum = 0.0
 	volume = randi_range(800000, 2500000)
 	price_history = PackedFloat32Array()
@@ -394,6 +479,24 @@ func get_day_change_pct() -> float:
 	return ((price - previous_close) / previous_close) * 100.0
 
 
+func apply_interpreted_news(result: Dictionary, duration_ticks: int, is_major: bool, lasting: bool, overnight: bool = false) -> void:
+	var immediate: float = float(result.get("move", 0.0))
+	var delay_move: float = float(result.get("delay_move", 0.0))
+	var delay_ticks: int = int(result.get("delay_ticks", 0))
+	var duration: int = maxi(int(round(float(duration_ticks) * randf_range(0.65, 1.45))), 1)
+	if overnight:
+		if absf(immediate) >= 0.0008:
+			apply_overnight_gap(immediate, is_major, lasting)
+	elif absf(immediate) >= 0.0004:
+		apply_news_impact(immediate, duration, is_major, lasting)
+	if absf(delay_move) >= 0.0005 and delay_ticks > 0:
+		pending_news_move = delay_move
+		pending_news_delay = delay_ticks
+		pending_news_duration = duration
+		pending_news_major = is_major
+		pending_news_lasting = lasting
+
+
 func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = false, lasting: bool = false) -> void:
 	news_move_remaining = total_move
 	news_move_ticks = maxi(duration_ticks, 1)
@@ -408,24 +511,26 @@ func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = 
 		news_is_major = false
 		return
 	if lasting:
-		sentiment = clampf(sentiment + total_move * 8.0, -1.0, 1.0)
+		sentiment = clampf(sentiment + total_move * randf_range(4.0, 9.0), -1.0, 1.0)
 		_set_lasting_bias(total_move, is_major)
-		if total_move > 0.004:
-			trend = Trend.BULLISH
-		elif total_move < -0.004:
-			trend = Trend.BEARISH
+		if absf(total_move) > 0.004 and randf() < 0.55:
+			trend = Trend.BULLISH if total_move > 0.0 else Trend.BEARISH
 	else:
-		sentiment = clampf(sentiment + total_move * 3.0, -1.0, 1.0)
-		_queue_flash_revert(total_move)
-		if total_move > 0.004 and randf() < 0.22:
-			trend = Trend.BULLISH
-		elif total_move < -0.004 and randf() < 0.22:
-			trend = Trend.BEARISH
+		sentiment = clampf(sentiment + total_move * randf_range(1.5, 4.5), -1.0, 1.0)
+		if randf() < 0.72:
+			_queue_flash_revert(total_move)
+		if absf(total_move) > 0.004 and randf() < 0.18:
+			trend = Trend.BULLISH if total_move > 0.0 else Trend.BEARISH
 
 
 func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
 	var news_move: float = _consume_news_or_revert()
+	if pending_news_delay > 0:
+		pending_news_delay -= 1
+		if pending_news_delay <= 0 and absf(pending_news_move) >= 0.0005:
+			apply_news_impact(pending_news_move, pending_news_duration, pending_news_major, pending_news_lasting)
+			pending_news_move = 0.0
 	var vol_mult: float = float(p_regime.get("vol_mult", 1.0))
 	var flip_mult: float = float(p_regime.get("flip_mult", 1.0))
 	var regime_drift: float = float(p_regime.get("drift", 0.0))
@@ -486,11 +591,14 @@ func _consume_news_move() -> float:
 
 	if news_is_major:
 		if ticks_elapsed == 0:
-			move = news_move_remaining * 0.65
+			move = news_move_remaining * randf_range(0.22, 0.72)
 		else:
 			move = news_move_remaining / float(news_move_ticks)
 	else:
-		move = news_move_remaining / float(news_move_ticks)
+		move = news_move_remaining * randf_range(0.7, 1.3) / float(news_move_ticks)
+		move = clampf(move, -absf(news_move_remaining), absf(news_move_remaining))
+		if signf(move) != signf(news_move_remaining) and news_move_remaining != 0.0:
+			move = news_move_remaining / float(news_move_ticks)
 
 	news_move_remaining -= move
 	news_move_ticks -= 1
