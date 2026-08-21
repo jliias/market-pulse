@@ -9,6 +9,7 @@ var impact: float
 var duration_ticks: int
 var is_major: bool
 var is_premarket: bool = false
+var category: String = "general"
 var reaction: String = ""
 
 
@@ -20,7 +21,8 @@ func _init(
 	p_impact: float,
 	p_duration: int,
 	p_is_major: bool = false,
-	p_is_premarket: bool = false
+	p_is_premarket: bool = false,
+	p_category: String = "general"
 ) -> void:
 	timestamp = p_timestamp
 	headline = p_headline
@@ -30,3 +32,4 @@ func _init(
 	duration_ticks = p_duration
 	is_major = p_is_major
 	is_premarket = p_is_premarket
+	category = p_category

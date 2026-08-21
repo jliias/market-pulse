@@ -9,6 +9,69 @@ const MAX_NORMAL_TICK_CHANGE := 0.0016
 const MAX_ROUTINE_NEWS_TICK_CHANGE := 0.006
 const MAX_MAJOR_TICK_CHANGE := 0.12
 
+const PERSONALITIES := {
+	"ALPH": {
+		"label": "Growth",
+		"volatility": 1.22,
+		"growth": 0.88,
+		"liquidity": 0.72,
+		"popularity": 0.85,
+		"institutional_ownership": 0.55,
+		"speculation_factor": 0.45,
+		"trend_flip": 0.010,
+		"news": {
+			"product": 1.45,
+			"earnings": 1.25,
+			"analyst": 1.15,
+			"rumor": 0.65,
+			"macro": 0.85,
+			"commodity": 0.35,
+			"regulatory": 0.90,
+			"general": 1.0,
+		},
+	},
+	"GRNE": {
+		"label": "Speculative",
+		"volatility": 1.38,
+		"growth": 0.58,
+		"liquidity": 0.42,
+		"popularity": 0.70,
+		"institutional_ownership": 0.28,
+		"speculation_factor": 0.92,
+		"trend_flip": 0.024,
+		"news": {
+			"rumor": 1.70,
+			"regulatory": 1.55,
+			"analyst": 1.25,
+			"earnings": 0.62,
+			"product": 1.05,
+			"macro": 1.20,
+			"commodity": 0.50,
+			"general": 1.10,
+		},
+	},
+	"NMIN": {
+		"label": "Stable",
+		"volatility": 0.62,
+		"growth": 0.42,
+		"liquidity": 0.88,
+		"popularity": 0.50,
+		"institutional_ownership": 0.78,
+		"speculation_factor": 0.22,
+		"trend_flip": 0.006,
+		"news": {
+			"commodity": 1.50,
+			"earnings": 1.20,
+			"rumor": 0.28,
+			"product": 0.50,
+			"analyst": 0.70,
+			"macro": 0.75,
+			"regulatory": 0.85,
+			"general": 0.85,
+		},
+	},
+}
+
 var symbol: String
 var company_name: String
 var sector: String
@@ -27,6 +90,9 @@ var liquidity: float
 var popularity: float
 var institutional_ownership: float
 var speculation_factor: float
+var personality_label: String = ""
+var news_sensitivity: Dictionary = {}
+var trend_flip_chance: float = 0.012
 
 var news_move_remaining: float = 0.0
 var news_move_ticks: int = 0
@@ -63,17 +129,38 @@ func _init(
 	popularity = randf_range(0.3, 1.0)
 	institutional_ownership = randf_range(0.2, 0.8)
 	speculation_factor = randf_range(0.2, 0.9)
+	_apply_personality()
 
 	_update_spread()
 	last_tick_volume = randi_range(40000, 90000)
 	_record_history()
 
 
-func interpret_news(headline_impact: float, is_major: bool, market_sentiment: float) -> Dictionary:
+func _apply_personality() -> void:
+	if not PERSONALITIES.has(symbol):
+		personality_label = "Balanced"
+		news_sensitivity = {"general": 1.0}
+		return
+	var profile: Dictionary = PERSONALITIES[symbol]
+	personality_label = str(profile["label"])
+	volatility = float(profile["volatility"])
+	growth = float(profile["growth"])
+	liquidity = float(profile["liquidity"])
+	popularity = float(profile["popularity"])
+	institutional_ownership = float(profile["institutional_ownership"])
+	speculation_factor = float(profile["speculation_factor"])
+	trend_flip_chance = float(profile["trend_flip"])
+	news_sensitivity = (profile["news"] as Dictionary).duplicate()
+
+
+func interpret_news(headline_impact: float, is_major: bool, market_sentiment: float, news_category: String = "general") -> Dictionary:
 	var headline_sign: float = signf(headline_impact)
 	var headline_size: float = absf(headline_impact)
 	if headline_sign == 0.0 or headline_size <= 0.0:
 		return {"move": 0.0, "reaction": ""}
+
+	var category: String = news_category if news_category != "" else "general"
+	var category_mult: float = float(news_sensitivity.get(category, news_sensitivity.get("general", 1.0)))
 
 	var combined_mood: float = clampf(market_sentiment * 0.65 + sentiment * 0.35, -1.0, 1.0)
 	var alignment: float = clampf(0.55 + headline_sign * combined_mood * 0.5, 0.08, 1.2)
@@ -85,6 +172,10 @@ func interpret_news(headline_impact: float, is_major: bool, market_sentiment: fl
 		ignore_chance += 0.08
 	if trend == Trend.SIDEWAYS:
 		ignore_chance += 0.04
+	if category == "rumor":
+		ignore_chance += lerpf(0.22, -0.12, speculation_factor)
+	elif category == "earnings":
+		ignore_chance += lerpf(-0.04, 0.10, speculation_factor)
 
 	var fade_chance: float = 0.04 if is_major else 0.08
 	if headline_sign > 0.0:
@@ -97,36 +188,82 @@ func interpret_news(headline_impact: float, is_major: bool, market_sentiment: fl
 		fade_chance += maxf(0.0, combined_mood) * 0.28
 		if trend == Trend.BULLISH:
 			fade_chance += 0.1
+	if category == "earnings" and speculation_factor > 0.7:
+		fade_chance += 0.18
+	elif category == "rumor" and speculation_factor < 0.35:
+		fade_chance += 0.12
 
 	if is_major:
 		ignore_chance *= 0.45
 		fade_chance *= 0.5
+	if category_mult < 0.5:
+		ignore_chance = clampf(ignore_chance + 0.18, 0.0, 0.7)
 
 	if randf() < ignore_chance:
 		return {
 			"move": 0.0,
-			"reaction": "Little reaction — traders treat it as already priced in.",
+			"reaction": _ignore_reaction(category),
 		}
 
 	if randf() < fade_chance:
-		var fade_move: float = -headline_sign * headline_size * randf_range(0.25, 0.7)
-		var fade_text: String
-		if headline_sign > 0.0:
-			fade_text = "Selling into the news as broader sentiment stays weak."
-		else:
-			fade_text = "Dip buyers step in despite the headline."
-		return {"move": fade_move, "reaction": fade_text}
+		var fade_move: float = -headline_sign * headline_size * randf_range(0.25, 0.7) * maxf(category_mult, 0.4)
+		return {"move": fade_move, "reaction": _fade_reaction(category, headline_sign)}
 
-	var actual_move: float = headline_impact * alignment * randf_range(0.65, 1.05)
-	var reaction := ""
-	if alignment < 0.4:
-		reaction = "Muted reaction amid mixed or cautious sentiment."
-	elif headline_sign > 0.0 and actual_move > 0.0:
-		reaction = "Buyers respond to the headline."
-	elif headline_sign < 0.0 and actual_move < 0.0:
-		reaction = "Sellers press the stock on the news."
-
+	var actual_move: float = headline_impact * alignment * category_mult * randf_range(0.65, 1.05)
+	if speculation_factor > 0.75:
+		actual_move *= randf_range(0.7, 1.45)
+	var reaction: String = _follow_reaction(category, headline_sign, alignment, actual_move)
 	return {"move": actual_move, "reaction": reaction}
+
+
+func _ignore_reaction(category: String) -> String:
+	match category:
+		"rumor":
+			if speculation_factor < 0.4:
+				return "Little reaction — this name does not trade on chatter."
+			return "Little reaction — traders treat it as already priced in."
+		"earnings":
+			if speculation_factor > 0.7:
+				return "The print is ignored — this name still trades the next rumor."
+			return "Little reaction — traders treat it as already priced in."
+		"commodity":
+			return "Muted — commodity names wait for the tape, not the headline."
+		_:
+			return "Little reaction — traders treat it as already priced in."
+
+
+func _fade_reaction(category: String, headline_sign: float) -> String:
+	if category == "earnings" and speculation_factor > 0.7:
+		return "Traders fade the print — this name lives on rumors, not results."
+	if category == "rumor" and speculation_factor < 0.4:
+		return "Institutions fade the chatter and stay with the longer-term tape."
+	if headline_sign > 0.0:
+		return "Selling into the news as broader sentiment stays weak."
+	return "Dip buyers step in despite the headline."
+
+
+func _follow_reaction(category: String, headline_sign: float, alignment: float, actual_move: float) -> String:
+	if alignment < 0.4:
+		return "Muted reaction amid mixed or cautious sentiment."
+	match category:
+		"product":
+			return "Growth money chases the product cycle." if headline_sign > 0.0 else "Product-cycle names sell the delay."
+		"commodity":
+			return "The miner tracks the commodity tape."
+		"regulatory":
+			return "Policy-sensitive names swing hard on the headline."
+		"rumor":
+			return "Speculative flow piles into the rumor." if headline_sign > 0.0 else "Hot money dumps on the whisper."
+		"earnings":
+			if headline_sign > 0.0 and actual_move > 0.0:
+				return "The print lands — buyers follow the numbers."
+			return "Sellers press the stock on the miss."
+		_:
+			if headline_sign > 0.0 and actual_move > 0.0:
+				return "Buyers respond to the headline."
+			if headline_sign < 0.0 and actual_move < 0.0:
+				return "Sellers press the stock on the news."
+			return ""
 
 
 func roll_to_next_day() -> void:
@@ -195,7 +332,7 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
 	var news_move: float = _consume_news_move()
 
-	if randf() < 0.012:
+	if randf() < trend_flip_chance:
 		trend = Trend.values()[randi() % Trend.size()]
 
 	var base_random: float = randf_range(-0.00028, 0.00028) * volatility
@@ -209,7 +346,10 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 
 	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias
 	organic_change *= lerpf(0.92, 1.08, speculation_factor)
-	organic_change = clampf(organic_change, -MAX_NORMAL_TICK_CHANGE, MAX_NORMAL_TICK_CHANGE)
+	if speculation_factor > 0.8 and randf() < 0.012:
+		organic_change += randf_range(-0.0011, 0.0011)
+	var organic_cap: float = MAX_NORMAL_TICK_CHANGE * clampf(volatility, 0.5, 1.6)
+	organic_change = clampf(organic_change, -organic_cap, organic_cap)
 
 	var total_change: float = organic_change + news_move
 	if major_news_active:
@@ -217,7 +357,7 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 	elif news_move != 0.0:
 		total_change = clampf(total_change, -MAX_ROUTINE_NEWS_TICK_CHANGE, MAX_ROUTINE_NEWS_TICK_CHANGE)
 	else:
-		total_change = clampf(total_change, -MAX_NORMAL_TICK_CHANGE, MAX_NORMAL_TICK_CHANGE)
+		total_change = clampf(total_change, -organic_cap, organic_cap)
 
 	momentum = clampf(momentum * 0.82 + total_change * 1.5, -0.002, 0.002)
 	price = clampf(price * (1.0 + total_change), MIN_PRICE, MAX_PRICE)

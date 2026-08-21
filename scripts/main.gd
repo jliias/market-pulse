@@ -12,6 +12,7 @@ const TRADE_ACCENT := Color(0.45, 0.86, 0.98)
 const BUY_ACCENT := Color(0.32, 0.92, 0.48)
 const SELL_ACCENT := Color(0.98, 0.42, 0.42)
 const SELECTED_ACCENT := Color(0.9, 0.75, 0.25)
+const INACTIVE_ACCENT := Color(0.48, 0.5, 0.55)
 const PREOPEN_SECONDS := 10.0
 
 var market := MarketSimulator.new()
@@ -376,7 +377,7 @@ func _refresh_selected_stock() -> void:
 	var change: float = stock.get_day_change()
 	selected_change_label.text = "%s$%.2f (%s%.2f%%)" % [_sign(change), absf(change), _sign(change), absf(stock.get_day_change_pct())]
 	selected_change_label.add_theme_color_override("font_color", _pl_color(change))
-	selected_meta_label.text = "%s · %s" % [stock.sector, stock.market_cap_label]
+	selected_meta_label.text = "%s · %s · %s" % [stock.personality_label, stock.sector, stock.market_cap_label]
 
 
 func _refresh_chart() -> void:
@@ -457,8 +458,10 @@ func _style_timeframe_buttons() -> void:
 
 
 func _style_trade_buttons() -> void:
-	_apply_button_style(buy_mode_button, BUY_ACCENT, TRADE_BORDER, buy_mode)
-	_apply_button_style(sell_mode_button, SELL_ACCENT, TRADE_BORDER, not buy_mode)
+	var buy_accent: Color = BUY_ACCENT if buy_mode else INACTIVE_ACCENT
+	var sell_accent: Color = SELL_ACCENT if not buy_mode else INACTIVE_ACCENT
+	_apply_button_style(buy_mode_button, buy_accent, TRADE_BORDER, buy_mode, buy_mode)
+	_apply_button_style(sell_mode_button, sell_accent, TRADE_BORDER, not buy_mode, not buy_mode)
 	_apply_button_style(%QtyMinusButton, TRADE_ACCENT, TRADE_BORDER)
 	_apply_button_style(%QtyPlusButton, TRADE_ACCENT, TRADE_BORDER)
 	_apply_button_style(%Qty10Button, TRADE_ACCENT, TRADE_BORDER, quantity == 10)
@@ -471,8 +474,12 @@ func _style_trade_buttons() -> void:
 	place_order_button.add_theme_font_size_override("font_size", 18)
 
 
-func _apply_button_style(button: Button, accent: Color, border: int, emphasized: bool = false) -> void:
-	var fill: float = 0.2 if emphasized else 0.08
+func _apply_button_style(button: Button, accent: Color, border: int, emphasized: bool = false, strong_fill: bool = false) -> void:
+	var fill: float = 0.08
+	if emphasized:
+		fill = 0.22
+	if strong_fill:
+		fill = 0.62
 	if button.disabled:
 		accent = Color(accent.r, accent.g, accent.b, 0.4)
 		fill = 0.05

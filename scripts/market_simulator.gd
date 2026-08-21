@@ -159,7 +159,7 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 		if not stocks.has(symbol):
 			continue
 		var stock: Stock = stocks[symbol]
-		var result: Dictionary = stock.interpret_news(event.impact, true, market_sentiment)
+		var result: Dictionary = stock.interpret_news(event.impact, true, market_sentiment, event.category)
 		var actual_move: float = float(result["move"])
 		if absf(actual_move) < 0.008:
 			actual_move = event.impact * randf_range(0.55, 0.9)
@@ -191,7 +191,7 @@ func _apply_news(event: NewsEvent) -> void:
 		if not stocks.has(symbol):
 			continue
 		var stock: Stock = stocks[symbol]
-		var result: Dictionary = stock.interpret_news(event.impact, event.is_major, market_sentiment)
+		var result: Dictionary = stock.interpret_news(event.impact, event.is_major, market_sentiment, event.category)
 		var actual_move: float = float(result["move"])
 		var reaction_text: String = str(result["reaction"])
 		stock.apply_news_impact(actual_move, event.duration_ticks, event.is_major)
