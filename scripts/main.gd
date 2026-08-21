@@ -1,202 +1,384 @@
 extends Control
 
-const TICK_INTERVAL := 5.0
+const TICK_INTERVAL := 1.0
+const CARD_SCENE := preload("res://scenes/watchlist_card.tscn")
+const NARROW_WIDTH := 1100.0
+const TIMEFRAMES := ["1M", "5M", "15M", "1H", "1D"]
+const TF_POINTS := {"1M": 20, "5M": 60, "15M": 120, "1H": 180, "1D": 400}
 
 var market := MarketSimulator.new()
 var portfolio := Portfolio.new()
-var command_handler: CommandHandler
 var session_active := true
+var selected_symbol: String = "ALPH"
+var buy_mode := true
+var quantity: int = 20
+var timeframe: String = "5M"
+var watchlist_cards: Dictionary = {}
 
-@onready var time_label: Label = %TimeLabel
-@onready var cash_label: Label = %CashLabel
-@onready var portfolio_label: Label = %PortfolioLabel
-@onready var pl_label: Label = %PLLabel
+@onready var body_columns: BoxContainer = %BodyColumns
+@onready var watchlist_column: Control = %WatchlistColumn
+@onready var trade_column: Control = %TradeColumn
+@onready var watchlist_list: VBoxContainer = %WatchlistList
+@onready var portfolio_list: VBoxContainer = %PortfolioList
+@onready var portfolio_total_label: Label = %PortfolioTotalLabel
+
+@onready var portfolio_value_label: Label = %PortfolioValueLabel
+@onready var cash_value_label: Label = %CashValueLabel
+@onready var daily_pl_label: Label = %DailyPLLabel
+@onready var session_label: Label = %SessionLabel
 @onready var vs_market_label: Label = %VsMarketLabel
-@onready var stock_panels: VBoxContainer = %StockPanels
-@onready var news_feed: RichTextLabel = %NewsFeed
-@onready var output_log: RichTextLabel = %OutputLog
-@onready var command_input: LineEdit = %CommandInput
-@onready var tick_timer: Timer = %TickTimer
 
-var stock_labels: Dictionary = {}
+@onready var selected_name_label: Label = %SelectedNameLabel
+@onready var selected_price_label: Label = %SelectedPriceLabel
+@onready var selected_change_label: Label = %SelectedChangeLabel
+@onready var selected_meta_label: Label = %SelectedMetaLabel
+@onready var main_chart: PriceChart = %MainChart
+@onready var news_feed: RichTextLabel = %NewsFeed
+@onready var timeframe_buttons: HBoxContainer = %TimeframeButtons
+
+@onready var trade_symbol_label: Label = %TradeSymbolLabel
+@onready var trade_price_label: Label = %TradePriceLabel
+@onready var buy_mode_button: Button = %BuyModeButton
+@onready var sell_mode_button: Button = %SellModeButton
+@onready var qty_label: Label = %QtyLabel
+@onready var est_price_label: Label = %EstPriceLabel
+@onready var est_total_label: Label = %EstTotalLabel
+@onready var commission_label: Label = %CommissionLabel
+@onready var final_total_label: Label = %FinalTotalLabel
+@onready var place_order_button: Button = %PlaceOrderButton
+@onready var trade_message_label: Label = %TradeMessageLabel
+
+@onready var market_status_label: Label = %MarketStatusLabel
+@onready var update_speed_label: Label = %UpdateSpeedLabel
+@onready var next_update_label: Label = %NextUpdateLabel
+@onready var end_session_button: Button = %EndSessionButton
+@onready var new_day_button: Button = %NewDayButton
+@onready var tick_timer: Timer = %TickTimer
+@onready var settings_dialog: AcceptDialog = %SettingsDialog
+@onready var menu_dialog: AcceptDialog = %MenuDialog
 
 
 func _ready() -> void:
-	command_handler = CommandHandler.new(market, portfolio)
-	_build_stock_panels()
+	resized.connect(_apply_responsive_layout)
+	_connect_controls()
+	_build_timeframe_buttons()
+	_build_watchlist()
 	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
 	tick_timer.timeout.connect(_on_market_tick)
 	tick_timer.start()
-	command_input.text_submitted.connect(_on_command_submitted)
-	command_input.grab_focus()
+	_apply_responsive_layout()
+
+
+func _process(_delta: float) -> void:
+	if session_active and not tick_timer.is_stopped():
+		next_update_label.text = "NEXT UPDATE: %02d:%02d" % [int(tick_timer.time_left) / 60, int(tick_timer.time_left) % 60]
+
+
+func _connect_controls() -> void:
+	%QtyMinusButton.pressed.connect(func() -> void: _set_quantity(quantity - 1))
+	%QtyPlusButton.pressed.connect(func() -> void: _set_quantity(quantity + 1))
+	%Qty10Button.pressed.connect(func() -> void: _set_quantity(10))
+	%Qty20Button.pressed.connect(func() -> void: _set_quantity(20))
+	%Qty50Button.pressed.connect(func() -> void: _set_quantity(50))
+	%Qty100Button.pressed.connect(func() -> void: _set_quantity(100))
+	%QtyMaxButton.pressed.connect(_set_max_quantity)
+	buy_mode_button.pressed.connect(func() -> void: _set_buy_mode(true))
+	sell_mode_button.pressed.connect(func() -> void: _set_buy_mode(false))
+	place_order_button.pressed.connect(_place_order)
+	end_session_button.pressed.connect(_end_session)
+	new_day_button.pressed.connect(_restart_session)
+	%SettingsButton.pressed.connect(func() -> void: settings_dialog.popup_centered())
+	%MenuButton.pressed.connect(func() -> void: menu_dialog.popup_centered())
+
+
+func _build_timeframe_buttons() -> void:
+	for child in timeframe_buttons.get_children():
+		timeframe_buttons.remove_child(child)
+		child.free()
+	for tf in TIMEFRAMES:
+		var button := Button.new()
+		button.text = tf
+		button.toggle_mode = true
+		button.button_pressed = tf == timeframe
+		button.pressed.connect(_on_timeframe_pressed.bind(tf))
+		timeframe_buttons.add_child(button)
+
+
+func _on_timeframe_pressed(tf: String) -> void:
+	timeframe = tf
+	for child in timeframe_buttons.get_children():
+		var button := child as Button
+		button.button_pressed = button.text == tf
+	_refresh_chart()
+
+
+func _build_watchlist() -> void:
+	for child in watchlist_list.get_children():
+		watchlist_list.remove_child(child)
+		child.free()
+	watchlist_cards.clear()
+	for symbol in MarketSimulator.SYMBOL_ORDER:
+		var card: WatchlistCard = CARD_SCENE.instantiate()
+		watchlist_list.add_child(card)
+		card.selected.connect(_select_stock)
+		watchlist_cards[symbol] = card
 
 
 func _begin_session() -> void:
 	session_active = true
 	market.start()
-	_log("Welcome to Market Pulse.")
-	_log("Premarket is out. Read the tape, then try to beat the market by close.")
-	_log("Starting capital: $10,000. Type HELP for commands.")
+	news_feed.clear()
+	selected_symbol = MarketSimulator.SYMBOL_ORDER[0]
+	_set_buy_mode(true)
+	_set_quantity(20)
+	trade_message_label.text = "Read the premarket tape, then try to beat the market."
 	for event in market.premarket_events:
 		_add_news_to_feed(event)
+	new_day_button.visible = false
+	end_session_button.visible = true
+	place_order_button.disabled = false
+	if tick_timer.is_stopped():
+		tick_timer.start()
 	_update_ui()
-
-
-func _build_stock_panels() -> void:
-	for symbol in ["A", "B", "C"]:
-		var stock: Stock = market.stocks[symbol]
-		var panel := PanelContainer.new()
-		var vbox := VBoxContainer.new()
-		panel.add_child(vbox)
-
-		var header := Label.new()
-		header.text = "%s — %s" % [symbol, stock.company_name]
-		header.add_theme_font_size_override("font_size", 16)
-		vbox.add_child(header)
-
-		var price_label := Label.new()
-		price_label.name = "PriceLabel"
-		vbox.add_child(price_label)
-
-		var detail_label := Label.new()
-		detail_label.name = "DetailLabel"
-		vbox.add_child(detail_label)
-
-		var owned_label := Label.new()
-		owned_label.name = "OwnedLabel"
-		vbox.add_child(owned_label)
-
-		stock_panels.add_child(panel)
-		stock_labels[symbol] = {
-			"price": price_label,
-			"detail": detail_label,
-			"owned": owned_label,
-		}
 
 
 func _on_market_tick() -> void:
 	if not session_active:
 		return
-
 	var new_events := market.tick()
 	for event in new_events:
 		_add_news_to_feed(event)
-
 	_update_ui()
-	_log("--- Market update (%s) ---" % market.get_time_string())
 	if market.is_closed:
 		_end_session()
 
 
-func _on_command_submitted(text: String) -> void:
-	if text.strip_edges().is_empty():
+func _select_stock(symbol: String) -> void:
+	if not market.stocks.has(symbol):
 		return
+	selected_symbol = symbol
+	_update_ui()
 
-	_log("> %s" % text)
-	var result := command_handler.execute(text)
 
-	if result == "QUIT":
-		_end_session()
+func _set_buy_mode(is_buy: bool) -> void:
+	buy_mode = is_buy
+	_refresh_trade_panel()
+
+
+func _set_quantity(value: int) -> void:
+	quantity = maxi(value, 1)
+	_refresh_trade_panel()
+
+
+func _set_max_quantity() -> void:
+	var stock: Stock = market.get_stock(selected_symbol)
+	if stock == null:
 		return
+	if buy_mode:
+		_set_quantity(maxi(portfolio.max_buyable(stock.ask), 1))
+	else:
+		_set_quantity(maxi(portfolio.get_shares(selected_symbol), 1))
 
-	if result == "AGAIN":
-		_restart_session()
-		command_input.clear()
-		command_input.grab_focus()
+
+func _place_order() -> void:
+	if market.is_closed or not session_active:
+		trade_message_label.text = "Market is closed."
 		return
-
-	if not result.is_empty():
-		_log(result)
-
-	command_input.clear()
-	command_input.grab_focus()
+	var stock: Stock = market.get_stock(selected_symbol)
+	if stock == null:
+		return
+	var result: Dictionary
+	if buy_mode:
+		result = portfolio.buy(selected_symbol, quantity, stock.ask)
+	else:
+		result = portfolio.sell(selected_symbol, quantity, stock.bid)
+	trade_message_label.text = str(result["message"])
 	_update_ui()
 
 
 func _end_session() -> void:
+	if not session_active:
+		return
 	session_active = false
 	market.stop()
 	tick_timer.stop()
+	place_order_button.disabled = true
+	end_session_button.visible = false
+	new_day_button.visible = true
 
-	var pl := portfolio.get_profit_loss(market.stocks)
 	var player_pct := portfolio.get_profit_loss_pct(market.stocks)
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(player_pct)
-	var pl_sign := "+" if pl >= 0 else ""
-	var m_sign := "+" if market_pct >= 0 else ""
-	var a_sign := "+" if alpha_pct >= 0 else ""
-
-	_log("")
-	_log("=== MARKET CLOSED ===")
-	_log("Final portfolio: $%.2f" % portfolio.get_portfolio_value(market.stocks))
-	_log("Your return: %s%.1f%%" % [pl_sign, player_pct])
-	_log("Market return: %s%.1f%%" % [m_sign, market_pct])
 	if alpha_pct > 0.05:
-		_log("You beat the market by %s%.1f%%. Type AGAIN to chase a bigger win." % [a_sign, alpha_pct])
+		trade_message_label.text = "Closed. You beat the market by %+.1f%%." % alpha_pct
 	elif alpha_pct < -0.05:
-		_log("The market beat you by %.1f%%. Type AGAIN to try another day." % absf(alpha_pct))
+		trade_message_label.text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
 	else:
-		_log("You matched the tape. Type AGAIN to take another shot.")
-	_log("Trades: %d  |  Commissions: $%.2f" % [portfolio.trade_history.size(), portfolio.total_commissions])
-
-	command_input.editable = true
+		trade_message_label.text = "Closed. You matched the tape."
+	_update_ui()
 
 
 func _restart_session() -> void:
-	for child in stock_panels.get_children():
-		stock_panels.remove_child(child)
-		child.free()
-	stock_labels.clear()
-	news_feed.clear()
-	output_log.clear()
 	market = MarketSimulator.new()
 	portfolio = Portfolio.new()
-	command_handler = CommandHandler.new(market, portfolio)
-	_build_stock_panels()
-	command_input.editable = true
-	if tick_timer.is_stopped():
-		tick_timer.start()
+	_build_watchlist()
 	_begin_session()
-	_log("New trading day. Fresh tape, same goal: beat the market.")
+
+
+func _apply_responsive_layout() -> void:
+	var narrow: bool = size.x < NARROW_WIDTH
+	body_columns.vertical = narrow
+	watchlist_column.custom_minimum_size.x = 0.0 if narrow else 280.0
+	trade_column.custom_minimum_size.x = 0.0 if narrow else 300.0
+	watchlist_column.size_flags_vertical = SIZE_EXPAND_FILL if narrow else SIZE_FILL
+	trade_column.size_flags_vertical = SIZE_EXPAND_FILL if narrow else SIZE_FILL
 
 
 func _update_ui() -> void:
-	time_label.text = "Time: %s" % market.get_time_string()
-	cash_label.text = "Cash: $%.2f" % portfolio.cash
-	portfolio_label.text = "Portfolio: $%.2f" % portfolio.get_portfolio_value(market.stocks)
+	var value: float = portfolio.get_portfolio_value(market.stocks)
+	var cash: float = portfolio.cash
+	var pl: float = portfolio.get_profit_loss(market.stocks)
+	var pl_pct: float = portfolio.get_profit_loss_pct(market.stocks)
+	portfolio_value_label.text = "Portfolio: $%.2f" % value
+	cash_value_label.text = "Cash: $%.2f" % cash
+	daily_pl_label.text = "Daily P/L: %s$%.2f (%s%.2f%%)" % [
+		_sign(pl), absf(pl), _sign(pl), absf(pl_pct)
+	]
+	daily_pl_label.add_theme_color_override("font_color", _pl_color(pl))
 
-	var pl := portfolio.get_profit_loss(market.stocks)
-	var pl_sign := "+" if pl >= 0 else ""
-	pl_label.text = "P/L: %s$%.2f (%s%.1f%%)" % [pl_sign, pl, pl_sign, portfolio.get_profit_loss_pct(market.stocks)]
-
-	if pl >= 0:
-		pl_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
-	else:
-		pl_label.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
-
+	var status := "MARKET CLOSED" if market.is_closed or not session_active else "MARKET OPEN"
+	session_label.text = "Session: %s — %s" % [market.get_time_string(), status]
 	var market_pct := market.get_market_return_pct()
-	var alpha_pct := market.get_alpha_pct(portfolio.get_profit_loss_pct(market.stocks))
-	var a_sign := "+" if alpha_pct >= 0 else ""
-	var m_sign := "+" if market_pct >= 0 else ""
-	vs_market_label.text = "vs Market: %s%.1f%%  (tape %s%.1f%%)" % [a_sign, alpha_pct, m_sign, market_pct]
-	if alpha_pct >= 0:
-		vs_market_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
-	else:
-		vs_market_label.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
+	var alpha_pct := market.get_alpha_pct(pl_pct)
+	vs_market_label.text = "vs Market: %+.1f%%  (tape %+.1f%%)" % [alpha_pct, market_pct]
+	vs_market_label.add_theme_color_override("font_color", _pl_color(alpha_pct))
 
-	for symbol in stock_labels:
-		var stock: Stock = market.stocks[symbol]
-		var labels: Dictionary = stock_labels[symbol]
-		var day_pct: float = stock.get_day_change_pct()
-		var day_sign: String = "+" if day_pct >= 0 else ""
-		labels["price"].text = "Price: $%.2f (%s%.1f%% today)  (Bid: $%.2f / Ask: $%.2f)" % [
-			stock.price, day_sign, day_pct, stock.bid, stock.ask
-		]
-		labels["detail"].text = "Volume: %s  |  Trend: %s  |  Volatility: %.0f%%" % [
-			_format_volume(stock.volume), stock.get_trend_name(), stock.volatility * 100
-		]
-		labels["owned"].text = "Owned: %d shares" % portfolio.get_shares(symbol)
+	for symbol in watchlist_cards:
+		var card: WatchlistCard = watchlist_cards[symbol]
+		card.refresh(market.stocks[symbol])
+		card.set_selected(symbol == selected_symbol)
+
+	_refresh_selected_stock()
+	_refresh_chart()
+	_refresh_portfolio()
+	_refresh_trade_panel()
+
+	var mood := "NORMAL"
+	if market.market_sentiment > 0.25:
+		mood = "BULLISH"
+	elif market.market_sentiment < -0.25:
+		mood = "CAUTIOUS"
+	market_status_label.text = "MARKET STATUS:  %s" % mood
+	update_speed_label.text = "UPDATE SPEED: 1 SECOND"
+
+
+func _refresh_selected_stock() -> void:
+	var stock: Stock = market.get_stock(selected_symbol)
+	if stock == null:
+		return
+	selected_name_label.text = "%s — %s" % [stock.symbol, stock.company_name]
+	selected_price_label.text = "$%.2f" % stock.price
+	var change: float = stock.get_day_change()
+	selected_change_label.text = "%s$%.2f (%s%.2f%%)" % [_sign(change), absf(change), _sign(change), absf(stock.get_day_change_pct())]
+	selected_change_label.add_theme_color_override("font_color", _pl_color(change))
+	selected_meta_label.text = "%s · %s" % [stock.sector, stock.market_cap_label]
+
+
+func _refresh_chart() -> void:
+	var stock: Stock = market.get_stock(selected_symbol)
+	if stock == null:
+		return
+	var points: int = int(TF_POINTS[timeframe])
+	var slice: Dictionary = stock.get_chart_slice(points, 1)
+	main_chart.compact = false
+	main_chart.set_series(slice["prices"], slice["volumes"])
+
+
+func _refresh_portfolio() -> void:
+	for child in portfolio_list.get_children():
+		portfolio_list.remove_child(child)
+		child.free()
+
+	var total_pl := 0.0
+	if portfolio.holdings.is_empty():
+		var empty := Label.new()
+		empty.text = "No positions yet."
+		empty.add_theme_color_override("font_color", Color(0.6, 0.62, 0.68))
+		portfolio_list.add_child(empty)
+	else:
+		for symbol in MarketSimulator.SYMBOL_ORDER:
+			if not portfolio.holdings.has(symbol):
+				continue
+			var stock: Stock = market.stocks[symbol]
+			var shares: int = portfolio.get_shares(symbol)
+			var avg: float = portfolio.get_avg_cost(symbol)
+			var pos_pl: float = portfolio.get_position_pl(symbol, stock.price)
+			total_pl += pos_pl
+			var row := Label.new()
+			row.text = "%s — %d shares — $%.2f — %s$%.2f" % [
+				symbol, shares, avg, _sign(pos_pl), absf(pos_pl)
+			]
+			row.add_theme_color_override("font_color", _pl_color(pos_pl))
+			portfolio_list.add_child(row)
+
+	portfolio_total_label.text = "Open P/L: %s$%.2f" % [_sign(total_pl), absf(total_pl)]
+	portfolio_total_label.add_theme_color_override("font_color", _pl_color(total_pl))
+
+
+func _refresh_trade_panel() -> void:
+	var stock: Stock = market.get_stock(selected_symbol)
+	if stock == null:
+		return
+	trade_symbol_label.text = "TRADE  %s" % stock.symbol
+	var px: float = stock.ask if buy_mode else stock.bid
+	trade_price_label.text = "$%.2f" % px
+	qty_label.text = str(quantity)
+	buy_mode_button.modulate = Color(0.55, 1.0, 0.65) if buy_mode else Color(1, 1, 1)
+	sell_mode_button.modulate = Color(1.0, 0.6, 0.6) if not buy_mode else Color(1, 1, 1)
+	place_order_button.text = "PLACE BUY ORDER" if buy_mode else "PLACE SELL ORDER"
+	_style_place_order_button()
+
+	var estimate: Dictionary = portfolio.estimate(quantity, px)
+	est_price_label.text = "Estimated price: $%.2f" % px
+	est_total_label.text = "Estimated total: $%.2f" % float(estimate["trade_value"])
+	commission_label.text = "Commission: $%.2f" % float(estimate["commission"])
+	if buy_mode:
+		final_total_label.text = "Total: $%.2f" % float(estimate["total"])
+	else:
+		final_total_label.text = "Total proceeds: $%.2f" % float(estimate["proceeds"])
+
+
+func _style_place_order_button() -> void:
+	var accent := Color(0.32, 0.92, 0.48) if buy_mode else Color(0.98, 0.42, 0.42)
+	if place_order_button.disabled:
+		accent = Color(accent.r, accent.g, accent.b, 0.4)
+
+	place_order_button.add_theme_color_override("font_color", accent)
+	place_order_button.add_theme_color_override("font_hover_color", accent.lightened(0.15))
+	place_order_button.add_theme_color_override("font_pressed_color", accent.darkened(0.1))
+	place_order_button.add_theme_color_override("font_disabled_color", Color(accent.r, accent.g, accent.b, 0.45))
+	place_order_button.add_theme_font_size_override("font_size", 18)
+
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
+		box.border_color = accent
+		box.set_border_width_all(3)
+		box.set_corner_radius_all(8)
+		box.content_margin_left = 12
+		box.content_margin_right = 12
+		box.content_margin_top = 10
+		box.content_margin_bottom = 10
+		if state == "hover":
+			box.bg_color = Color(accent.r, accent.g, accent.b, 0.22)
+			box.set_border_width_all(4)
+		elif state == "pressed":
+			box.bg_color = Color(accent.r, accent.g, accent.b, 0.3)
+		elif state == "disabled":
+			box.border_color = Color(accent.r, accent.g, accent.b, 0.35)
+			box.bg_color = Color(0.12, 0.13, 0.16, 1.0)
+		place_order_button.add_theme_stylebox_override(state, box)
 
 
 func _add_news_to_feed(event: NewsEvent) -> void:
@@ -205,19 +387,21 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		color = "#55cc55"
 	elif event.sentiment < 0:
 		color = "#cc5555"
-
-	news_feed.append_text("[color=%s][%s] %s[/color]\n" % [color, event.timestamp, event.headline])
+	var tag := "MARKET"
+	if event.affected_symbols.size() == 1:
+		tag = event.affected_symbols[0]
+	news_feed.append_text("[color=%s]%s  [b]%s[/b] — %s[/color]\n" % [
+		color, event.timestamp, tag, event.headline
+	])
 	if not event.reaction.is_empty():
 		news_feed.append_text("[color=#888888]    %s[/color]\n" % event.reaction)
 
 
-func _log(message: String) -> void:
-	output_log.append_text(message + "\n")
+func _sign(value: float) -> String:
+	return "+" if value >= 0.0 else "-"
 
 
-func _format_volume(vol: int) -> String:
-	if vol >= 1000000:
-		return "%.1fM" % (float(vol) / 1000000.0)
-	if vol >= 1000:
-		return "%.1fK" % (float(vol) / 1000.0)
-	return str(vol)
+func _pl_color(value: float) -> Color:
+	if value >= 0.0:
+		return Color(0.35, 0.85, 0.45)
+	return Color(0.95, 0.38, 0.38)

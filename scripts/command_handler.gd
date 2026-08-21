@@ -44,7 +44,7 @@ func _handle_buy(parts: PackedStringArray) -> String:
 
 	var symbol: String = market.resolve_symbol(parts[1])
 	if symbol.is_empty():
-		return "Unknown stock: %s. Use A, B, or C." % parts[1]
+		return "Unknown stock: %s. Use ALPH, GRNE, or NMIN." % parts[1]
 
 	var shares: int = parts[2].to_int()
 	if shares <= 0:
@@ -62,7 +62,7 @@ func _handle_sell(parts: PackedStringArray) -> String:
 
 	var symbol: String = market.resolve_symbol(parts[1])
 	if symbol.is_empty():
-		return "Unknown stock: %s. Use A, B, or C." % parts[1]
+		return "Unknown stock: %s. Use ALPH, GRNE, or NMIN." % parts[1]
 
 	var shares: int = parts[2].to_int()
 	if shares <= 0:
@@ -94,7 +94,7 @@ func _handle_status() -> String:
 	lines.append("")
 	lines.append("--- Stocks ---")
 
-	for symbol in ["A", "B", "C"]:
+	for symbol in MarketSimulator.SYMBOL_ORDER:
 		var stock: Stock = market.stocks[symbol]
 		var owned: int = portfolio.get_shares(symbol)
 		lines.append("%s (%s)" % [symbol, stock.company_name])

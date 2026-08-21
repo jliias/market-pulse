@@ -5,12 +5,14 @@ enum Trend { BULLISH, BEARISH, SIDEWAYS }
 
 const MIN_PRICE := 1.0
 const MAX_PRICE := 1000.0
-const MAX_NORMAL_TICK_CHANGE := 0.0035
-const MAX_ROUTINE_NEWS_TICK_CHANGE := 0.008
-const MAX_MAJOR_TICK_CHANGE := 0.15
+const MAX_NORMAL_TICK_CHANGE := 0.0016
+const MAX_ROUTINE_NEWS_TICK_CHANGE := 0.006
+const MAX_MAJOR_TICK_CHANGE := 0.12
 
 var symbol: String
 var company_name: String
+var sector: String
+var market_cap_label: String
 var price: float
 var bid: float
 var ask: float
@@ -32,16 +34,27 @@ var news_initial_ticks: int = 0
 var news_is_major: bool = false
 
 var previous_close: float
+var last_tick_volume: int = 0
 var price_history: PackedFloat32Array = PackedFloat32Array()
+var volume_history: PackedInt32Array = PackedInt32Array()
 
 
-func _init(p_symbol: String, p_name: String, start_price: float, p_volatility: float) -> void:
+func _init(
+	p_symbol: String,
+	p_name: String,
+	start_price: float,
+	p_volatility: float,
+	p_sector: String = "",
+	p_cap: String = ""
+) -> void:
 	symbol = p_symbol
 	company_name = p_name
+	sector = p_sector
+	market_cap_label = p_cap
 	price = clampf(start_price, MIN_PRICE, MAX_PRICE)
 	previous_close = price
 	volatility = p_volatility
-	volume = randi_range(5000, 20000)
+	volume = randi_range(800000, 2500000)
 	sentiment = randf_range(-0.2, 0.2)
 	trend = Trend.values()[randi() % Trend.size()]
 
@@ -52,7 +65,8 @@ func _init(p_symbol: String, p_name: String, start_price: float, p_volatility: f
 	speculation_factor = randf_range(0.2, 0.9)
 
 	_update_spread()
-	price_history.append(price)
+	last_tick_volume = randi_range(40000, 90000)
+	_record_history()
 
 
 func interpret_news(headline_impact: float, is_major: bool, market_sentiment: float) -> Dictionary:
@@ -124,11 +138,17 @@ func apply_overnight_gap(gap_pct: float, is_major: bool = true) -> void:
 	elif gap_pct < -0.01:
 		trend = Trend.BEARISH
 	news_move_remaining = gap_pct * 0.22
-	news_move_ticks = 3
-	news_initial_ticks = 3
+	news_move_ticks = 10
+	news_initial_ticks = 10
 	news_is_major = is_major
+	last_tick_volume = int(abs(gap_pct) * 1200000.0 * popularity) + randi_range(60000, 140000)
+	volume += last_tick_volume
 	_update_spread()
-	price_history.append(price)
+	_record_history()
+
+
+func get_day_change() -> float:
+	return price - previous_close
 
 
 func get_day_change_pct() -> float:
@@ -155,17 +175,17 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
 	var news_move: float = _consume_news_move()
 
-	if randf() < 0.06:
+	if randf() < 0.012:
 		trend = Trend.values()[randi() % Trend.size()]
 
-	var base_random: float = randf_range(-0.0006, 0.0006) * volatility
+	var base_random: float = randf_range(-0.00028, 0.00028) * volatility
 	var trend_move: float = _get_trend_drift() * volatility
-	var momentum_move: float = clampf(momentum * 0.12, -0.00025, 0.00025)
-	var growth_bias: float = (growth - 0.5) * 0.00008
-	var mood_bias: float = clampf(p_market_sentiment * 0.00018 + sentiment * 0.00012, -0.00035, 0.00035)
+	var momentum_move: float = clampf(momentum * 0.1, -0.00012, 0.00012)
+	var growth_bias: float = (growth - 0.5) * 0.00003
+	var mood_bias: float = clampf(p_market_sentiment * 0.00008 + sentiment * 0.00005, -0.00016, 0.00016)
 
 	var volume_factor: float = clampf(float(volume) / 15000.0, 0.5, 2.0)
-	var liquidity_noise: float = randf_range(-0.0003, 0.0003) * (1.0 - liquidity) / volume_factor
+	var liquidity_noise: float = randf_range(-0.00012, 0.00012) * (1.0 - liquidity) / volume_factor
 
 	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias
 	organic_change *= lerpf(0.92, 1.08, speculation_factor)
@@ -182,13 +202,12 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 	momentum = clampf(momentum * 0.82 + total_change * 1.5, -0.002, 0.002)
 	price = clampf(price * (1.0 + total_change), MIN_PRICE, MAX_PRICE)
 
-	var volume_change: int = int(abs(total_change) * 50000.0 * popularity)
-	volume = maxi(volume + volume_change - randi_range(100, 800), 1000)
+	var tick_volume: int = randi_range(25000, 70000) + int(abs(total_change) * 9000000.0 * popularity)
+	last_tick_volume = tick_volume
+	volume += tick_volume
 
 	_update_spread()
-	price_history.append(price)
-	if price_history.size() > 120:
-		price_history.remove_at(0)
+	_record_history()
 
 
 func _consume_news_move() -> float:
@@ -219,11 +238,46 @@ func _consume_news_move() -> float:
 func _get_trend_drift() -> float:
 	match trend:
 		Trend.BULLISH:
-			return 0.00015
+			return 0.00004
 		Trend.BEARISH:
-			return -0.00015
+			return -0.00004
 		_:
 			return 0.0
+
+
+func _record_history() -> void:
+	price_history.append(price)
+	volume_history.append(last_tick_volume)
+	if price_history.size() > 500:
+		price_history.remove_at(0)
+	if volume_history.size() > 500:
+		volume_history.remove_at(0)
+
+
+func get_chart_slice(max_points: int, stride: int = 1) -> Dictionary:
+	var prices: PackedFloat32Array = PackedFloat32Array()
+	var volumes: PackedInt32Array = PackedInt32Array()
+	if price_history.is_empty():
+		return {"prices": prices, "volumes": volumes}
+
+	var step: int = maxi(stride, 1)
+	var start: int = maxi(price_history.size() - max_points * step, 0)
+	var last_sampled: int = -1
+	var i: int = start
+	while i < price_history.size():
+		prices.append(price_history[i])
+		if i < volume_history.size():
+			volumes.append(volume_history[i])
+		last_sampled = i
+		i += step
+
+	var last_index: int = price_history.size() - 1
+	if last_sampled != last_index:
+		prices.append(price_history[last_index])
+		if last_index < volume_history.size():
+			volumes.append(volume_history[last_index])
+
+	return {"prices": prices, "volumes": volumes}
 
 
 func _update_spread() -> void:

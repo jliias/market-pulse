@@ -2,7 +2,7 @@ class_name NewsGenerator
 extends RefCounted
 
 const PREMARKET_TEMPLATES := {
-	"A": {
+	"ALPH": {
 		"positive": [
 			"PREMARKET: Alpha Technologies beats quarterly earnings and raises guidance.",
 			"PREMARKET: Alpha Technologies reports record annual revenue.",
@@ -12,7 +12,7 @@ const PREMARKET_TEMPLATES := {
 			"PREMARKET: Alpha Technologies issues a profit warning before the open.",
 		],
 	},
-	"B": {
+	"GRNE": {
 		"positive": [
 			"PREMARKET: Green Energy Corp beats earnings on strong project pipeline.",
 			"PREMARKET: Green Energy Corp raises full-year guidance.",
@@ -22,7 +22,7 @@ const PREMARKET_TEMPLATES := {
 			"PREMARKET: Green Energy Corp slashes annual production forecast.",
 		],
 	},
-	"C": {
+	"NMIN": {
 		"positive": [
 			"PREMARKET: North Mining Ltd posts better-than-expected quarterly results.",
 			"PREMARKET: North Mining Ltd lifts annual output guidance.",
@@ -35,7 +35,7 @@ const PREMARKET_TEMPLATES := {
 }
 
 const INTRADAY_TEMPLATES := {
-	"A": {
+	"ALPH": {
 		"positive": [
 			"Analyst raises Alpha Technologies price target.",
 			"Street chatter: Alpha Technologies named a top pick.",
@@ -47,7 +47,7 @@ const INTRADAY_TEMPLATES := {
 			"Whispers of profit-taking in Alpha Technologies.",
 		],
 	},
-	"B": {
+	"GRNE": {
 		"positive": [
 			"Analyst upgrades Green Energy Corp to Overweight.",
 			"Green Energy Corp mentioned in a sector rotation note.",
@@ -59,7 +59,7 @@ const INTRADAY_TEMPLATES := {
 			"Sector note warns of subsidy risk for Green Energy Corp.",
 		],
 	},
-	"C": {
+	"NMIN": {
 		"positive": [
 			"Commodity desk lifts North Mining Ltd target price.",
 			"Analysts flag North Mining Ltd as oversold.",
@@ -116,7 +116,7 @@ func generate_premarket(stocks: Array[Stock], session_time: String) -> Array[New
 
 
 func generate_intraday(stocks: Array[Stock], session_time: String) -> NewsEvent:
-	if randf() < 0.04:
+	if randf() < 0.008:
 		return _generate_surprise(stocks, session_time)
 	if randf() < 0.22:
 		return _make_global(session_time, stocks, false)
@@ -143,7 +143,7 @@ func _make_premarket_company(stock: Stock, session_time: String) -> NewsEvent:
 	var headline: String = templates[randi() % templates.size()]
 	var sentiment: float = 1.0 if is_positive else -1.0
 	var impact: float = randf_range(0.035, 0.09) * sentiment
-	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, 3, true, true)
+	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, 12, true, true)
 
 
 func _make_intraday_company(stocks: Array[Stock], session_time: String) -> NewsEvent:
@@ -154,7 +154,7 @@ func _make_intraday_company(stocks: Array[Stock], session_time: String) -> NewsE
 	var headline: String = templates[randi() % templates.size()]
 	var sentiment: float = 1.0 if is_positive else -1.0
 	var impact: float = randf_range(0.004, 0.018) * sentiment
-	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, randi_range(2, 4), false, false)
+	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, randi_range(8, 16), false, false)
 
 
 func _generate_surprise(stocks: Array[Stock], session_time: String) -> NewsEvent:
@@ -167,7 +167,7 @@ func _generate_surprise(stocks: Array[Stock], session_time: String) -> NewsEvent
 		headline = "BREAKING: unexpected downgrade hits %s mid-session." % stock.company_name
 	var sentiment: float = 1.0 if is_positive else -1.0
 	var impact: float = randf_range(0.03, 0.07) * sentiment
-	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, 2, true, false)
+	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, 8, true, false)
 
 
 func _make_global(session_time: String, stocks: Array[Stock], premarket: bool) -> NewsEvent:
@@ -187,7 +187,7 @@ func _make_global(session_time: String, stocks: Array[Stock], premarket: bool) -
 		symbols,
 		sentiment,
 		magnitude * sentiment,
-		randi_range(2, 4),
+		randi_range(8, 16),
 		false,
 		premarket
 	)

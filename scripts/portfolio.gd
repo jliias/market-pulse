@@ -7,6 +7,7 @@ const PERCENT_COMMISSION := 0.002
 
 var cash: float = STARTING_CASH
 var holdings: Dictionary = {}
+var avg_cost: Dictionary = {}
 var trade_history: Array[Dictionary] = []
 var total_commissions: float = 0.0
 
@@ -15,8 +16,33 @@ func _init() -> void:
 	pass
 
 
+func get_avg_cost(symbol: String) -> float:
+	return float(avg_cost.get(symbol, 0.0))
+
+
 func get_shares(symbol: String) -> int:
-	return holdings.get(symbol, 0)
+	return int(holdings.get(symbol, 0))
+
+
+func get_position_pl(symbol: String, current_price: float) -> float:
+	return (current_price - get_avg_cost(symbol)) * float(get_shares(symbol))
+
+
+func max_buyable(ask_price: float) -> int:
+	if ask_price <= 0.0:
+		return 0
+	return maxi(int((cash - FIXED_COMMISSION) / (ask_price * (1.0 + PERCENT_COMMISSION))), 0)
+
+
+func estimate(shares: int, price: float) -> Dictionary:
+	var trade_value: float = float(shares) * price
+	var commission: float = calculate_commission(trade_value) if shares > 0 else 0.0
+	return {
+		"trade_value": trade_value,
+		"commission": commission,
+		"total": trade_value + commission,
+		"proceeds": trade_value - commission,
+	}
 
 
 func get_holdings_value(stocks: Dictionary) -> float:
@@ -60,7 +86,10 @@ func buy(symbol: String, shares: int, ask_price: float) -> Dictionary:
 
 	cash -= total_cost
 	total_commissions += commission
-	holdings[symbol] = get_shares(symbol) + shares
+	var owned: int = get_shares(symbol)
+	var old_cost: float = get_avg_cost(symbol) * float(owned)
+	holdings[symbol] = owned + shares
+	avg_cost[symbol] = (old_cost + trade_value) / float(holdings[symbol])
 
 	var trade := {
 		"type": "BUY",
@@ -94,6 +123,7 @@ func sell(symbol: String, shares: int, bid_price: float) -> Dictionary:
 	holdings[symbol] = owned - shares
 	if holdings[symbol] == 0:
 		holdings.erase(symbol)
+		avg_cost.erase(symbol)
 
 	var trade := {
 		"type": "SELL",

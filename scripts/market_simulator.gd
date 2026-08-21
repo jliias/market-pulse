@@ -1,20 +1,24 @@
 class_name MarketSimulator
 extends RefCounted
 
-const TICK_INTERVAL := 5.0
-const MARKET_MINUTES_PER_TICK := 5
+const TICK_INTERVAL := 1.0
+const MARKET_MINUTES_PER_TICK := 1
 const OPEN_HOUR := 9
 const OPEN_MINUTE := 30
 const CLOSE_HOUR := 16
 const CLOSE_MINUTE := 0
+const SYMBOL_ORDER: Array[String] = ["ALPH", "GRNE", "NMIN"]
 const SYMBOL_ALIASES := {
-	"A": "A",
-	"ALPHA": "A",
-	"B": "B",
-	"GREEN": "B",
-	"C": "C",
-	"NORTH": "C",
-	"MINING": "C",
+	"A": "ALPH",
+	"ALPH": "ALPH",
+	"ALPHA": "ALPH",
+	"B": "GRNE",
+	"GRNE": "GRNE",
+	"GREEN": "GRNE",
+	"C": "NMIN",
+	"NMIN": "NMIN",
+	"NORTH": "NMIN",
+	"MINING": "NMIN",
 }
 
 var stocks: Dictionary = {}
@@ -35,12 +39,9 @@ func _init() -> void:
 
 
 func _setup_stocks() -> void:
-	var stock_a := Stock.new("A", "Alpha Technologies", 187.45, 1.0)
-	var stock_b := Stock.new("B", "Green Energy Corp", 34.20, 0.85)
-	var stock_c := Stock.new("C", "North Mining Ltd", 512.80, 1.15)
-	stocks["A"] = stock_a
-	stocks["B"] = stock_b
-	stocks["C"] = stock_c
+	stocks["ALPH"] = Stock.new("ALPH", "Alpha Technologies", 187.45, 1.0, "Technology", "Large Cap")
+	stocks["GRNE"] = Stock.new("GRNE", "Green Energy Corp", 34.20, 0.85, "Energy", "Mid Cap")
+	stocks["NMIN"] = Stock.new("NMIN", "North Mining Ltd", 512.80, 1.15, "Materials", "Large Cap")
 
 
 func start() -> void:
@@ -94,7 +95,7 @@ func tick() -> Array[NewsEvent]:
 		new_events.append(close_event)
 		return new_events
 
-	if randf() < 0.28:
+	if randf() < 0.055:
 		var event := news_generator.generate_intraday(get_stock_list(), get_time_string())
 		news_feed.append(event)
 		new_events.append(event)
@@ -122,7 +123,7 @@ func get_alpha_pct(player_return_pct: float) -> float:
 func _current_index() -> float:
 	var total := 0.0
 	var count := 0
-	for symbol in ["A", "B", "C"]:
+	for symbol in SYMBOL_ORDER:
 		total += stocks[symbol].price
 		count += 1
 	return total / float(count)
@@ -212,7 +213,7 @@ func _summarize_global_reaction(applied_moves: PackedFloat32Array, headline_impa
 
 
 func _drift_market_sentiment() -> void:
-	market_sentiment = clampf(market_sentiment * 0.97 + randf_range(-0.04, 0.04), -1.0, 1.0)
+	market_sentiment = clampf(market_sentiment * 0.994 + randf_range(-0.012, 0.012), -1.0, 1.0)
 
 
 func _advance_time() -> void:
@@ -234,7 +235,7 @@ func get_time_string() -> String:
 
 func get_stock_list() -> Array[Stock]:
 	var list: Array[Stock] = []
-	for symbol in ["A", "B", "C"]:
+	for symbol in SYMBOL_ORDER:
 		list.append(stocks[symbol])
 	return list
 
