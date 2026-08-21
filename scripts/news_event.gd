@@ -14,6 +14,8 @@ var scope: String = "company"
 var strength: String = "moderate"
 var lasting: bool = false
 var industry: String = ""
+var chain_id: String = ""
+var chain_stage: String = ""
 var reaction: String = ""
 
 
@@ -45,6 +47,8 @@ func _init(
 	strength = p_strength
 	lasting = p_lasting
 	industry = p_industry
+	chain_id = ""
+	chain_stage = ""
 
 
 func feed_tag() -> String:
@@ -73,7 +77,16 @@ func feed_tag() -> String:
 			return "TAPE"
 
 
+func attach_chain(p_chain_id: String, p_stage: String) -> void:
+	chain_id = p_chain_id
+	chain_stage = p_stage
+
+
 func effect_label() -> String:
+	if not chain_stage.is_empty():
+		var stage_name: String = EventChain.display_stage(chain_stage)
+		var life: String = "lasting" if lasting else "flash"
+		return "%s · %s · %s" % [stage_name, strength, life]
 	if strength.is_empty() or impact == 0.0:
 		return ""
 	var life: String = "lasting" if lasting else "flash"

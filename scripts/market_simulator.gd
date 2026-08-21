@@ -24,6 +24,7 @@ const SYMBOL_ALIASES := {
 var stocks: Dictionary = {}
 var news_feed: Array[NewsEvent] = []
 var news_generator: NewsGenerator = NewsGenerator.new()
+var chain_director: EventChainDirector
 var session_minutes: int = 0
 var session_seconds: int = 0
 var tick_count: int = 0
@@ -34,10 +35,12 @@ var opening_index: float = 0.0
 var premarket_events: Array[NewsEvent] = []
 var mood_hold: float = 0.0
 var mood_hold_ticks: int = 0
+var calendar_day: int = 0
 
 
 func _init() -> void:
 	_setup_stocks()
+	chain_director = EventChainDirector.new(news_generator)
 
 
 func _setup_stocks() -> void:
@@ -68,9 +71,19 @@ func prepare() -> void:
 	mood_hold_ticks = 0
 	premarket_events.clear()
 	news_feed.clear()
+	chain_director.calendar_day = calendar_day
 
-	var briefing := news_generator.generate_premarket(get_stock_list(), get_time_string())
+	var chain_briefing: Array[NewsEvent] = chain_director.collect_premarket(get_stock_list(), get_time_string())
+	var avoid: Array[String] = chain_director.occupied_subjects()
+	var briefing: Array[NewsEvent] = news_generator.generate_premarket(get_stock_list(), get_time_string(), avoid)
+	var combined: Array[NewsEvent] = []
+	for event in chain_briefing:
+		combined.append(event)
 	for event in briefing:
+		if combined.size() >= 4:
+			break
+		combined.append(event)
+	for event in combined:
 		news_feed.append(event)
 		premarket_events.append(event)
 		_apply_premarket_news(event)
@@ -127,8 +140,17 @@ func tick() -> Array[NewsEvent]:
 		new_events.append(close_event)
 		return new_events
 
-	if randf() < 0.055:
-		var event := news_generator.generate_intraday(get_stock_list(), get_time_string())
+	var chain_event: NewsEvent = chain_director.try_fire_due(get_stock_list(), get_time_string(), tick_count)
+	if chain_event != null:
+		news_feed.append(chain_event)
+		new_events.append(chain_event)
+		_apply_news(chain_event)
+	elif randf() < 0.055:
+		var event: NewsEvent = null
+		if randf() < 0.18:
+			event = chain_director.try_start(get_stock_list(), get_time_string(), false)
+		if event == null:
+			event = news_generator.generate_intraday(get_stock_list(), get_time_string(), chain_director.occupied_subjects())
 		news_feed.append(event)
 		new_events.append(event)
 		_apply_news(event)

@@ -173,37 +173,43 @@ const MARKET_PREMARKET := {
 }
 
 
-func generate_premarket(stocks: Array[Stock], session_time: String) -> Array[NewsEvent]:
+func generate_premarket(stocks: Array[Stock], session_time: String, avoid_subjects: Array[String] = []) -> Array[NewsEvent]:
 	var events: Array[NewsEvent] = []
-	var featured: Stock = stocks[randi() % stocks.size()]
+	var featured: Stock = _pick_unrelated_stock(stocks, avoid_subjects)
 	events.append(_make_company_event(featured, session_time, true))
 
 	if randf() < 0.5:
 		if randf() < 0.45:
-			events.append(_make_industry_event(stocks, session_time, true))
+			events.append(_make_industry_event(stocks, session_time, true, avoid_subjects))
 		else:
 			var others: Array[Stock] = []
 			for stock in stocks:
-				if stock.symbol != featured.symbol:
+				if stock.symbol != featured.symbol and not avoid_subjects.has(stock.symbol):
 					others.append(stock)
+			if others.is_empty():
+				for stock in stocks:
+					if stock.symbol != featured.symbol:
+						others.append(stock)
 			if not others.is_empty():
 				events.append(_make_company_event(others[randi() % others.size()], session_time, true))
 
-	if randf() < 0.45:
+	if randf() < 0.45 and not avoid_subjects.has("MARKET"):
 		events.append(_make_market_event(stocks, session_time, true))
 
 	return events
 
 
-func generate_intraday(stocks: Array[Stock], session_time: String) -> NewsEvent:
+func generate_intraday(stocks: Array[Stock], session_time: String, avoid_subjects: Array[String] = []) -> NewsEvent:
 	var roll := randf()
 	if roll < 0.07:
-		return _generate_surprise(stocks, session_time)
+		return _generate_surprise(_pick_unrelated_stock(stocks, avoid_subjects), session_time)
 	if roll < 0.32:
-		return _make_industry_event(stocks, session_time, false)
+		return _make_industry_event(stocks, session_time, false, avoid_subjects)
 	if roll < 0.55:
+		if avoid_subjects.has("MARKET"):
+			return _make_company_event(_pick_unrelated_stock(stocks, avoid_subjects), session_time, false)
 		return _make_market_event(stocks, session_time, false)
-	return _make_company_event(stocks[randi() % stocks.size()], session_time, false)
+	return _make_company_event(_pick_unrelated_stock(stocks, avoid_subjects), session_time, false)
 
 
 func generate_open_bell(session_time: String) -> NewsEvent:
@@ -228,11 +234,19 @@ func _make_company_event(stock: Stock, session_time: String, premarket: bool) ->
 	return _from_item(item, session_time, [stock.symbol], is_positive, premarket, "company", "")
 
 
-func _make_industry_event(stocks: Array[Stock], session_time: String, premarket: bool) -> NewsEvent:
+func _make_industry_event(stocks: Array[Stock], session_time: String, premarket: bool, avoid_subjects: Array[String] = []) -> NewsEvent:
 	var industry: String = INDUSTRY_KEYS[randi() % INDUSTRY_KEYS.size()]
+	if avoid_subjects.has("GROWTH") and industry == "Growth":
+		industry = INDUSTRY_KEYS[randi() % INDUSTRY_KEYS.size()]
 	var names: Array[String] = _symbols_for_industry(stocks, industry)
 	if names.is_empty():
 		return _make_market_event(stocks, session_time, premarket)
+	var blocked := false
+	for name in names:
+		if avoid_subjects.has(name) and names.size() == 1:
+			blocked = true
+	if blocked:
+		return _make_company_event(_pick_unrelated_stock(stocks, avoid_subjects), session_time, premarket)
 	var is_positive := randf() > 0.48
 	var item: Dictionary = _pick_item(INDUSTRY_NEWS[industry], is_positive)
 	var headline: String = str(item["text"])
@@ -253,8 +267,7 @@ func _make_market_event(stocks: Array[Stock], session_time: String, premarket: b
 	return _from_item(item, session_time, names, is_positive, premarket, "market", "")
 
 
-func _generate_surprise(stocks: Array[Stock], session_time: String) -> NewsEvent:
-	var stock: Stock = stocks[randi() % stocks.size()]
+func _generate_surprise(stock: Stock, session_time: String) -> NewsEvent:
 	var is_positive := randf() > 0.5
 	var headline: String
 	if is_positive:
@@ -268,6 +281,32 @@ func _generate_surprise(stocks: Array[Stock], session_time: String) -> NewsEvent
 		"lasting": randf() < 0.45,
 	}
 	return _from_item(item, session_time, [stock.symbol], is_positive, false, "company", "")
+
+
+func make_from_item(
+	item: Dictionary,
+	session_time: String,
+	symbols: Array[String],
+	is_positive: bool,
+	premarket: bool,
+	scope: String,
+	industry: String
+) -> NewsEvent:
+	return _from_item(item, session_time, symbols, is_positive, premarket, scope, industry)
+
+
+func symbols_for_industry(stocks: Array[Stock], industry: String) -> Array[String]:
+	return _symbols_for_industry(stocks, industry)
+
+
+func _pick_unrelated_stock(stocks: Array[Stock], avoid_subjects: Array[String]) -> Stock:
+	var pool: Array[Stock] = []
+	for stock in stocks:
+		if not avoid_subjects.has(stock.symbol):
+			pool.append(stock)
+	if pool.is_empty():
+		return stocks[randi() % stocks.size()]
+	return pool[randi() % pool.size()]
 
 
 func _from_item(

@@ -131,6 +131,7 @@ func _apply_launch_mode() -> void:
 			SaveManager.apply_to(portfolio, market, data)
 	else:
 		portfolio.reset_new_game()
+		market.chain_director.reset()
 	SaveManager.launch_mode = "new"
 
 
@@ -170,6 +171,7 @@ func _begin_session() -> void:
 	session_active = true
 	awaiting_open = true
 	preopen_remaining = PREOPEN_SECONDS
+	market.calendar_day = portfolio.days_played
 	market.prepare()
 	portfolio.mark_day_start(market.stocks)
 	news_feed.clear()
@@ -285,6 +287,8 @@ func _end_session() -> void:
 		trade_message_label.text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
 	else:
 		trade_message_label.text = "Closed. You matched the tape."
+	market.chain_director.calendar_day = market.calendar_day
+	market.chain_director.on_session_end()
 	portfolio.days_played += 1
 	SaveManager.save_game(portfolio, market)
 	_update_ui()
