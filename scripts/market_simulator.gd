@@ -32,6 +32,8 @@ var is_closed: bool = false
 var market_sentiment: float = 0.0
 var opening_index: float = 0.0
 var premarket_events: Array[NewsEvent] = []
+var mood_hold: float = 0.0
+var mood_hold_ticks: int = 0
 
 
 func _init() -> void:
@@ -62,6 +64,8 @@ func prepare() -> void:
 	session_minutes = 9
 	session_seconds = 25
 	market_sentiment = randf_range(-0.25, 0.25)
+	mood_hold = 0.0
+	mood_hold_ticks = 0
 	premarket_events.clear()
 	news_feed.clear()
 
@@ -113,7 +117,11 @@ func tick() -> Array[NewsEvent]:
 			[],
 			0.0,
 			0.0,
-			0
+			0,
+			false,
+			false,
+			"general",
+			"system"
 		)
 		news_feed.append(close_event)
 		new_events.append(close_event)
@@ -163,7 +171,7 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 		var actual_move: float = float(result["move"])
 		if absf(actual_move) < 0.008:
 			actual_move = event.impact * randf_range(0.55, 0.9)
-		stock.apply_overnight_gap(actual_move, event.is_major)
+		stock.apply_overnight_gap(actual_move, event.is_major, event.lasting)
 		var reaction_text: String = str(result["reaction"])
 		if actual_move * event.impact < 0.0:
 			reaction_text = "Futures fade the print — the gap may not hold."
@@ -172,15 +180,14 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 		if not reaction_text.is_empty() and not reactions.has(reaction_text):
 			reactions.append(reaction_text)
 
-	if event.affected_symbols.size() > 1:
+	if event.scope == "market":
 		event.reaction = "Overnight futures lean with the headline."
+	elif event.scope == "industry":
+		event.reaction = "The sector gaps with the overnight note."
 	elif not reactions.is_empty():
 		event.reaction = reactions[0]
 
-	if event.affected_symbols.size() > 1:
-		market_sentiment = clampf(market_sentiment + event.impact * 3.0, -1.0, 1.0)
-	elif not event.affected_symbols.is_empty():
-		market_sentiment = clampf(market_sentiment + event.impact * 1.5, -1.0, 1.0)
+	_nudge_market_mood(event, event.impact)
 
 
 func _apply_news(event: NewsEvent) -> void:
@@ -194,20 +201,22 @@ func _apply_news(event: NewsEvent) -> void:
 		var result: Dictionary = stock.interpret_news(event.impact, event.is_major, market_sentiment, event.category)
 		var actual_move: float = float(result["move"])
 		var reaction_text: String = str(result["reaction"])
-		stock.apply_news_impact(actual_move, event.duration_ticks, event.is_major)
+		stock.apply_news_impact(actual_move, event.duration_ticks, event.is_major, event.lasting)
 		applied_moves.append(actual_move)
 		if not reaction_text.is_empty() and not reactions.has(reaction_text):
 			reactions.append(reaction_text)
 
-	if event.affected_symbols.size() > 1:
+	if event.scope == "market":
 		event.reaction = _summarize_global_reaction(applied_moves, event.impact)
+	elif event.scope == "industry":
+		event.reaction = _summarize_industry_reaction(applied_moves, event.impact, event.industry)
 	elif not reactions.is_empty():
 		event.reaction = reactions[0]
 
-	if event.affected_symbols.size() > 1:
-		market_sentiment = clampf(market_sentiment + event.impact * 2.5, -1.0, 1.0)
-	elif not applied_moves.is_empty():
-		market_sentiment = clampf(market_sentiment + applied_moves[0] * 1.2, -1.0, 1.0)
+	var mood_impulse: float = event.impact
+	if not applied_moves.is_empty() and event.scope == "company":
+		mood_impulse = applied_moves[0]
+	_nudge_market_mood(event, mood_impulse)
 
 
 func _summarize_global_reaction(applied_moves: PackedFloat32Array, headline_impact: float) -> String:
@@ -236,8 +245,56 @@ func _summarize_global_reaction(applied_moves: PackedFloat32Array, headline_impa
 	return "The wider market leans with the headline."
 
 
+func _summarize_industry_reaction(applied_moves: PackedFloat32Array, headline_impact: float, industry: String) -> String:
+	var label: String = industry if not industry.is_empty() else "sector"
+	if applied_moves.is_empty():
+		return "Quiet tape in %s." % label
+
+	var headline_sign: float = signf(headline_impact)
+	var follow_count := 0
+	var fade_count := 0
+	var ignore_count := 0
+	for move in applied_moves:
+		if absf(move) < 0.0015:
+			ignore_count += 1
+		elif headline_sign != 0.0 and signf(move) != headline_sign:
+			fade_count += 1
+		else:
+			follow_count += 1
+
+	if ignore_count == applied_moves.size():
+		return "The %s group shrugs the sector note." % label
+	if fade_count >= follow_count:
+		return "The %s group fades the sector headline." % label
+	if ignore_count > 0 or fade_count > 0:
+		return "Uneven reaction across %s names." % label
+	return "The %s group leans with the headline." % label
+
+
+func _nudge_market_mood(event: NewsEvent, impulse: float) -> void:
+	var scale: float = 1.2
+	match event.scope:
+		"market":
+			scale = 3.2 if event.lasting else 2.2
+		"industry":
+			scale = 1.8 if event.lasting else 1.2
+		_:
+			scale = 1.1 if event.lasting else 0.7
+	market_sentiment = clampf(market_sentiment + impulse * scale, -1.0, 1.0)
+	if event.lasting and event.scope == "market":
+		mood_hold_ticks = maxi(mood_hold_ticks, 40 if event.is_major else 24)
+		mood_hold = clampf(mood_hold + impulse * 2.0, -0.35, 0.35)
+
+
 func _drift_market_sentiment() -> void:
-	market_sentiment = clampf(market_sentiment * 0.994 + randf_range(-0.012, 0.012), -1.0, 1.0)
+	var decay: float = 0.997 if mood_hold_ticks > 0 else 0.994
+	if mood_hold_ticks > 0:
+		market_sentiment = clampf(market_sentiment * decay + mood_hold * 0.08 + randf_range(-0.008, 0.008), -1.0, 1.0)
+		mood_hold_ticks -= 1
+		mood_hold *= 0.97
+	else:
+		mood_hold = 0.0
+		market_sentiment = clampf(market_sentiment * decay + randf_range(-0.012, 0.012), -1.0, 1.0)
 
 
 func _advance_time() -> void:

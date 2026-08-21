@@ -27,6 +27,7 @@ const PERSONALITIES := {
 			"macro": 0.85,
 			"commodity": 0.35,
 			"regulatory": 0.90,
+			"industry": 1.15,
 			"general": 1.0,
 		},
 	},
@@ -47,6 +48,7 @@ const PERSONALITIES := {
 			"product": 1.05,
 			"macro": 1.20,
 			"commodity": 0.50,
+			"industry": 1.20,
 			"general": 1.10,
 		},
 	},
@@ -67,6 +69,7 @@ const PERSONALITIES := {
 			"analyst": 0.70,
 			"macro": 0.75,
 			"regulatory": 0.85,
+			"industry": 0.80,
 			"general": 0.85,
 		},
 	},
@@ -94,10 +97,16 @@ var personality_label: String = ""
 var news_sensitivity: Dictionary = {}
 var trend_flip_chance: float = 0.012
 
+var industries: Array[String] = []
 var news_move_remaining: float = 0.0
 var news_move_ticks: int = 0
 var news_initial_ticks: int = 0
 var news_is_major: bool = false
+var news_is_lasting: bool = false
+var revert_remaining: float = 0.0
+var revert_ticks: int = 0
+var lasting_bias: float = 0.0
+var lasting_ticks: int = 0
 
 var previous_close: float
 var last_tick_volume: int = 0
@@ -130,6 +139,7 @@ func _init(
 	institutional_ownership = randf_range(0.2, 0.8)
 	speculation_factor = randf_range(0.2, 0.9)
 	_apply_personality()
+	_assign_industries()
 
 	_update_spread()
 	last_tick_volume = randi_range(40000, 90000)
@@ -151,6 +161,28 @@ func _apply_personality() -> void:
 	speculation_factor = float(profile["speculation_factor"])
 	trend_flip_chance = float(profile["trend_flip"])
 	news_sensitivity = (profile["news"] as Dictionary).duplicate()
+
+
+func _assign_industries() -> void:
+	industries.clear()
+	if not sector.is_empty():
+		industries.append(sector)
+	match symbol:
+		"ALPH":
+			if not industries.has("Growth"):
+				industries.append("Growth")
+		"GRNE":
+			if not industries.has("Growth"):
+				industries.append("Growth")
+			if not industries.has("Commodities"):
+				industries.append("Commodities")
+		"NMIN":
+			if not industries.has("Commodities"):
+				industries.append("Commodities")
+
+
+func in_industry(industry_name: String) -> bool:
+	return sector == industry_name or industries.has(industry_name)
 
 
 func interpret_news(headline_impact: float, is_major: bool, market_sentiment: float, news_category: String = "general") -> Dictionary:
@@ -272,6 +304,11 @@ func roll_to_next_day() -> void:
 	news_move_ticks = 0
 	news_initial_ticks = 0
 	news_is_major = false
+	news_is_lasting = false
+	revert_remaining = 0.0
+	revert_ticks = 0
+	lasting_bias = 0.0
+	lasting_ticks = 0
 	momentum = 0.0
 	volume = randi_range(800000, 2500000)
 	price_history = PackedFloat32Array()
@@ -286,10 +323,10 @@ func apply_saved_close(close_price: float) -> void:
 	roll_to_next_day()
 
 
-func apply_overnight_gap(gap_pct: float, is_major: bool = true) -> void:
+func apply_overnight_gap(gap_pct: float, is_major: bool = true, lasting: bool = true) -> void:
 	price = clampf(price * (1.0 + gap_pct), MIN_PRICE, MAX_PRICE)
 	momentum = clampf(gap_pct * 0.4, -0.002, 0.002)
-	sentiment = clampf(sentiment + gap_pct * 4.0, -1.0, 1.0)
+	sentiment = clampf(sentiment + gap_pct * (6.0 if lasting else 3.0), -1.0, 1.0)
 	if gap_pct > 0.01:
 		trend = Trend.BULLISH
 	elif gap_pct < -0.01:
@@ -298,6 +335,13 @@ func apply_overnight_gap(gap_pct: float, is_major: bool = true) -> void:
 	news_move_ticks = 10
 	news_initial_ticks = 10
 	news_is_major = is_major
+	news_is_lasting = lasting
+	revert_remaining = 0.0
+	revert_ticks = 0
+	if lasting:
+		_set_lasting_bias(gap_pct, is_major)
+	else:
+		_queue_flash_revert(gap_pct)
 	last_tick_volume = int(abs(gap_pct) * 1200000.0 * popularity) + randi_range(60000, 140000)
 	volume += last_tick_volume
 	_update_spread()
@@ -314,23 +358,38 @@ func get_day_change_pct() -> float:
 	return ((price - previous_close) / previous_close) * 100.0
 
 
-func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = false) -> void:
+func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = false, lasting: bool = false) -> void:
 	news_move_remaining = total_move
 	news_move_ticks = maxi(duration_ticks, 1)
 	news_initial_ticks = news_move_ticks
 	news_is_major = is_major
+	news_is_lasting = lasting
+	revert_remaining = 0.0
+	revert_ticks = 0
 	if total_move == 0.0:
+		news_move_ticks = 0
+		news_initial_ticks = 0
+		news_is_major = false
 		return
-	sentiment = clampf(sentiment + total_move * 6.0, -1.0, 1.0)
-	if total_move > 0.004 and randf() < 0.35:
-		trend = Trend.BULLISH
-	elif total_move < -0.004 and randf() < 0.35:
-		trend = Trend.BEARISH
+	if lasting:
+		sentiment = clampf(sentiment + total_move * 8.0, -1.0, 1.0)
+		_set_lasting_bias(total_move, is_major)
+		if total_move > 0.004:
+			trend = Trend.BULLISH
+		elif total_move < -0.004:
+			trend = Trend.BEARISH
+	else:
+		sentiment = clampf(sentiment + total_move * 3.0, -1.0, 1.0)
+		_queue_flash_revert(total_move)
+		if total_move > 0.004 and randf() < 0.22:
+			trend = Trend.BULLISH
+		elif total_move < -0.004 and randf() < 0.22:
+			trend = Trend.BEARISH
 
 
 func tick(p_market_sentiment: float = 0.0) -> void:
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
-	var news_move: float = _consume_news_move()
+	var news_move: float = _consume_news_or_revert()
 
 	if randf() < trend_flip_chance:
 		trend = Trend.values()[randi() % Trend.size()]
@@ -343,6 +402,13 @@ func tick(p_market_sentiment: float = 0.0) -> void:
 
 	var volume_factor: float = clampf(float(volume) / 15000.0, 0.5, 2.0)
 	var liquidity_noise: float = randf_range(-0.00012, 0.00012) * (1.0 - liquidity) / volume_factor
+
+	if lasting_ticks > 0:
+		mood_bias += lasting_bias
+		lasting_ticks -= 1
+		lasting_bias *= 0.988
+	else:
+		lasting_bias = 0.0
 
 	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias
 	organic_change *= lerpf(0.92, 1.08, speculation_factor)
@@ -393,6 +459,33 @@ func _consume_news_move() -> float:
 		news_move_remaining = 0.0
 
 	return move
+
+
+func _consume_news_or_revert() -> float:
+	if news_move_ticks > 0:
+		return _consume_news_move()
+	if revert_ticks <= 0:
+		return 0.0
+	var move: float = revert_remaining / float(revert_ticks)
+	revert_remaining -= move
+	revert_ticks -= 1
+	if revert_ticks <= 0:
+		revert_remaining = 0.0
+	return move
+
+
+func _set_lasting_bias(move: float, is_major: bool) -> void:
+	var extra: float = 0.00008 if is_major else 0.000045
+	lasting_bias = clampf(lasting_bias + signf(move) * extra, -0.00022, 0.00022)
+	var hold: int = 70 if is_major else 42
+	lasting_ticks = maxi(lasting_ticks, hold)
+
+
+func _queue_flash_revert(move: float) -> void:
+	if absf(move) < 0.001:
+		return
+	revert_remaining = -move * randf_range(0.38, 0.78)
+	revert_ticks = randi_range(6, 14)
 
 
 func _get_trend_drift() -> float:

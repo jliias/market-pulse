@@ -516,12 +516,16 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		color = "#55cc55"
 	elif event.sentiment < 0:
 		color = "#cc5555"
-	var tag := "MARKET"
-	if event.affected_symbols.size() == 1:
-		tag = event.affected_symbols[0]
-	news_feed.append_text("[color=%s]%s  [b]%s[/b] — %s[/color]\n" % [
-		color, event.timestamp, tag, event.headline
-	])
+	var tag: String = event.feed_tag()
+	var effect: String = event.effect_label()
+	if effect.is_empty():
+		news_feed.append_text("[color=%s]%s  [b]%s[/b] — %s[/color]\n" % [
+			color, event.timestamp, tag, event.headline
+		])
+	else:
+		news_feed.append_text("[color=%s]%s  [b]%s[/b] · %s — %s[/color]\n" % [
+			color, event.timestamp, tag, effect, event.headline
+		])
 	if not event.reaction.is_empty():
 		news_feed.append_text("[color=#888888]    %s[/color]\n" % event.reaction)
 
