@@ -44,13 +44,15 @@ func _setup_stocks() -> void:
 	stocks["NMIN"] = Stock.new("NMIN", "North Mining Ltd", 512.80, 1.15, "Materials", "Large Cap")
 
 
-func start() -> void:
-	is_running = true
+func prepare() -> void:
+	is_running = false
 	is_closed = false
+	tick_count = 0
 	session_minutes = 9
 	session_seconds = 25
 	market_sentiment = randf_range(-0.25, 0.25)
 	premarket_events.clear()
+	news_feed.clear()
 
 	var briefing := news_generator.generate_premarket(get_stock_list(), get_time_string())
 	for event in briefing:
@@ -58,12 +60,23 @@ func start() -> void:
 		premarket_events.append(event)
 		_apply_premarket_news(event)
 
+	opening_index = _current_index()
+
+
+func open() -> NewsEvent:
 	session_minutes = OPEN_HOUR
 	session_seconds = OPEN_MINUTE
 	opening_index = _current_index()
+	is_running = true
+	is_closed = false
 	var open_bell := news_generator.generate_open_bell(get_time_string())
 	news_feed.append(open_bell)
-	premarket_events.append(open_bell)
+	return open_bell
+
+
+func start() -> void:
+	prepare()
+	open()
 
 
 func stop() -> void:

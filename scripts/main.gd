@@ -12,6 +12,7 @@ const TRADE_ACCENT := Color(0.45, 0.86, 0.98)
 const BUY_ACCENT := Color(0.32, 0.92, 0.48)
 const SELL_ACCENT := Color(0.98, 0.42, 0.42)
 const SELECTED_ACCENT := Color(0.9, 0.75, 0.25)
+const PREOPEN_SECONDS := 10.0
 
 var market := MarketSimulator.new()
 var portfolio := Portfolio.new()
@@ -21,6 +22,8 @@ var buy_mode := true
 var quantity: int = 20
 var timeframe: String = "5M"
 var watchlist_cards: Dictionary = {}
+var awaiting_open := false
+var preopen_remaining := 0.0
 
 @onready var body_columns: BoxContainer = %BodyColumns
 @onready var watchlist_column: Control = %WatchlistColumn
@@ -63,6 +66,8 @@ var watchlist_cards: Dictionary = {}
 @onready var tick_timer: Timer = %TickTimer
 @onready var settings_dialog: AcceptDialog = %SettingsDialog
 @onready var menu_dialog: AcceptDialog = %MenuDialog
+@onready var open_countdown_overlay: CenterContainer = %OpenCountdownOverlay
+@onready var open_countdown_label: Label = %OpenCountdownLabel
 
 
 func _ready() -> void:
@@ -73,11 +78,16 @@ func _ready() -> void:
 	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
 	tick_timer.timeout.connect(_on_market_tick)
-	tick_timer.start()
 	_apply_responsive_layout()
 
 
 func _process(_delta: float) -> void:
+	if awaiting_open:
+		preopen_remaining = maxf(preopen_remaining - _delta, 0.0)
+		_refresh_open_countdown()
+		if preopen_remaining <= 0.0:
+			_open_market()
+		return
 	if session_active and not tick_timer.is_stopped():
 		next_update_label.text = "NEXT UPDATE: %02d:%02d" % [int(tick_timer.time_left) / 60, int(tick_timer.time_left) % 60]
 
@@ -134,24 +144,46 @@ func _build_watchlist() -> void:
 
 func _begin_session() -> void:
 	session_active = true
-	market.start()
+	awaiting_open = true
+	preopen_remaining = PREOPEN_SECONDS
+	market.prepare()
 	news_feed.clear()
 	selected_symbol = MarketSimulator.SYMBOL_ORDER[0]
 	_set_buy_mode(true)
 	_set_quantity(20)
-	trade_message_label.text = "Read the premarket tape, then try to beat the market."
+	trade_message_label.text = "Premarket is out. Read the tape — the open is in 10 seconds."
 	for event in market.premarket_events:
 		_add_news_to_feed(event)
 	new_day_button.visible = false
 	end_session_button.visible = true
-	place_order_button.disabled = false
-	if tick_timer.is_stopped():
-		tick_timer.start()
+	place_order_button.disabled = true
+	tick_timer.stop()
+	open_countdown_overlay.visible = true
+	_refresh_open_countdown()
 	_update_ui()
 
 
+func _open_market() -> void:
+	if not awaiting_open:
+		return
+	awaiting_open = false
+	open_countdown_overlay.visible = false
+	var open_bell: NewsEvent = market.open()
+	_add_news_to_feed(open_bell)
+	place_order_button.disabled = false
+	trade_message_label.text = "Market is open. Try to beat the tape."
+	tick_timer.start()
+	_update_ui()
+
+
+func _refresh_open_countdown() -> void:
+	var seconds: int = maxi(ceili(preopen_remaining), 0)
+	open_countdown_label.text = "Market will open in %d seconds" % seconds
+	next_update_label.text = "OPENS IN: %02d:%02d" % [seconds / 60, seconds % 60]
+
+
 func _on_market_tick() -> void:
-	if not session_active:
+	if not session_active or awaiting_open:
 		return
 	var new_events := market.tick()
 	for event in new_events:
@@ -189,6 +221,9 @@ func _set_max_quantity() -> void:
 
 
 func _place_order() -> void:
+	if awaiting_open:
+		trade_message_label.text = "Market is not open yet."
+		return
 	if market.is_closed or not session_active:
 		trade_message_label.text = "Market is closed."
 		return
@@ -208,6 +243,8 @@ func _end_session() -> void:
 	if not session_active:
 		return
 	session_active = false
+	awaiting_open = false
+	open_countdown_overlay.visible = false
 	market.stop()
 	tick_timer.stop()
 	place_order_button.disabled = true
@@ -254,7 +291,11 @@ func _update_ui() -> void:
 	]
 	daily_pl_label.add_theme_color_override("font_color", _pl_color(pl))
 
-	var status := "MARKET CLOSED" if market.is_closed or not session_active else "MARKET OPEN"
+	var status := "MARKET CLOSED"
+	if awaiting_open:
+		status = "PREMARKET"
+	elif session_active and not market.is_closed:
+		status = "MARKET OPEN"
 	session_label.text = "Session: %s — %s" % [market.get_time_string(), status]
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(pl_pct)

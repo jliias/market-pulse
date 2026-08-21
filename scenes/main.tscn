@@ -370,6 +370,27 @@ text = "New Day"
 [node name="TickTimer" type="Timer" parent="."]
 unique_name_in_owner = true
 
+[node name="OpenCountdownOverlay" type="CenterContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="OpenCountdownLabel" type="Label" parent="OpenCountdownOverlay"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.72)
+theme_override_font_sizes/font_size = 42
+text = "Market will open in 10 seconds"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SettingsDialog" type="AcceptDialog" parent="."]
 unique_name_in_owner = true
 title = "Settings"
