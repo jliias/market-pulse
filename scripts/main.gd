@@ -11,6 +11,7 @@ var session_active := true
 @onready var cash_label: Label = %CashLabel
 @onready var portfolio_label: Label = %PortfolioLabel
 @onready var pl_label: Label = %PLLabel
+@onready var vs_market_label: Label = %VsMarketLabel
 @onready var stock_panels: VBoxContainer = %StockPanels
 @onready var news_feed: RichTextLabel = %NewsFeed
 @onready var output_log: RichTextLabel = %OutputLog
@@ -22,17 +23,24 @@ var stock_labels: Dictionary = {}
 
 func _ready() -> void:
 	command_handler = CommandHandler.new(market, portfolio)
-	market.start()
 	_build_stock_panels()
-	_update_ui()
-	_log("Welcome to Market Pulse!")
-	_log("Starting capital: $10,000. Type HELP for commands.")
-	_add_news_to_feed(market.news_feed[0])
+	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
 	tick_timer.timeout.connect(_on_market_tick)
 	tick_timer.start()
 	command_input.text_submitted.connect(_on_command_submitted)
 	command_input.grab_focus()
+
+
+func _begin_session() -> void:
+	session_active = true
+	market.start()
+	_log("Welcome to Market Pulse.")
+	_log("Premarket is out. Read the tape, then try to beat the market by close.")
+	_log("Starting capital: $10,000. Type HELP for commands.")
+	for event in market.premarket_events:
+		_add_news_to_feed(event)
+	_update_ui()
 
 
 func _build_stock_panels() -> void:
@@ -77,6 +85,8 @@ func _on_market_tick() -> void:
 
 	_update_ui()
 	_log("--- Market update (%s) ---" % market.get_time_string())
+	if market.is_closed:
+		_end_session()
 
 
 func _on_command_submitted(text: String) -> void:
@@ -88,6 +98,12 @@ func _on_command_submitted(text: String) -> void:
 
 	if result == "QUIT":
 		_end_session()
+		return
+
+	if result == "AGAIN":
+		_restart_session()
+		command_input.clear()
+		command_input.grab_focus()
 		return
 
 	if not result.is_empty():
@@ -104,20 +120,45 @@ func _end_session() -> void:
 	tick_timer.stop()
 
 	var pl := portfolio.get_profit_loss(market.stocks)
+	var player_pct := portfolio.get_profit_loss_pct(market.stocks)
+	var market_pct := market.get_market_return_pct()
+	var alpha_pct := market.get_alpha_pct(player_pct)
 	var pl_sign := "+" if pl >= 0 else ""
+	var m_sign := "+" if market_pct >= 0 else ""
+	var a_sign := "+" if alpha_pct >= 0 else ""
 
 	_log("")
-	_log("=== TRADING SESSION ENDED ===")
-	_log("Final portfolio value: $%.2f" % portfolio.get_portfolio_value(market.stocks))
-	_log("Profit/Loss: %s$%.2f (%s%.1f%%)" % [
-		pl_sign, pl, pl_sign, portfolio.get_profit_loss_pct(market.stocks)
-	])
-	_log("Total trades: %d" % portfolio.trade_history.size())
-	_log("Total commissions: $%.2f" % portfolio.total_commissions)
-	_log("")
-	_log("Thanks for playing Market Pulse!")
+	_log("=== MARKET CLOSED ===")
+	_log("Final portfolio: $%.2f" % portfolio.get_portfolio_value(market.stocks))
+	_log("Your return: %s%.1f%%" % [pl_sign, player_pct])
+	_log("Market return: %s%.1f%%" % [m_sign, market_pct])
+	if alpha_pct > 0.05:
+		_log("You beat the market by %s%.1f%%. Type AGAIN to chase a bigger win." % [a_sign, alpha_pct])
+	elif alpha_pct < -0.05:
+		_log("The market beat you by %.1f%%. Type AGAIN to try another day." % absf(alpha_pct))
+	else:
+		_log("You matched the tape. Type AGAIN to take another shot.")
+	_log("Trades: %d  |  Commissions: $%.2f" % [portfolio.trade_history.size(), portfolio.total_commissions])
 
-	command_input.editable = false
+	command_input.editable = true
+
+
+func _restart_session() -> void:
+	for child in stock_panels.get_children():
+		stock_panels.remove_child(child)
+		child.free()
+	stock_labels.clear()
+	news_feed.clear()
+	output_log.clear()
+	market = MarketSimulator.new()
+	portfolio = Portfolio.new()
+	command_handler = CommandHandler.new(market, portfolio)
+	_build_stock_panels()
+	command_input.editable = true
+	if tick_timer.is_stopped():
+		tick_timer.start()
+	_begin_session()
+	_log("New trading day. Fresh tape, same goal: beat the market.")
 
 
 func _update_ui() -> void:
@@ -134,10 +175,24 @@ func _update_ui() -> void:
 	else:
 		pl_label.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
 
+	var market_pct := market.get_market_return_pct()
+	var alpha_pct := market.get_alpha_pct(portfolio.get_profit_loss_pct(market.stocks))
+	var a_sign := "+" if alpha_pct >= 0 else ""
+	var m_sign := "+" if market_pct >= 0 else ""
+	vs_market_label.text = "vs Market: %s%.1f%%  (tape %s%.1f%%)" % [a_sign, alpha_pct, m_sign, market_pct]
+	if alpha_pct >= 0:
+		vs_market_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
+	else:
+		vs_market_label.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
+
 	for symbol in stock_labels:
 		var stock: Stock = market.stocks[symbol]
 		var labels: Dictionary = stock_labels[symbol]
-		labels["price"].text = "Price: $%.2f  (Bid: $%.2f / Ask: $%.2f)" % [stock.price, stock.bid, stock.ask]
+		var day_pct: float = stock.get_day_change_pct()
+		var day_sign: String = "+" if day_pct >= 0 else ""
+		labels["price"].text = "Price: $%.2f (%s%.1f%% today)  (Bid: $%.2f / Ask: $%.2f)" % [
+			stock.price, day_sign, day_pct, stock.bid, stock.ask
+		]
 		labels["detail"].text = "Volume: %s  |  Trend: %s  |  Volatility: %.0f%%" % [
 			_format_volume(stock.volume), stock.get_trend_name(), stock.volatility * 100
 		]
@@ -152,6 +207,8 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		color = "#cc5555"
 
 	news_feed.append_text("[color=%s][%s] %s[/color]\n" % [color, event.timestamp, event.headline])
+	if not event.reaction.is_empty():
+		news_feed.append_text("[color=#888888]    %s[/color]\n" % event.reaction)
 
 
 func _log(message: String) -> void:

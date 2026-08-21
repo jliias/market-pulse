@@ -75,6 +75,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 15
 text = "P/L: $0.00"
 
+[node name="VsMarketLabel" type="Label" parent="MarginContainer/VBox/AccountBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "vs Market: +0.0%"
+
 [node name="HSeparator" type="HSeparator" parent="MarginContainer/VBox"]
 layout_mode = 2
 

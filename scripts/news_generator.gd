@@ -1,151 +1,193 @@
 class_name NewsGenerator
 extends RefCounted
 
-const COMPANY_TEMPLATES := {
+const PREMARKET_TEMPLATES := {
 	"A": {
 		"positive": [
-			"Alpha Technologies announces record quarterly earnings.",
-			"Alpha Technologies wins major cloud contract.",
-			"Analysts upgrade Alpha Technologies to Buy.",
-			"Alpha Technologies unveils breakthrough AI chip.",
+			"PREMARKET: Alpha Technologies beats quarterly earnings and raises guidance.",
+			"PREMARKET: Alpha Technologies reports record annual revenue.",
 		],
 		"negative": [
-			"Alpha Technologies CEO announces resignation.",
-			"Alpha Technologies faces patent lawsuit.",
-			"Alpha Technologies misses earnings expectations.",
-			"Alpha Technologies product recall announced.",
+			"PREMARKET: Alpha Technologies misses quarterly earnings and cuts outlook.",
+			"PREMARKET: Alpha Technologies issues a profit warning before the open.",
 		],
 	},
 	"B": {
 		"positive": [
-			"Green Energy Corp receives government subsidy.",
-			"Green Energy Corp secures wind farm contract.",
-			"Green Energy Corp beats revenue forecasts.",
-			"Green Energy Corp stock added to green index.",
+			"PREMARKET: Green Energy Corp beats earnings on strong project pipeline.",
+			"PREMARKET: Green Energy Corp raises full-year guidance.",
 		],
 		"negative": [
-			"Green Energy Corp project delayed by regulators.",
-			"Green Energy Corp reports turbine failures.",
-			"Subsidy cuts threaten Green Energy Corp margins.",
-			"Green Energy Corp CFO steps down unexpectedly.",
+			"PREMARKET: Green Energy Corp misses earnings as subsidies disappoint.",
+			"PREMARKET: Green Energy Corp slashes annual production forecast.",
 		],
 	},
 	"C": {
 		"positive": [
-			"North Mining Ltd discovers new ore deposit.",
-			"North Mining Ltd commodity prices surge.",
-			"North Mining Ltd exceeds production targets.",
-			"North Mining Ltd signs long-term supply deal.",
+			"PREMARKET: North Mining Ltd posts better-than-expected quarterly results.",
+			"PREMARKET: North Mining Ltd lifts annual output guidance.",
 		],
 		"negative": [
-			"North Mining Ltd reports unexpected production shutdown.",
-			"North Mining Ltd faces environmental fine.",
-			"Commodity slump hits North Mining Ltd shares.",
-			"North Mining Ltd labor dispute halts operations.",
+			"PREMARKET: North Mining Ltd misses earnings on weaker commodity prices.",
+			"PREMARKET: North Mining Ltd cuts annual production targets.",
 		],
 	},
 }
 
-const MAJOR_TEMPLATES := {
+const INTRADAY_TEMPLATES := {
 	"A": {
 		"positive": [
-			"BREAKING: Alpha Technologies announces transformative acquisition.",
-			"BREAKING: Alpha Technologies wins landmark government contract.",
+			"Analyst raises Alpha Technologies price target.",
+			"Street chatter: Alpha Technologies named a top pick.",
+			"Options flow leans bullish on Alpha Technologies.",
 		],
 		"negative": [
-			"BREAKING: Alpha Technologies discloses major accounting investigation.",
-			"BREAKING: Alpha Technologies hit with catastrophic product failure.",
+			"Analyst trims Alpha Technologies price target.",
+			"Desk note: Alpha Technologies valuation looks stretched.",
+			"Whispers of profit-taking in Alpha Technologies.",
 		],
 	},
 	"B": {
 		"positive": [
-			"BREAKING: Green Energy Corp secures record-breaking subsidy package.",
-			"BREAKING: Green Energy Corp announces revolutionary battery breakthrough.",
+			"Analyst upgrades Green Energy Corp to Overweight.",
+			"Green Energy Corp mentioned in a sector rotation note.",
+			"Intraday rumor: Green Energy Corp nearing a new contract.",
 		],
 		"negative": [
-			"BREAKING: Green Energy Corp loses critical regulatory approval.",
-			"BREAKING: Green Energy Corp warns of imminent bankruptcy risk.",
+			"Analyst downgrades Green Energy Corp to Neutral.",
+			"Traders fade Green Energy Corp after the morning pop.",
+			"Sector note warns of subsidy risk for Green Energy Corp.",
 		],
 	},
 	"C": {
 		"positive": [
-			"BREAKING: North Mining Ltd discovers massive new ore deposit.",
-			"BREAKING: North Mining Ltd commodity prices spike to record highs.",
+			"Commodity desk lifts North Mining Ltd target price.",
+			"Analysts flag North Mining Ltd as oversold.",
+			"Intraday rumor: North Mining Ltd production running hot.",
 		],
 		"negative": [
-			"BREAKING: North Mining Ltd halts all production indefinitely.",
-			"BREAKING: North Mining Ltd faces catastrophic mine collapse.",
+			"Analyst cuts North Mining Ltd to Underweight.",
+			"Commodity weakness weighs on North Mining Ltd chatter.",
+			"Traders question North Mining Ltd's morning move.",
 		],
 	},
 }
 
-const GLOBAL_TEMPLATES := {
+const GLOBAL_PREMARKET := {
 	"positive": [
-		"Central bank signals interest rate cut.",
-		"Global markets rally on trade deal optimism.",
-		"Economic data exceeds expectations.",
-		"Investor confidence reaches multi-month high.",
+		"PREMARKET: Futures jump after overnight economic data.",
+		"PREMARKET: Risk appetite returns after a quiet overnight session.",
 	],
 	"negative": [
-		"Recession fears grow amid weak jobs data.",
-		"Geopolitical tensions rattle global markets.",
-		"Central bank hints at further rate hikes.",
-		"Inflation data spooks investors.",
+		"PREMARKET: Futures slip as overnight data disappoints.",
+		"PREMARKET: Cautious tape after weak global sentiment overnight.",
+	],
+}
+
+const GLOBAL_INTRADAY := {
+	"positive": [
+		"Intraday: buyers step back in across the tape.",
+		"Desk note: dip-buying interest is returning.",
+	],
+	"negative": [
+		"Intraday: risk-off tone spreads across the market.",
+		"Desk note: traders reduce exposure into the close.",
 	],
 }
 
 
-func generate(stocks: Array[Stock], session_time: String) -> NewsEvent:
-	if randf() < 0.08:
-		return _generate_major_company(stocks, session_time)
+func generate_premarket(stocks: Array[Stock], session_time: String) -> Array[NewsEvent]:
+	var events: Array[NewsEvent] = []
+	var featured: Stock = stocks[randi() % stocks.size()]
+	events.append(_make_premarket_company(featured, session_time))
+
+	if randf() < 0.55:
+		var others: Array[Stock] = []
+		for stock in stocks:
+			if stock.symbol != featured.symbol:
+				others.append(stock)
+		if not others.is_empty():
+			events.append(_make_premarket_company(others[randi() % others.size()], session_time))
+
+	if randf() < 0.4:
+		events.append(_make_global(session_time, stocks, true))
+
+	return events
+
+
+func generate_intraday(stocks: Array[Stock], session_time: String) -> NewsEvent:
+	if randf() < 0.04:
+		return _generate_surprise(stocks, session_time)
 	if randf() < 0.22:
-		return _generate_global(session_time, stocks)
-	return _generate_routine_company(stocks, session_time)
+		return _make_global(session_time, stocks, false)
+	return _make_intraday_company(stocks, session_time)
 
 
-func generate_initial(stocks: Array[Stock], session_time: String) -> NewsEvent:
-	var stock: Stock = stocks[randi() % stocks.size()]
-	var headline: String = "Markets open. Traders watch %s closely." % stock.company_name
-	return NewsEvent.new(session_time, headline, [], 0.0, 0.0, 0, false)
+func generate_open_bell(session_time: String) -> NewsEvent:
+	return NewsEvent.new(
+		session_time,
+		"Market open. Use the premarket tape — then try to beat the market.",
+		[],
+		0.0,
+		0.0,
+		0,
+		false,
+		false
+	)
 
 
-func _generate_routine_company(stocks: Array[Stock], session_time: String) -> NewsEvent:
-	var stock: Stock = stocks[randi() % stocks.size()]
-	var is_positive := randf() > 0.45
+func _make_premarket_company(stock: Stock, session_time: String) -> NewsEvent:
+	var is_positive := randf() > 0.42
 	var category: String = "positive" if is_positive else "negative"
-	var templates: Array = COMPANY_TEMPLATES[stock.symbol][category]
+	var templates: Array = PREMARKET_TEMPLATES[stock.symbol][category]
 	var headline: String = templates[randi() % templates.size()]
 	var sentiment: float = 1.0 if is_positive else -1.0
-	var magnitude: float = randf_range(0.005, 0.03)
-	var impact: float = magnitude * sentiment
-	var duration: int = randi_range(2, 5)
-
-	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, duration, false)
+	var impact: float = randf_range(0.035, 0.09) * sentiment
+	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, 3, true, true)
 
 
-func _generate_major_company(stocks: Array[Stock], session_time: String) -> NewsEvent:
+func _make_intraday_company(stocks: Array[Stock], session_time: String) -> NewsEvent:
 	var stock: Stock = stocks[randi() % stocks.size()]
-	var is_positive := randf() > 0.4
+	var is_positive := randf() > 0.48
 	var category: String = "positive" if is_positive else "negative"
-	var templates: Array = MAJOR_TEMPLATES[stock.symbol][category]
+	var templates: Array = INTRADAY_TEMPLATES[stock.symbol][category]
 	var headline: String = templates[randi() % templates.size()]
 	var sentiment: float = 1.0 if is_positive else -1.0
-	var magnitude: float = randf_range(0.08, 0.14)
-	var impact: float = magnitude * sentiment
-	var duration: int = randi_range(1, 3)
-
-	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, duration, true)
+	var impact: float = randf_range(0.004, 0.018) * sentiment
+	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, randi_range(2, 4), false, false)
 
 
-func _generate_global(session_time: String, stocks: Array[Stock]) -> NewsEvent:
+func _generate_surprise(stocks: Array[Stock], session_time: String) -> NewsEvent:
+	var stock: Stock = stocks[randi() % stocks.size()]
+	var is_positive := randf() > 0.5
+	var headline: String
+	if is_positive:
+		headline = "BREAKING: unexpected upgrade hits %s mid-session." % stock.company_name
+	else:
+		headline = "BREAKING: unexpected downgrade hits %s mid-session." % stock.company_name
+	var sentiment: float = 1.0 if is_positive else -1.0
+	var impact: float = randf_range(0.03, 0.07) * sentiment
+	return NewsEvent.new(session_time, headline, [stock.symbol], sentiment, impact, 2, true, false)
+
+
+func _make_global(session_time: String, stocks: Array[Stock], premarket: bool) -> NewsEvent:
 	var is_positive := randf() > 0.5
 	var category: String = "positive" if is_positive else "negative"
-	var templates: Array = GLOBAL_TEMPLATES[category]
+	var pool: Dictionary = GLOBAL_PREMARKET if premarket else GLOBAL_INTRADAY
+	var templates: Array = pool[category]
 	var headline: String = templates[randi() % templates.size()]
 	var sentiment: float = 1.0 if is_positive else -1.0
-	var magnitude: float = randf_range(0.004, 0.015)
-	var impact: float = magnitude * sentiment
+	var magnitude: float = randf_range(0.008, 0.02) if premarket else randf_range(0.003, 0.012)
 	var symbols: Array[String] = []
 	for stock in stocks:
 		symbols.append(stock.symbol)
-	return NewsEvent.new(session_time, headline, symbols, sentiment, impact, randi_range(2, 4), false)
+	return NewsEvent.new(
+		session_time,
+		headline,
+		symbols,
+		sentiment,
+		magnitude * sentiment,
+		randi_range(2, 4),
+		false,
+		premarket
+	)

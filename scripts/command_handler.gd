@@ -28,6 +28,8 @@ func execute(command_line: String) -> String:
 			return _handle_status()
 		"HELP":
 			return _handle_help()
+		"AGAIN", "RESTART":
+			return "AGAIN"
 		"QUIT":
 			return "QUIT"
 		_:
@@ -35,6 +37,8 @@ func execute(command_line: String) -> String:
 
 
 func _handle_buy(parts: PackedStringArray) -> String:
+	if market.is_closed:
+		return "Market is closed. Type AGAIN for a new session."
 	if parts.size() < 3:
 		return "Usage: BUY <stock> <shares>  (e.g. BUY A 50)"
 
@@ -51,6 +55,8 @@ func _handle_buy(parts: PackedStringArray) -> String:
 
 
 func _handle_sell(parts: PackedStringArray) -> String:
+	if market.is_closed:
+		return "Market is closed. Type AGAIN for a new session."
 	if parts.size() < 3:
 		return "Usage: SELL <stock> <shares>  (e.g. SELL B 20)"
 
@@ -79,6 +85,11 @@ func _handle_status() -> String:
 	lines.append("Profit/Loss: %s$%.2f (%s%.1f%%)" % [
 		pl_sign, pl, pl_sign, portfolio.get_profit_loss_pct(market.stocks)
 	])
+	var market_pct: float = market.get_market_return_pct()
+	var alpha_pct: float = market.get_alpha_pct(portfolio.get_profit_loss_pct(market.stocks))
+	var m_sign: String = "+" if market_pct >= 0 else ""
+	var a_sign: String = "+" if alpha_pct >= 0 else ""
+	lines.append("Market: %s%.1f%%   You vs market: %s%.1f%%" % [m_sign, market_pct, a_sign, alpha_pct])
 	lines.append("Total commissions: $%.2f" % portfolio.total_commissions)
 	lines.append("")
 	lines.append("--- Stocks ---")
@@ -87,7 +98,11 @@ func _handle_status() -> String:
 		var stock: Stock = market.stocks[symbol]
 		var owned: int = portfolio.get_shares(symbol)
 		lines.append("%s (%s)" % [symbol, stock.company_name])
-		lines.append("  Price: $%.2f  Bid: $%.2f  Ask: $%.2f" % [stock.price, stock.bid, stock.ask])
+		var day_pct: float = stock.get_day_change_pct()
+		var day_sign: String = "+" if day_pct >= 0 else ""
+		lines.append("  Price: $%.2f (%s%.1f%%)  Bid: $%.2f  Ask: $%.2f" % [
+			stock.price, day_sign, day_pct, stock.bid, stock.ask
+		])
 		lines.append("  Volume: %s  Trend: %s  Owned: %d" % [
 			_format_volume(stock.volume), stock.get_trend_name(), owned
 		])
@@ -111,9 +126,11 @@ func _handle_help() -> String:
   STATUS                 Show account and market info
   HELP                   Show this help
   QUIT                   End trading session
+  AGAIN                  Start a new trading day
 
 Stocks: A (Alpha Technologies), B (Green Energy Corp), C (North Mining Ltd)
-Commission: $2.00 + 0.2% per trade"""
+Commission: $2.00 + 0.2% per trade
+Goal: finish ahead of the market, not just in the green."""
 
 
 func _format_volume(vol: int) -> String:
