@@ -24,6 +24,7 @@ var timeframe: String = "5M"
 var watchlist_cards: Dictionary = {}
 var awaiting_open := false
 var preopen_remaining := 0.0
+var menu_confirm_open := false
 
 @onready var body_columns: BoxContainer = %BodyColumns
 @onready var watchlist_column: Control = %WatchlistColumn
@@ -59,15 +60,21 @@ var preopen_remaining := 0.0
 @onready var trade_message_label: Label = %TradeMessageLabel
 
 @onready var market_status_label: Label = %MarketStatusLabel
+@onready var day_label: Label = %DayLabel
 @onready var update_speed_label: Label = %UpdateSpeedLabel
 @onready var next_update_label: Label = %NextUpdateLabel
 @onready var end_session_button: Button = %EndSessionButton
 @onready var new_day_button: Button = %NewDayButton
 @onready var tick_timer: Timer = %TickTimer
 @onready var settings_dialog: AcceptDialog = %SettingsDialog
-@onready var menu_dialog: AcceptDialog = %MenuDialog
+@onready var menu_dialog: ConfirmationDialog = %MenuDialog
 @onready var open_countdown_overlay: CenterContainer = %OpenCountdownOverlay
 @onready var open_countdown_label: Label = %OpenCountdownLabel
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		SaveManager.save_game(portfolio, market)
 
 
 func _ready() -> void:
@@ -75,6 +82,7 @@ func _ready() -> void:
 	_connect_controls()
 	_build_timeframe_buttons()
 	_build_watchlist()
+	_apply_launch_mode()
 	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
 	tick_timer.timeout.connect(_on_market_tick)
@@ -82,6 +90,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if menu_confirm_open:
+		return
 	if awaiting_open:
 		preopen_remaining = maxf(preopen_remaining - _delta, 0.0)
 		_refresh_open_countdown()
@@ -106,8 +116,21 @@ func _connect_controls() -> void:
 	end_session_button.pressed.connect(_end_session)
 	new_day_button.pressed.connect(_restart_session)
 	%SettingsButton.pressed.connect(func() -> void: settings_dialog.popup_centered())
-	%MenuButton.pressed.connect(func() -> void: menu_dialog.popup_centered())
+	%MenuButton.pressed.connect(_confirm_return_to_menu)
+	menu_dialog.confirmed.connect(_return_to_menu)
+	menu_dialog.canceled.connect(_cancel_return_to_menu)
+	menu_dialog.get_cancel_button().text = "Stay"
 	_style_ui_buttons()
+
+
+func _apply_launch_mode() -> void:
+	if SaveManager.launch_mode == "continue":
+		var data: Dictionary = SaveManager.load_game()
+		if not data.is_empty():
+			SaveManager.apply_to(portfolio, market, data)
+	else:
+		portfolio.reset_new_game()
+	SaveManager.launch_mode = "new"
 
 
 func _build_timeframe_buttons() -> void:
@@ -261,7 +284,30 @@ func _end_session() -> void:
 		trade_message_label.text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
 	else:
 		trade_message_label.text = "Closed. You matched the tape."
+	portfolio.days_played += 1
+	SaveManager.save_game(portfolio, market)
 	_update_ui()
+
+
+func _confirm_return_to_menu() -> void:
+	menu_confirm_open = true
+	tick_timer.stop()
+	menu_dialog.popup_centered()
+
+
+func _cancel_return_to_menu() -> void:
+	menu_confirm_open = false
+	if session_active and not awaiting_open and not market.is_closed:
+		tick_timer.start()
+
+
+func _return_to_menu() -> void:
+	menu_confirm_open = false
+	if session_active:
+		_end_session()
+	else:
+		SaveManager.save_game(portfolio, market)
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 
 func _restart_session() -> void:
@@ -296,6 +342,7 @@ func _update_ui() -> void:
 	elif session_active and not market.is_closed:
 		status = "MARKET OPEN"
 	session_label.text = "Session: %s — %s" % [market.get_time_string(), status]
+	day_label.text = "DAY %d" % (portfolio.days_played + 1)
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(pl_pct)
 	vs_market_label.text = "vs Market: %+.1f%%  (tape %+.1f%%)" % [alpha_pct, market_pct]

@@ -340,6 +340,11 @@ text = ""
 layout_mode = 2
 theme_override_constants/separation = 16
 
+[node name="DayLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "DAY 1"
+
 [node name="MarketStatusLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -397,8 +402,11 @@ title = "Settings"
 ok_button_text = "Close"
 dialog_text = "Settings will land in a later pass. Speed control and layout options belong here."
 
-[node name="MenuDialog" type="AcceptDialog" parent="."]
+[node name="MenuDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
-title = "Menu"
-ok_button_text = "Close"
-dialog_text = "Market Pulse — beat the market before the close. Use the watchlist, chart, and trade panel. End Session finishes the day."
+title = "Return to Menu"
+ok_button_text = "Return to Menu"
+dialog_text = "Are you sure you want to return to the menu?
+
+This will end the current trading day. Your cash and holdings will be saved."
+dialog_autowrap = true

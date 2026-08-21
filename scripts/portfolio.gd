@@ -11,10 +11,34 @@ var avg_cost: Dictionary = {}
 var trade_history: Array[Dictionary] = []
 var total_commissions: float = 0.0
 var day_start_value: float = STARTING_CASH
+var days_played: int = 0
 
 
-func _init() -> void:
-	pass
+func reset_new_game() -> void:
+	cash = STARTING_CASH
+	holdings.clear()
+	avg_cost.clear()
+	trade_history.clear()
+	total_commissions = 0.0
+	day_start_value = STARTING_CASH
+	days_played = 0
+
+
+func apply_save(data: Dictionary) -> void:
+	cash = float(data.get("cash", STARTING_CASH))
+	days_played = int(data.get("days_played", 0))
+	total_commissions = float(data.get("total_commissions", 0.0))
+	holdings.clear()
+	avg_cost.clear()
+	var saved_holdings: Variant = data.get("holdings", {})
+	if typeof(saved_holdings) == TYPE_DICTIONARY:
+		for symbol in saved_holdings:
+			holdings[str(symbol)] = int(saved_holdings[symbol])
+	var saved_avg: Variant = data.get("avg_cost", {})
+	if typeof(saved_avg) == TYPE_DICTIONARY:
+		for symbol in saved_avg:
+			avg_cost[str(symbol)] = float(saved_avg[symbol])
+	day_start_value = cash
 
 
 func get_avg_cost(symbol: String) -> float:

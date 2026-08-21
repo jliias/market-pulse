@@ -144,6 +144,11 @@ func roll_to_next_day() -> void:
 	_record_history()
 
 
+func apply_saved_close(close_price: float) -> void:
+	price = clampf(close_price, MIN_PRICE, MAX_PRICE)
+	roll_to_next_day()
+
+
 func apply_overnight_gap(gap_pct: float, is_major: bool = true) -> void:
 	price = clampf(price * (1.0 + gap_pct), MIN_PRICE, MAX_PRICE)
 	momentum = clampf(gap_pct * 0.4, -0.002, 0.002)

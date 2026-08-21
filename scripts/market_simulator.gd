@@ -44,6 +44,12 @@ func _setup_stocks() -> void:
 	stocks["NMIN"] = Stock.new("NMIN", "North Mining Ltd", 512.80, 1.15, "Materials", "Large Cap")
 
 
+func apply_saved_prices(prices: Dictionary) -> void:
+	for symbol in SYMBOL_ORDER:
+		if prices.has(symbol):
+			stocks[symbol].apply_saved_close(float(prices[symbol]))
+
+
 func roll_to_next_day() -> void:
 	for symbol in SYMBOL_ORDER:
 		stocks[symbol].roll_to_next_day()
