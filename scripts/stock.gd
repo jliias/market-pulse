@@ -28,6 +28,17 @@ var popularity: float
 var institutional_ownership: float
 var speculation_factor: float
 var personality_label: String = ""
+var risk_key: String = "growth"
+var news_mult: float = 1.0
+var news_abs_cap: float = 0.048
+var organic_mult: float = 1.0
+var tick_cap_mult: float = 1.0
+var routine_cap_mult: float = 1.0
+var major_cap_mult: float = 1.0
+var drama_mult: float = 1.0
+var fade_bonus: float = 0.0
+var surprise_mult: float = 1.0
+var revert_mult: float = 1.0
 var news_sensitivity: Dictionary = {}
 var trend_flip_chance: float = 0.012
 
@@ -96,6 +107,18 @@ func _apply_personality() -> void:
 	speculation_factor = float(profile["speculation_factor"])
 	trend_flip_chance = float(profile["trend_flip"])
 	news_sensitivity = (profile["news"] as Dictionary).duplicate()
+	risk_key = CompanyCatalog.risk_key(symbol)
+	var risk: Dictionary = CompanyCatalog.risk_profile(symbol)
+	news_mult = float(risk["news_mult"])
+	news_abs_cap = float(risk["news_abs_cap"])
+	organic_mult = float(risk["organic_mult"])
+	tick_cap_mult = float(risk["tick_cap_mult"])
+	routine_cap_mult = float(risk["routine_cap_mult"])
+	major_cap_mult = float(risk["major_cap_mult"])
+	drama_mult = float(risk["drama_mult"])
+	fade_bonus = float(risk["fade_bonus"])
+	surprise_mult = float(risk["surprise_mult"])
+	revert_mult = float(risk["revert_mult"])
 
 
 func _assign_industries() -> void:
@@ -134,7 +157,7 @@ func interpret_news(
 	var day_pct: float = get_day_change_pct()
 	var clarity: float = _news_clarity(category, category_mult, headline_sign, combined_mood, is_major, weather)
 	var thesis: Dictionary = _news_thesis(headline_impact, headline_sign, headline_size, category, category_mult, combined_mood, day_pct, climate, weather, is_major)
-	var total_move: float = float(thesis["move"])
+	var total_move: float = clampf(float(thesis["move"]) * news_mult, -news_abs_cap, news_abs_cap)
 	var wait: int = _read_delay(clarity, is_major, absf(total_move))
 	var pulses: Array = _build_digest_pulses(total_move, wait, clarity, is_major)
 	var reaction: String = str(thesis["reaction"])
@@ -221,6 +244,7 @@ func _news_thesis(
 		priced_in += 0.14
 
 	var fade_chance: float = 0.06 if is_major else 0.11
+	fade_chance += fade_bonus
 	fade_chance += randf_range(-0.03, 0.05)
 	if headline_sign > 0.0:
 		fade_chance += maxf(0.0, -combined_mood) * 0.35
@@ -233,9 +257,9 @@ func _news_thesis(
 	if category == "earnings" and speculation_factor > 0.7:
 		fade_chance += 0.14
 
-	var surprise_chance: float = 0.07 if is_major else 0.1
+	var surprise_chance: float = (0.07 if is_major else 0.1) * surprise_mult
 	if weather == "high_vol":
-		surprise_chance += 0.08
+		surprise_chance += 0.08 * surprise_mult
 	if is_major:
 		priced_in *= 0.55
 		fade_chance *= 0.55
@@ -569,18 +593,18 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 		lasting_bias = 0.0
 
 	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias + regime_drift
-	organic_change *= lerpf(0.92, 1.08, speculation_factor)
+	organic_change *= lerpf(0.92, 1.08, speculation_factor) * organic_mult
 	if speculation_factor > 0.8 and randf() < 0.012 * flip_mult:
-		organic_change += randf_range(-0.0011, 0.0011)
+		organic_change += randf_range(-0.0011, 0.0011) * organic_mult
 	var cap_mult: float = clampf(lerpf(1.0, 1.4, (vol_mult - 1.0) / 0.7), 1.0, 1.45)
-	var organic_cap: float = MAX_NORMAL_TICK_CHANGE * clampf(volatility, 0.5, 1.6) * cap_mult
+	var organic_cap: float = MAX_NORMAL_TICK_CHANGE * clampf(volatility, 0.5, 1.6) * cap_mult * tick_cap_mult
 	organic_change = clampf(organic_change, -organic_cap, organic_cap)
 
 	var total_change: float = organic_change + news_move
 	if major_news_active:
-		total_change = clampf(total_change, -MAX_MAJOR_TICK_CHANGE, MAX_MAJOR_TICK_CHANGE)
+		total_change = clampf(total_change, -MAX_MAJOR_TICK_CHANGE * major_cap_mult, MAX_MAJOR_TICK_CHANGE * major_cap_mult)
 	elif news_move != 0.0:
-		total_change = clampf(total_change, -MAX_ROUTINE_NEWS_TICK_CHANGE, MAX_ROUTINE_NEWS_TICK_CHANGE)
+		total_change = clampf(total_change, -MAX_ROUTINE_NEWS_TICK_CHANGE * routine_cap_mult, MAX_ROUTINE_NEWS_TICK_CHANGE * routine_cap_mult)
 	else:
 		total_change = clampf(total_change, -organic_cap, organic_cap)
 
@@ -665,7 +689,7 @@ func _set_lasting_bias(move: float, is_major: bool) -> void:
 func _queue_flash_revert(move: float) -> void:
 	if absf(move) < 0.001:
 		return
-	revert_remaining = -move * randf_range(0.38, 0.78)
+	revert_remaining = -move * randf_range(0.38, 0.78) * revert_mult
 	revert_ticks = randi_range(6, 14)
 
 

@@ -457,7 +457,9 @@ func _refresh_selected_stock() -> void:
 	var change: float = stock.get_day_change()
 	selected_change_label.text = "%s$%.2f (%s%.2f%%)" % [_sign(change), absf(change), _sign(change), absf(stock.get_day_change_pct())]
 	selected_change_label.add_theme_color_override("font_color", _pl_color(change))
-	selected_meta_label.text = "%s · %s · %s" % [stock.personality_label, stock.sector, stock.market_cap_label]
+	var typical: String = str(CompanyCatalog.risk_profile(stock.symbol).get("typical", ""))
+	selected_meta_label.text = "%s · %s · %s · %s" % [stock.personality_label, typical, stock.sector, stock.market_cap_label]
+	selected_meta_label.add_theme_color_override("font_color", CompanyCatalog.risk_color(stock.risk_key))
 
 
 func _refresh_chart() -> void:

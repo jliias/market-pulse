@@ -97,7 +97,7 @@ func _handle_status() -> String:
 	for symbol in market.watchlist:
 		var stock: Stock = market.stocks[symbol]
 		var owned: int = portfolio.get_shares(symbol)
-		lines.append("%s (%s)" % [symbol, stock.company_name])
+		lines.append("%s (%s)  [%s]" % [symbol, stock.company_name, stock.personality_label])
 		var day_pct: float = stock.get_day_change_pct()
 		var day_sign: String = "+" if day_pct >= 0 else ""
 		lines.append("  Price: $%.2f (%s%.1f%%)  Bid: $%.2f  Ask: $%.2f" % [

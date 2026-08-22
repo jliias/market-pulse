@@ -155,7 +155,7 @@ func _schedule(stock: Stock, tick: int, wait: int, move: float, event: NewsEvent
 	dramas_today += 1
 	last_drama_tick = tick
 	last_symbol_drama_tick[stock.symbol] = tick
-	stock.queue_scripted_move(wait, move, randi_range(8, 16), absf(move) > 0.028, absf(move) > 0.022)
+	stock.queue_scripted_move(wait, move * stock.drama_mult, randi_range(8, 16), absf(move) > 0.028, absf(move) > 0.022)
 	pending_headlines.append({"wait": wait, "event": event})
 
 

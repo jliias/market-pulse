@@ -7,6 +7,7 @@ var symbol: String = ""
 var _selected: bool = false
 
 @onready var ticker_label: Label = %TickerLabel
+@onready var risk_label: Label = %RiskLabel
 @onready var name_label: Label = %NameLabel
 @onready var price_label: Label = %PriceLabel
 @onready var change_label: Label = %ChangeLabel
@@ -31,6 +32,8 @@ func set_selected(on: bool) -> void:
 func refresh(stock: Stock, owned_shares: int = 0) -> void:
 	symbol = stock.symbol
 	ticker_label.text = stock.symbol
+	risk_label.text = stock.personality_label.to_upper()
+	risk_label.add_theme_color_override("font_color", CompanyCatalog.risk_color(stock.risk_key))
 	name_label.text = stock.company_name
 	price_label.text = "$%.2f" % stock.price
 	var change: float = stock.get_day_change()
