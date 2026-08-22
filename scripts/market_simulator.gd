@@ -37,6 +37,8 @@ var mood_hold: float = 0.0
 var mood_hold_ticks: int = 0
 var calendar_day: int = 0
 var regime: MarketRegime = MarketRegime.new()
+var drama: DramaDirector = DramaDirector.new()
+var player_portfolio: Portfolio
 
 
 func _init() -> void:
@@ -72,6 +74,7 @@ func prepare() -> void:
 	mood_hold_ticks = 0
 	premarket_events.clear()
 	news_feed.clear()
+	drama.reset()
 	chain_director.calendar_day = calendar_day
 
 	var climate_line: String = regime.take_climate_headline()
@@ -137,6 +140,7 @@ func simulate_until_close() -> Array[NewsEvent]:
 		return []
 	if not is_running:
 		is_running = true
+	drama.spectator = true
 	var caught_up: Array[NewsEvent] = []
 	var guard: int = 0
 	while not is_closed and guard < 500:
@@ -144,6 +148,7 @@ func simulate_until_close() -> Array[NewsEvent]:
 		var batch: Array[NewsEvent] = tick()
 		for event in batch:
 			caught_up.append(event)
+	drama.spectator = false
 	return caught_up
 
 
@@ -197,10 +202,26 @@ func tick() -> Array[NewsEvent]:
 	for symbol in stocks:
 		stocks[symbol].tick(market_sentiment, regime.tick_modifiers())
 
+	if player_portfolio != null:
+		var drama_events: Array[NewsEvent] = drama.tick(self, player_portfolio)
+		for event in drama_events:
+			news_feed.append(event)
+			new_events.append(event)
+
 	if news_feed.size() > 50:
 		news_feed.remove_at(0)
 
 	return new_events
+
+
+func note_player_trade(side: String, symbol: String, shares: int, price: float, remaining: int, avg_cost: float, cash: float, portfolio_value: float) -> void:
+	var stock: Stock = get_stock(symbol)
+	if stock == null:
+		return
+	if side == "BUY":
+		drama.note_buy(symbol, shares, price, stock, tick_count, cash, portfolio_value)
+	else:
+		drama.note_sell(symbol, shares, price, stock, tick_count, remaining, avg_cost, portfolio_value)
 
 
 func get_market_return_pct() -> float:

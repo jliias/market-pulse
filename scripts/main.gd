@@ -89,6 +89,7 @@ func _ready() -> void:
 	_build_timeframe_buttons()
 	_build_watchlist()
 	_apply_launch_mode()
+	market.player_portfolio = portfolio
 	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
 	tick_timer.timeout.connect(_on_market_tick)
@@ -271,8 +272,31 @@ func _place_order() -> void:
 	var result: Dictionary
 	if buy_mode:
 		result = portfolio.buy(selected_symbol, quantity, stock.ask)
+		if bool(result.get("success", false)):
+			market.note_player_trade(
+				"BUY",
+				selected_symbol,
+				quantity,
+				stock.ask,
+				portfolio.get_shares(selected_symbol),
+				portfolio.get_avg_cost(selected_symbol),
+				portfolio.cash,
+				portfolio.get_portfolio_value(market.stocks)
+			)
 	else:
+		var avg_cost: float = portfolio.get_avg_cost(selected_symbol)
 		result = portfolio.sell(selected_symbol, quantity, stock.bid)
+		if bool(result.get("success", false)):
+			market.note_player_trade(
+				"SELL",
+				selected_symbol,
+				quantity,
+				stock.bid,
+				portfolio.get_shares(selected_symbol),
+				avg_cost,
+				portfolio.cash,
+				portfolio.get_portfolio_value(market.stocks)
+			)
 	trade_message_label.text = str(result["message"])
 	_update_ui()
 

@@ -569,6 +569,18 @@ func apply_interpreted_news(result: Dictionary, duration_ticks: int, is_major: b
 		})
 
 
+func queue_scripted_move(wait: int, move: float, duration: int, is_major: bool, lasting: bool) -> void:
+	if absf(move) < 0.0004:
+		return
+	digest_queue.append({
+		"wait": maxi(wait, 2),
+		"move": move,
+		"duration": maxi(duration, 4),
+		"major": is_major,
+		"lasting": lasting,
+	})
+
+
 func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = false, lasting: bool = false) -> void:
 	if absf(total_move) < 0.0002:
 		return
