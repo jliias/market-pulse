@@ -19,8 +19,7 @@ func _ready() -> void:
 
 func _on_new_game() -> void:
 	SaveManager.launch_mode = "new"
-	SaveManager.delete_save()
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	get_tree().change_scene_to_file("res://scenes/watchlist_select.tscn")
 
 
 func _on_continue() -> void:

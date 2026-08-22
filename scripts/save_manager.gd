@@ -3,6 +3,7 @@ extends RefCounted
 
 const SAVE_PATH := "user://market_pulse_save.json"
 static var launch_mode: String = "new"
+static var pending_watchlist: Array[String] = []
 
 
 static func has_save() -> bool:
@@ -27,12 +28,13 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		avg_cost[str(symbol)] = float(portfolio.avg_cost[symbol])
 
 	var prices: Dictionary = {}
-	for symbol in MarketSimulator.SYMBOL_ORDER:
+	for symbol in market.watchlist:
 		if market.stocks.has(symbol):
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 3,
+		"version": 4,
+		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
 		"avg_cost": avg_cost,
@@ -63,6 +65,7 @@ static func load_game() -> Dictionary:
 
 
 static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictionary) -> void:
+	market.set_watchlist(watchlist_from_save(data))
 	portfolio.apply_save(data)
 	if data.has("stock_prices") and typeof(data["stock_prices"]) == TYPE_DICTIONARY:
 		market.apply_saved_prices(data["stock_prices"])
@@ -70,10 +73,19 @@ static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictio
 		market.chain_director.deserialize(data["event_chains"])
 	else:
 		market.chain_director.reset()
+	market.chain_director.prune_to_universe(market.watchlist, market.get_stock_list())
 	if data.has("regime") and typeof(data["regime"]) == TYPE_DICTIONARY:
 		market.regime.deserialize(data["regime"])
 	else:
 		market.regime.reset()
+
+
+static func watchlist_from_save(data: Dictionary) -> Array[String]:
+	if data.has("watchlist") and typeof(data["watchlist"]) == TYPE_ARRAY:
+		return CompanyCatalog.sanitize_watchlist(data["watchlist"])
+	if data.has("stock_prices") and typeof(data["stock_prices"]) == TYPE_DICTIONARY:
+		return CompanyCatalog.sanitize_watchlist((data["stock_prices"] as Dictionary).keys())
+	return CompanyCatalog.DEFAULT_WATCHLIST.duplicate()
 
 
 static func summary_text() -> String:

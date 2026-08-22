@@ -87,8 +87,8 @@ func _ready() -> void:
 	resized.connect(_apply_responsive_layout)
 	_connect_controls()
 	_build_timeframe_buttons()
-	_build_watchlist()
 	_apply_launch_mode()
+	_build_watchlist()
 	market.player_portfolio = portfolio
 	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
@@ -139,6 +139,9 @@ func _apply_launch_mode() -> void:
 		if not data.is_empty():
 			SaveManager.apply_to(portfolio, market, data)
 	else:
+		var names: Array[String] = CompanyCatalog.sanitize_watchlist(SaveManager.pending_watchlist)
+		market.set_watchlist(names)
+		SaveManager.pending_watchlist.clear()
 		portfolio.reset_new_game()
 		market.chain_director.reset()
 		market.regime.reset()
@@ -170,7 +173,7 @@ func _build_watchlist() -> void:
 		watchlist_list.remove_child(child)
 		child.free()
 	watchlist_cards.clear()
-	for symbol in MarketSimulator.SYMBOL_ORDER:
+	for symbol in market.watchlist:
 		var card: WatchlistCard = CARD_SCENE.instantiate()
 		watchlist_list.add_child(card)
 		card.selected.connect(_select_stock)
@@ -185,7 +188,7 @@ func _begin_session() -> void:
 	market.prepare()
 	portfolio.mark_day_start(market.stocks)
 	news_feed.clear()
-	selected_symbol = MarketSimulator.SYMBOL_ORDER[0]
+	selected_symbol = market.watchlist[0]
 	_set_buy_mode(true)
 	_set_quantity(20)
 	trade_message_label.text = "Premarket is out. Read the tape — the open is in 10 seconds."
@@ -479,7 +482,7 @@ func _refresh_portfolio() -> void:
 		empty.add_theme_color_override("font_color", Color(0.6, 0.62, 0.68))
 		portfolio_list.add_child(empty)
 	else:
-		for symbol in MarketSimulator.SYMBOL_ORDER:
+		for symbol in market.watchlist:
 			if not portfolio.holdings.has(symbol):
 				continue
 			var stock: Stock = market.stocks[symbol]

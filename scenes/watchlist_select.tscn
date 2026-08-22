@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://dx6dfw8e7rgw3"]
+
+[ext_resource type="Script" path="res://scripts/watchlist_select.gd" id="1_select"]
+
+[node name="WatchlistSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_select")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.08, 0.11, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 36
+
+[node name="Panel" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Margin/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
+theme_override_font_sizes/font_size = 36
+text = "BUILD YOUR WATCHLIST"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Margin/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.78, 0.84, 1)
+theme_override_font_sizes/font_size = 16
+text = "Pick three companies. This board stays locked for the whole run."
+horizontal_alignment = 1
+
+[node name="HintLabel" type="Label" parent="Margin/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.74, 1)
+theme_override_font_sizes/font_size = 15
+text = "Choose exactly 3 names for this run. 0 of 3 selected."
+horizontal_alignment = 1
+
+[node name="PickedLabel" type="Label" parent="Margin/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 1)
+theme_override_font_sizes/font_size = 16
+text = "Watchlist: —"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Panel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CompanyList" type="VBoxContainer" parent="Margin/Panel/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BackButton" type="Button" parent="Margin/Panel/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 52)
+layout_mode = 2
+text = "Back"
+
+[node name="StartButton" type="Button" parent="Margin/Panel/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+disabled = true
+text = "Start With These 3"

@@ -125,7 +125,7 @@ func _maybe_missed_breakout(market: MarketSimulator, portfolio: Portfolio) -> vo
 	if portfolio.cash < 600.0:
 		return
 	var candidates: Array[Stock] = []
-	for symbol in MarketSimulator.SYMBOL_ORDER:
+	for symbol in market.watchlist:
 		if portfolio.get_shares(symbol) > 0:
 			continue
 		if not market.stocks.has(symbol):

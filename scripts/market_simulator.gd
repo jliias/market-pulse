@@ -7,20 +7,7 @@ const OPEN_HOUR := 9
 const OPEN_MINUTE := 30
 const CLOSE_HOUR := 16
 const CLOSE_MINUTE := 0
-const SYMBOL_ORDER: Array[String] = ["ALPH", "GRNE", "NMIN"]
-const SYMBOL_ALIASES := {
-	"A": "ALPH",
-	"ALPH": "ALPH",
-	"ALPHA": "ALPH",
-	"B": "GRNE",
-	"GRNE": "GRNE",
-	"GREEN": "GRNE",
-	"C": "NMIN",
-	"NMIN": "NMIN",
-	"NORTH": "NMIN",
-	"MINING": "NMIN",
-}
-
+var watchlist: Array[String] = CompanyCatalog.DEFAULT_WATCHLIST.duplicate()
 var stocks: Dictionary = {}
 var news_feed: Array[NewsEvent] = []
 var news_generator: NewsGenerator = NewsGenerator.new()
@@ -42,24 +29,25 @@ var player_portfolio: Portfolio
 
 
 func _init() -> void:
-	_setup_stocks()
+	set_watchlist(CompanyCatalog.DEFAULT_WATCHLIST)
 	chain_director = EventChainDirector.new(news_generator)
 
 
-func _setup_stocks() -> void:
-	stocks["ALPH"] = Stock.new("ALPH", "Alpha Technologies", 187.45, 1.0, "Technology", "Large Cap")
-	stocks["GRNE"] = Stock.new("GRNE", "Green Energy Corp", 34.20, 0.85, "Energy", "Mid Cap")
-	stocks["NMIN"] = Stock.new("NMIN", "North Mining Ltd", 512.80, 1.15, "Materials", "Large Cap")
+func set_watchlist(symbols: Array) -> void:
+	watchlist = CompanyCatalog.sanitize_watchlist(symbols)
+	stocks.clear()
+	for symbol in watchlist:
+		stocks[symbol] = CompanyCatalog.make_stock(symbol)
 
 
 func apply_saved_prices(prices: Dictionary) -> void:
-	for symbol in SYMBOL_ORDER:
-		if prices.has(symbol):
+	for symbol in watchlist:
+		if prices.has(symbol) and stocks.has(symbol):
 			stocks[symbol].apply_saved_close(float(prices[symbol]))
 
 
 func roll_to_next_day() -> void:
-	for symbol in SYMBOL_ORDER:
+	for symbol in watchlist:
 		stocks[symbol].roll_to_next_day()
 
 
@@ -237,7 +225,7 @@ func get_alpha_pct(player_return_pct: float) -> float:
 func _current_index() -> float:
 	var total := 0.0
 	var count := 0
-	for symbol in SYMBOL_ORDER:
+	for symbol in watchlist:
 		total += stocks[symbol].price
 		count += 1
 	return total / float(count)
@@ -441,14 +429,25 @@ func get_time_string() -> String:
 
 func get_stock_list() -> Array[Stock]:
 	var list: Array[Stock] = []
-	for symbol in SYMBOL_ORDER:
+	for symbol in watchlist:
 		list.append(stocks[symbol])
 	return list
 
 
 func resolve_symbol(input: String) -> String:
 	var upper := input.to_upper()
-	return SYMBOL_ALIASES.get(upper, "")
+	if upper == "A" and watchlist.size() > 0:
+		return watchlist[0]
+	if upper == "B" and watchlist.size() > 1:
+		return watchlist[1]
+	if upper == "C" and watchlist.size() > 2:
+		return watchlist[2]
+	var mapped: String = CompanyCatalog.resolve_alias(upper)
+	if mapped.is_empty():
+		mapped = upper
+	if watchlist.has(mapped):
+		return mapped
+	return ""
 
 
 func get_stock(symbol: String) -> Stock:

@@ -176,10 +176,10 @@ const ARCS := {
 			},
 			"reaction": {
 				"positive": [
-					{"text": "Market reaction: ALPH and GRNE catch the growth bid.", "category": "macro", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: growth names on the board catch the bid.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 				"negative": [
-					{"text": "Market reaction: ALPH and GRNE are offered as growth gets cut.", "category": "macro", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: growth names on the board are offered as duration gets cut.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 			},
 			"twist": {
@@ -196,6 +196,147 @@ const ARCS := {
 				],
 				"negative": [
 					{"text": "Resolution: the growth unwind is done — desks call the factor reset complete.", "category": "macro", "strength": "moderate", "lasting": true},
+				],
+			},
+		},
+	},
+	"helx_trial": {
+		"scope": "company",
+		"subject": "HELX",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Helix Biotech says a pivotal readout is coming in range.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Helix Biotech says a pivotal readout may slip.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: investigators sound constructive on the Helix Biotech cohort.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: enrollment at Helix Biotech looks slower than billed.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: biotech flow chases Helix Biotech on the trial tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Helix Biotech is offered as desks fade the trial rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a subgroup look at Helix Biotech comes in cleaner than feared.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a safety flag at Helix Biotech is wider than first billed.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Helix Biotech confirms the trial met the primary endpoint.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Helix Biotech says the trial missed and the timeline is under review.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"cybr_contract": {
+		"scope": "company",
+		"subject": "CYBR",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "CyberNest Inc says it is in late talks on a large security award.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "CyberNest Inc warns a large security award may slip.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: CyberNest Inc commentary on the award stays constructive.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: the CyberNest Inc award looks more competitive than billed.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: speculative flow chases CyberNest Inc on the contract tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: CyberNest Inc is sold as traders fade the award rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: CyberNest Inc is said to have the inside track after a bake-off.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a protest is said to be hanging over the CyberNest Inc award.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: CyberNest Inc confirms the multi-year security award.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: CyberNest Inc loses the award — the rumor dies.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"qbit_demo": {
+		"scope": "company",
+		"subject": "QBIT",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Qubit Labs teases a public quantum demo this month.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Qubit Labs warns the public quantum demo may slip.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Qubit Labs says lab metrics are tracking ahead of the demo.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: Qubit Labs trims demo commentary as calibration slips.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: hot money piles into Qubit Labs on the demo tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Qubit Labs is offered as traders fade the demo rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a partner lab corroborates the Qubit Labs metrics.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a rival notes holes in the Qubit Labs demo claims.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Qubit Labs completes the demo and holds the narrative.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Qubit Labs postpones the demo — the squeeze unwinds.", "category": "product", "strength": "major", "lasting": true},
 				],
 			},
 		},
@@ -340,7 +481,7 @@ func try_intraday(stocks: Array[Stock], session_time: String, tick_count: int) -
 
 
 func try_start(stocks: Array[Stock], session_time: String, premarket: bool) -> NewsEvent:
-	var arc_id: String = _pick_available_arc()
+	var arc_id: String = _pick_available_arc(stocks)
 	if arc_id.is_empty():
 		return null
 	var spec: Dictionary = ARCS[arc_id]
@@ -480,8 +621,22 @@ func _schedule(chain: EventChain, from_stage: String) -> void:
 		chain.due_tick = 0 if chain.prefer_premarket else randi_range(20, 180)
 
 
-func _pick_available_arc() -> String:
+func prune_to_universe(watchlist: Array[String], stocks: Array[Stock]) -> void:
+	var keep: Array[EventChain] = []
+	for chain in active:
+		if not ARCS.has(chain.arc_id):
+			continue
+		if not _arc_allowed(ARCS[chain.arc_id], watchlist, stocks):
+			continue
+		keep.append(chain)
+	active = keep
+
+
+func _pick_available_arc(stocks: Array[Stock]) -> String:
 	var taken: Array[String] = occupied_subjects()
+	var watchlist: Array[String] = []
+	for stock in stocks:
+		watchlist.append(stock.symbol)
 	var options: Array[String] = []
 	for arc_id in ARCS.keys():
 		var spec: Dictionary = ARCS[arc_id]
@@ -490,10 +645,21 @@ func _pick_available_arc() -> String:
 			continue
 		if int(cooldowns.get(arc_id, -99)) > calendar_day:
 			continue
+		if not _arc_allowed(spec, watchlist, stocks):
+			continue
 		options.append(str(arc_id))
 	if options.is_empty():
 		return ""
 	return options[randi() % options.size()]
+
+
+func _arc_allowed(spec: Dictionary, watchlist: Array[String], stocks: Array[Stock]) -> bool:
+	var scope: String = str(spec.get("scope", ""))
+	if scope == "company":
+		return watchlist.has(str(spec.get("subject", "")))
+	if scope == "industry":
+		return not news_generator.symbols_for_industry(stocks, str(spec.get("industry", ""))).is_empty()
+	return true
 
 
 func _stage_item(arc_id: String, stage: String, positive: bool) -> Dictionary:

@@ -44,7 +44,7 @@ func _handle_buy(parts: PackedStringArray) -> String:
 
 	var symbol: String = market.resolve_symbol(parts[1])
 	if symbol.is_empty():
-		return "Unknown stock: %s. Use ALPH, GRNE, or NMIN." % parts[1]
+		return "Unknown stock: %s. Trade one of: %s." % [parts[1], ", ".join(market.watchlist)]
 
 	var shares: int = parts[2].to_int()
 	if shares <= 0:
@@ -62,7 +62,7 @@ func _handle_sell(parts: PackedStringArray) -> String:
 
 	var symbol: String = market.resolve_symbol(parts[1])
 	if symbol.is_empty():
-		return "Unknown stock: %s. Use ALPH, GRNE, or NMIN." % parts[1]
+		return "Unknown stock: %s. Trade one of: %s." % [parts[1], ", ".join(market.watchlist)]
 
 	var shares: int = parts[2].to_int()
 	if shares <= 0:
@@ -94,7 +94,7 @@ func _handle_status() -> String:
 	lines.append("")
 	lines.append("--- Stocks ---")
 
-	for symbol in MarketSimulator.SYMBOL_ORDER:
+	for symbol in market.watchlist:
 		var stock: Stock = market.stocks[symbol]
 		var owned: int = portfolio.get_shares(symbol)
 		lines.append("%s (%s)" % [symbol, stock.company_name])
@@ -119,6 +119,12 @@ func _handle_status() -> String:
 
 
 func _handle_help() -> String:
+	var names: PackedStringArray = []
+	for i in market.watchlist.size():
+		var symbol: String = market.watchlist[i]
+		var stock: Stock = market.stocks[symbol]
+		var shortcut: String = "ABC"[i]
+		names.append("%s/%s (%s)" % [shortcut, symbol, stock.company_name])
 	return """Available commands:
   BUY <stock> <shares>   Buy shares (e.g. BUY A 50)
   SELL <stock> <shares>  Sell shares (e.g. SELL B 20)
@@ -128,9 +134,9 @@ func _handle_help() -> String:
   QUIT                   End trading session
   AGAIN                  Start a new trading day
 
-Stocks: A (Alpha Technologies), B (Green Energy Corp), C (North Mining Ltd)
-Commission: $2.00 + 0.2% per trade
-Goal: finish ahead of the market, not just in the green."""
+Stocks: %s
+Commission: $2.00 + 0.2%% per trade
+Goal: finish ahead of the market, not just in the green.""" % ", ".join(names)
 
 
 func _format_volume(vol: int) -> String:

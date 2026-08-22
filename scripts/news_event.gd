@@ -65,6 +65,14 @@ func feed_tag() -> String:
 					return "MATERIALS"
 				"Commodities":
 					return "CMTY"
+				"Healthcare":
+					return "HLTH"
+				"Consumer":
+					return "CONS"
+				"Industrials":
+					return "INDU"
+				"Financials":
+					return "FIN"
 				"Growth":
 					return "GROWTH"
 				_:

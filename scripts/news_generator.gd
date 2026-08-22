@@ -7,7 +7,10 @@ const STRENGTH_RANGE := {
 	"major": {"day": Vector2(0.028, 0.055), "pre": Vector2(0.040, 0.090)},
 }
 
-const INDUSTRY_KEYS: Array[String] = ["Technology", "Energy", "Materials", "Commodities", "Growth"]
+const INDUSTRY_KEYS: Array[String] = [
+	"Technology", "Energy", "Materials", "Commodities", "Growth",
+	"Healthcare", "Consumer", "Industrials", "Financials",
+]
 
 const COMPANY_NEWS := {
 	"ALPH": {
@@ -58,6 +61,104 @@ const COMPANY_NEWS := {
 			{"text": "Flow desks lean short North Mining Ltd into the close.", "category": "rumor", "strength": "minor", "lasting": false},
 		],
 	},
+	"HELX": {
+		"positive": [
+			{"text": "Helix Biotech reports a clean readout on a mid-stage trial.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Analyst raises Helix Biotech on pipeline optionality.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Helix Biotech signs a co-development pact with a larger peer.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Street chatter: Helix Biotech data looks better than billed.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Helix Biotech flags a pause in a key trial cohort.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Analyst cuts Helix Biotech after a mixed data leak.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Whispers of a safety review hanging over Helix Biotech.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Helix Biotech trims a near-term launch window.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+	},
+	"RETL": {
+		"positive": [
+			{"text": "Redline Retail beats a same-store sales checkpoint.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Redline Retail lifts holiday inventory guidance.", "category": "earnings", "strength": "minor", "lasting": true},
+			{"text": "Analysts flag Redline Retail as a defensive consumer pick.", "category": "analyst", "strength": "minor", "lasting": false},
+			{"text": "Intraday bid: Redline Retail sees dip-buying after a soft open.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Redline Retail warns of a weaker traffic print.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Analyst trims Redline Retail on margin pressure.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Whispers of a promotional war hitting Redline Retail.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Redline Retail delays a store-refresh wave.", "category": "product", "strength": "minor", "lasting": true},
+		],
+	},
+	"CYBR": {
+		"positive": [
+			{"text": "Intraday rumor: CyberNest Inc nearing a large security contract.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "CyberNest Inc lands a multi-year government cyber award.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Analyst upgrades CyberNest Inc after a product demo.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Hot money piles into CyberNest Inc on breach-prevention chatter.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Whisper: CyberNest Inc may have missed a key RFP.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Analyst downgrades CyberNest Inc to Neutral.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "CyberNest Inc delays a flagship platform release.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Traders fade CyberNest Inc after the morning squeeze.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+	},
+	"AERO": {
+		"positive": [
+			{"text": "Aether Aerospace wins a multi-year defense contract.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Aether Aerospace beats a production checkpoint.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Analyst raises Aether Aerospace on backlog visibility.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Street chatter: Aether Aerospace named on a new program shortlist.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Aether Aerospace flags a supply-chain slip on a key airframe.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Aether Aerospace trims a near-term delivery guide.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "Analyst cuts Aether Aerospace after a program review.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Whispers of a protest hanging over an Aether Aerospace award.", "category": "rumor", "strength": "moderate", "lasting": false},
+		],
+	},
+	"BANK": {
+		"positive": [
+			{"text": "Bastion Bank reports a clean net-interest print.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Bastion Bank lifts its capital-return commentary.", "category": "earnings", "strength": "minor", "lasting": true},
+			{"text": "Analysts flag Bastion Bank as oversold versus peers.", "category": "analyst", "strength": "minor", "lasting": false},
+			{"text": "Intraday bid: Bastion Bank sees dip-buying in financials.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Bastion Bank flags a rise in credit-loss provisions.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "Analyst cuts Bastion Bank on net-interest pressure.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Intraday rumor: Bastion Bank deposit costs running hot.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Flow desks lean short Bastion Bank into the close.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+	},
+	"FOOD": {
+		"positive": [
+			{"text": "Harbor Foods reports steady volume across the grocery channel.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Harbor Foods extends a private-label supply deal.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Analysts flag Harbor Foods as a defensive consumer name.", "category": "analyst", "strength": "minor", "lasting": false},
+			{"text": "Intraday bid: Harbor Foods sees dip-buying after a soft open.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Harbor Foods flags input-cost pressure into the next quarter.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Harbor Foods recalls a limited SKU after a quality check.", "category": "product", "strength": "major", "lasting": false},
+			{"text": "Analyst trims Harbor Foods on promotional intensity.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Whispers of retailer destocking hitting Harbor Foods.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+	},
+	"QBIT": {
+		"positive": [
+			{"text": "Street chatter: Qubit Labs named a dark-horse AI pick.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Qubit Labs posts a surprise research milestone.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Hot money piles into Qubit Labs on quantum chatter.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Analyst initiates Qubit Labs at Overweight.", "category": "analyst", "strength": "moderate", "lasting": false},
+		],
+		"negative": [
+			{"text": "Whispers of a funding squeeze at Qubit Labs.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Qubit Labs delays a key lab demonstration.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Analyst flags dilution risk at Qubit Labs.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Traders fade Qubit Labs after the morning squeeze.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+	},
 }
 
 const PREMARKET_COMPANY := {
@@ -89,6 +190,76 @@ const PREMARKET_COMPANY := {
 		"negative": [
 			{"text": "PREMARKET: North Mining Ltd misses earnings on weaker commodity prices.", "category": "earnings", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: North Mining Ltd cuts annual production targets.", "category": "earnings", "strength": "major", "lasting": true},
+		],
+	},
+	"HELX": {
+		"positive": [
+			{"text": "PREMARKET: Helix Biotech beats estimates after a clean trial update.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Helix Biotech raises pipeline commentary before the open.", "category": "product", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Helix Biotech misses as a trial delay hits the print.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Helix Biotech issues a cautionary note on a key study.", "category": "product", "strength": "major", "lasting": true},
+		],
+	},
+	"RETL": {
+		"positive": [
+			{"text": "PREMARKET: Redline Retail beats quarterly sales and holds margins.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Redline Retail lifts full-year traffic commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Redline Retail misses as traffic turns softer.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Redline Retail cuts a near-term margin outlook.", "category": "earnings", "strength": "major", "lasting": true},
+		],
+	},
+	"CYBR": {
+		"positive": [
+			{"text": "PREMARKET: CyberNest Inc beats on a surge in security bookings.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: CyberNest Inc raises full-year ARR commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: CyberNest Inc misses as deal slip hits the quarter.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: CyberNest Inc warns of a slower government pipeline.", "category": "earnings", "strength": "major", "lasting": true},
+		],
+	},
+	"AERO": {
+		"positive": [
+			{"text": "PREMARKET: Aether Aerospace beats on stronger deliveries.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Aether Aerospace lifts backlog commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Aether Aerospace misses as a program slips.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Aether Aerospace cuts a near-term delivery range.", "category": "earnings", "strength": "major", "lasting": true},
+		],
+	},
+	"BANK": {
+		"positive": [
+			{"text": "PREMARKET: Bastion Bank posts a better-than-expected NII print.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Bastion Bank lifts its capital-return outlook.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Bastion Bank misses as provisions jump.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Bastion Bank warns of hotter deposit costs.", "category": "earnings", "strength": "major", "lasting": true},
+		],
+	},
+	"FOOD": {
+		"positive": [
+			{"text": "PREMARKET: Harbor Foods beats on volume and mix.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Harbor Foods lifts grocery-channel commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Harbor Foods misses as input costs bite.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Harbor Foods trims a near-term volume guide.", "category": "earnings", "strength": "major", "lasting": true},
+		],
+	},
+	"QBIT": {
+		"positive": [
+			{"text": "PREMARKET: Qubit Labs beats on a research milestone and contract chatter.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Qubit Labs raises cash-runway commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Qubit Labs misses as a demo slips and costs run hot.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Qubit Labs flags a tighter funding window.", "category": "earnings", "strength": "major", "lasting": true},
 		],
 	},
 }
@@ -142,6 +313,46 @@ const INDUSTRY_NEWS := {
 		"negative": [
 			{"text": "Growth unwind: traders cut duration and speculative exposure.", "category": "macro", "strength": "moderate", "lasting": true},
 			{"text": "Crowded growth trades get squeezed on the offer.", "category": "macro", "strength": "minor", "lasting": false},
+		],
+	},
+	"Healthcare": {
+		"positive": [
+			{"text": "Healthcare: biotech desks bid the group after a clean data tape.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Pipeline chatter turns constructive across healthcare names.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Healthcare: risk-off hits the biotech complex after mixed data.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Policy chatter weighs on healthcare multiples.", "category": "regulatory", "strength": "minor", "lasting": false},
+		],
+	},
+	"Consumer": {
+		"positive": [
+			{"text": "Consumer: traffic and mix look firmer across the group.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Defensive consumer names catch a bid as the tape turns cautious.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Consumer: promotional intensity hits margins across the group.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Traffic worries knock consumer names.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+	},
+	"Industrials": {
+		"positive": [
+			{"text": "Industrials: backlog commentary turns constructive across the group.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Defense and aerospace names catch a bid on contract flow.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Industrials: supply-chain slips weigh on the group.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Order-book worries knock industrial names.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+	},
+	"Financials": {
+		"positive": [
+			{"text": "Financials: net-interest commentary firms across the banks.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Credit desks turn constructive on the bank group.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Financials: provision chatter weighs on the bank group.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Deposit-cost worries knock financial names.", "category": "industry", "strength": "minor", "lasting": false},
 		],
 	},
 }
@@ -222,13 +433,16 @@ func generate_open_bell(session_time: String) -> NewsEvent:
 
 func _make_company_event(stock: Stock, session_time: String, premarket: bool) -> NewsEvent:
 	var is_positive := randf() > (0.42 if premarket else 0.48)
-	var pool: Dictionary = PREMARKET_COMPANY if premarket else COMPANY_NEWS
-	var item: Dictionary = _pick_item(pool[stock.symbol], is_positive)
+	var pack: Dictionary = _company_templates(stock, premarket)
+	var item: Dictionary = _pick_item(pack, is_positive)
 	return _from_item(item, session_time, [stock.symbol], is_positive, premarket, "company", "")
 
 
 func _make_industry_event(stocks: Array[Stock], session_time: String, premarket: bool, _avoid_subjects: Array[String] = []) -> NewsEvent:
-	var industry: String = INDUSTRY_KEYS[randi() % INDUSTRY_KEYS.size()]
+	var keys: Array[String] = _industry_keys_for(stocks)
+	if keys.is_empty():
+		return _make_market_event(stocks, session_time, premarket)
+	var industry: String = keys[randi() % keys.size()]
 	var names: Array[String] = _symbols_for_industry(stocks, industry)
 	if names.is_empty():
 		return _make_market_event(stocks, session_time, premarket)
@@ -361,6 +575,39 @@ func _roll_duration(strength: String, lasting: bool) -> int:
 			return randi_range(3, 7)
 		_:
 			return randi_range(5, 11)
+
+
+func _company_templates(stock: Stock, premarket: bool) -> Dictionary:
+	var pool: Dictionary = PREMARKET_COMPANY if premarket else COMPANY_NEWS
+	if pool.has(stock.symbol):
+		return pool[stock.symbol]
+	var name: String = stock.company_name
+	if premarket:
+		return {
+			"positive": [
+				{"text": "PREMARKET: %s beats quarterly earnings." % name, "category": "earnings", "strength": "major", "lasting": true},
+			],
+			"negative": [
+				{"text": "PREMARKET: %s misses quarterly earnings." % name, "category": "earnings", "strength": "major", "lasting": true},
+			],
+		}
+	return {
+		"positive": [
+			{"text": "Analyst raises %s." % name, "category": "analyst", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Analyst trims %s." % name, "category": "analyst", "strength": "minor", "lasting": false},
+		],
+	}
+
+
+func _industry_keys_for(stocks: Array[Stock]) -> Array[String]:
+	var keys: Array[String] = []
+	for stock in stocks:
+		for industry in stock.industries:
+			if INDUSTRY_NEWS.has(industry) and not keys.has(industry):
+				keys.append(industry)
+	return keys
 
 
 func _symbols_for_industry(stocks: Array[Stock], industry: String) -> Array[String]:

@@ -9,72 +9,6 @@ const MAX_NORMAL_TICK_CHANGE := 0.0016
 const MAX_ROUTINE_NEWS_TICK_CHANGE := 0.006
 const MAX_MAJOR_TICK_CHANGE := 0.12
 
-const PERSONALITIES := {
-	"ALPH": {
-		"label": "Growth",
-		"volatility": 1.22,
-		"growth": 0.88,
-		"liquidity": 0.72,
-		"popularity": 0.85,
-		"institutional_ownership": 0.55,
-		"speculation_factor": 0.45,
-		"trend_flip": 0.010,
-		"news": {
-			"product": 1.45,
-			"earnings": 1.25,
-			"analyst": 1.15,
-			"rumor": 0.65,
-			"macro": 0.85,
-			"commodity": 0.35,
-			"regulatory": 0.90,
-			"industry": 1.15,
-			"general": 1.0,
-		},
-	},
-	"GRNE": {
-		"label": "Speculative",
-		"volatility": 1.38,
-		"growth": 0.58,
-		"liquidity": 0.42,
-		"popularity": 0.70,
-		"institutional_ownership": 0.28,
-		"speculation_factor": 0.92,
-		"trend_flip": 0.024,
-		"news": {
-			"rumor": 1.70,
-			"regulatory": 1.55,
-			"analyst": 1.25,
-			"earnings": 0.62,
-			"product": 1.05,
-			"macro": 1.20,
-			"commodity": 0.50,
-			"industry": 1.20,
-			"general": 1.10,
-		},
-	},
-	"NMIN": {
-		"label": "Stable",
-		"volatility": 0.62,
-		"growth": 0.42,
-		"liquidity": 0.88,
-		"popularity": 0.50,
-		"institutional_ownership": 0.78,
-		"speculation_factor": 0.22,
-		"trend_flip": 0.006,
-		"news": {
-			"commodity": 1.50,
-			"earnings": 1.20,
-			"rumor": 0.28,
-			"product": 0.50,
-			"analyst": 0.70,
-			"macro": 0.75,
-			"regulatory": 0.85,
-			"industry": 0.80,
-			"general": 0.85,
-		},
-	},
-}
-
 var symbol: String
 var company_name: String
 var sector: String
@@ -148,11 +82,11 @@ func _init(
 
 
 func _apply_personality() -> void:
-	if not PERSONALITIES.has(symbol):
+	var profile: Dictionary = CompanyCatalog.spec(symbol)
+	if profile.is_empty():
 		personality_label = "Balanced"
 		news_sensitivity = {"general": 1.0}
 		return
-	var profile: Dictionary = PERSONALITIES[symbol]
 	personality_label = str(profile["label"])
 	volatility = float(profile["volatility"])
 	growth = float(profile["growth"])
@@ -166,20 +100,15 @@ func _apply_personality() -> void:
 
 func _assign_industries() -> void:
 	industries.clear()
-	if not sector.is_empty():
+	var profile: Dictionary = CompanyCatalog.spec(symbol)
+	var listed: Variant = profile.get("industries", [])
+	if typeof(listed) == TYPE_ARRAY:
+		for item in listed:
+			var name: String = str(item)
+			if not name.is_empty() and not industries.has(name):
+				industries.append(name)
+	if industries.is_empty() and not sector.is_empty():
 		industries.append(sector)
-	match symbol:
-		"ALPH":
-			if not industries.has("Growth"):
-				industries.append("Growth")
-		"GRNE":
-			if not industries.has("Growth"):
-				industries.append("Growth")
-			if not industries.has("Commodities"):
-				industries.append("Commodities")
-		"NMIN":
-			if not industries.has("Commodities"):
-				industries.append("Commodities")
 
 
 func in_industry(industry_name: String) -> bool:
