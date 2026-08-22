@@ -265,7 +265,7 @@ func _apply_news(event: NewsEvent) -> void:
 		var actual_move: float = float(result.get("move", 0.0))
 		var reaction_text: String = str(result.get("reaction", ""))
 		stock.apply_interpreted_news(result, event.duration_ticks, event.is_major, event.lasting, false)
-		applied_moves.append(actual_move + float(result.get("delay_move", 0.0)))
+		applied_moves.append(float(result.get("move", 0.0)))
 		if not reaction_text.is_empty() and not reactions.has(reaction_text):
 			reactions.append(reaction_text)
 

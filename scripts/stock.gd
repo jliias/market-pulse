@@ -107,11 +107,7 @@ var revert_remaining: float = 0.0
 var revert_ticks: int = 0
 var lasting_bias: float = 0.0
 var lasting_ticks: int = 0
-var pending_news_move: float = 0.0
-var pending_news_delay: int = 0
-var pending_news_duration: int = 12
-var pending_news_major: bool = false
-var pending_news_lasting: bool = false
+var digest_queue: Array = []
 
 var previous_close: float
 var last_tick_volume: int = 0
@@ -201,13 +197,82 @@ func interpret_news(
 	var headline_sign: float = signf(headline_impact)
 	var headline_size: float = absf(headline_impact)
 	if headline_sign == 0.0 or headline_size <= 0.0:
-		return {"move": 0.0, "reaction": "", "delay_move": 0.0, "delay_ticks": 0}
+		return {"move": 0.0, "reaction": "", "pulses": []}
 
 	var category: String = news_category if news_category != "" else "general"
 	var category_mult: float = float(news_sensitivity.get(category, news_sensitivity.get("general", 1.0)))
 	var combined_mood: float = clampf(market_sentiment * 0.65 + sentiment * 0.35, -1.0, 1.0)
 	var day_pct: float = get_day_change_pct()
+	var clarity: float = _news_clarity(category, category_mult, headline_sign, combined_mood, is_major, weather)
+	var thesis: Dictionary = _news_thesis(headline_impact, headline_sign, headline_size, category, category_mult, combined_mood, day_pct, climate, weather, is_major)
+	var total_move: float = float(thesis["move"])
+	var wait: int = _read_delay(clarity, is_major, absf(total_move))
+	var pulses: Array = _build_digest_pulses(total_move, wait, clarity, is_major)
+	var reaction: String = str(thesis["reaction"])
+	if _pulses_hesitate(pulses):
+		reaction = "Desks are split — the first reaction may reverse as they finish reading it."
+	elif wait >= 12:
+		reaction = "Still digesting — a larger move may show up after the tape processes it."
+	elif reaction.is_empty():
+		reaction = "The headline is out; flow has not fully shown up yet."
+	return {
+		"move": total_move,
+		"reaction": reaction,
+		"clarity": clarity,
+		"pulses": pulses,
+	}
 
+
+func _news_clarity(category: String, category_mult: float, headline_sign: float, combined_mood: float, is_major: bool, weather: String) -> float:
+	var clarity: float = 0.52 + (category_mult - 1.0) * 0.28
+	match category:
+		"rumor":
+			clarity -= 0.24
+		"analyst":
+			clarity -= 0.1
+		"macro":
+			clarity -= 0.06
+		"earnings", "product":
+			clarity += 0.14
+		"regulatory":
+			clarity -= 0.04
+		"commodity":
+			clarity += 0.06
+	if headline_sign * combined_mood < 0.0:
+		clarity -= 0.2
+	if weather == "high_vol":
+		clarity -= 0.12
+	elif weather == "panic" or weather == "euphoria":
+		clarity -= 0.05
+	if is_major:
+		clarity += 0.08
+	clarity += randf_range(-0.1, 0.1)
+	return clampf(clarity, 0.1, 0.92)
+
+
+func _read_delay(clarity: float, is_major: bool, move_size: float) -> int:
+	var seconds: float = lerpf(26.0, 3.5, clarity)
+	if is_major:
+		seconds *= 0.78
+	if move_size > 0.025 and clarity < 0.45:
+		seconds += lerpf(14.0, 4.0, clarity)
+	seconds *= lerpf(1.22, 0.62, speculation_factor)
+	seconds *= randf_range(0.72, 1.38)
+	return clampi(int(round(seconds)), 2, 42)
+
+
+func _news_thesis(
+	headline_impact: float,
+	headline_sign: float,
+	headline_size: float,
+	category: String,
+	category_mult: float,
+	combined_mood: float,
+	day_pct: float,
+	climate: String,
+	weather: String,
+	is_major: bool
+) -> Dictionary:
 	var priced_in: float = 0.1 if is_major else 0.18
 	priced_in += randf_range(-0.04, 0.06)
 	if headline_sign < 0.0:
@@ -226,14 +291,6 @@ func interpret_news(
 	if category_mult < 0.5:
 		priced_in += 0.14
 
-	var delay_chance: float = 0.14 if is_major else 0.1
-	if headline_sign > 0.0:
-		delay_chance += 0.12
-	if speculation_factor < 0.4:
-		delay_chance += 0.08
-	if weather == "high_vol":
-		delay_chance += 0.06
-
 	var fade_chance: float = 0.06 if is_major else 0.11
 	fade_chance += randf_range(-0.03, 0.05)
 	if headline_sign > 0.0:
@@ -250,51 +307,27 @@ func interpret_news(
 	var surprise_chance: float = 0.07 if is_major else 0.1
 	if weather == "high_vol":
 		surprise_chance += 0.08
-
 	if is_major:
 		priced_in *= 0.55
 		fade_chance *= 0.55
 		surprise_chance *= 0.7
 	priced_in = clampf(priced_in, 0.04, 0.48)
 	fade_chance = clampf(fade_chance, 0.03, 0.42)
-	delay_chance = clampf(delay_chance, 0.05, 0.38)
 
 	var roll: float = randf()
 	if roll < priced_in:
 		var drip: float = headline_sign * headline_size * randf_range(0.0, 0.12) * category_mult
-		if randf() < 0.35:
+		if randf() < 0.4:
 			drip = 0.0
-		return {
-			"move": drip,
-			"delay_move": 0.0,
-			"delay_ticks": 0,
-			"reaction": _priced_in_reaction(headline_sign, category),
-		}
-
+		return {"move": drip, "reaction": _priced_in_reaction(headline_sign, category)}
 	roll -= priced_in
 	if roll < fade_chance:
 		var fade_scale: float = randf_range(0.18, 0.85) * maxf(category_mult, 0.35)
-		return {
-			"move": -headline_sign * headline_size * fade_scale,
-			"delay_move": 0.0,
-			"delay_ticks": 0,
-			"reaction": _fade_reaction(category, headline_sign),
-		}
-
+		return {"move": -headline_sign * headline_size * fade_scale, "reaction": _fade_reaction(category, headline_sign)}
 	roll -= fade_chance
 	if roll < surprise_chance:
-		return _surprise_reaction(headline_sign, headline_size, category_mult, category)
-
-	roll -= surprise_chance
-	if roll < delay_chance:
-		var later: float = headline_impact * category_mult * randf_range(0.45, 1.25)
-		var now: float = later * randf_range(0.0, 0.28)
-		return {
-			"move": now,
-			"delay_move": later - now,
-			"delay_ticks": randi_range(8, 42),
-			"reaction": _delay_reaction(headline_sign),
-		}
+		var surprise: Dictionary = _surprise_reaction(headline_sign, headline_size, category_mult, category)
+		return {"move": float(surprise["move"]) + float(surprise.get("delay_move", 0.0)) * 0.35, "reaction": str(surprise["reaction"])}
 
 	var follow: float = headline_impact * category_mult * randf_range(0.28, 1.55)
 	follow *= randf_range(0.85, 1.15)
@@ -302,20 +335,60 @@ func interpret_news(
 		follow *= randf_range(0.55, 1.7)
 	if weather == "high_vol":
 		follow *= randf_range(0.6, 1.6)
-	if randf() < 0.22:
-		var split: float = follow * randf_range(0.25, 0.55)
-		return {
-			"move": split,
-			"delay_move": follow - split,
-			"delay_ticks": randi_range(6, 24),
-			"reaction": _stagger_reaction(headline_sign, follow),
-		}
+	return {"move": follow, "reaction": _follow_reaction(category, headline_sign, 0.7, follow)}
+
+
+func _build_digest_pulses(total_move: float, wait: int, clarity: float, is_major: bool) -> Array:
+	var pulses: Array = []
+	if absf(total_move) < 0.00025:
+		return pulses
+
+	var hesitate: float = clampf(lerpf(0.42, 0.08, clarity) + randf_range(-0.06, 0.08), 0.05, 0.5)
+	var unclear_big: bool = absf(total_move) > 0.012 and clarity < 0.48
+	var duration: int = randi_range(6, 14) if not is_major else randi_range(10, 22)
+
+	if unclear_big:
+		var probe: float = total_move * randf_range(0.12, 0.32)
+		var rest: float = total_move - probe
+		pulses.append(_pulse(wait, probe, maxi(duration - 4, 4), is_major, false))
+		var rest_wait: int = wait + randi_range(6, 18)
+		if randf() < hesitate:
+			rest *= -randf_range(0.35, 1.15)
+			pulses.append(_pulse(rest_wait, rest, duration, is_major, false))
+			pulses.append(_pulse(rest_wait + randi_range(5, 16), total_move * randf_range(0.4, 1.1), duration, is_major, is_major))
+		else:
+			pulses.append(_pulse(rest_wait, rest, duration, is_major, is_major))
+		return pulses
+
+	pulses.append(_pulse(wait, total_move, duration, is_major, is_major and absf(total_move) > 0.008))
+	if randf() < hesitate:
+		var swing: float = -total_move * randf_range(0.35, 1.25)
+		if randf() < 0.45:
+			swing = total_move * randf_range(0.4, 0.95)
+		pulses.append(_pulse(wait + randi_range(5, 20), swing, randi_range(5, 14), false, false))
+	return pulses
+
+
+func _pulse(wait: int, move: float, duration: int, is_major: bool, lasting: bool) -> Dictionary:
 	return {
-		"move": follow,
-		"delay_move": 0.0,
-		"delay_ticks": 0,
-		"reaction": _follow_reaction(category, headline_sign, 0.7, follow),
+		"wait": maxi(wait, 2),
+		"move": move,
+		"duration": maxi(duration, 3),
+		"major": is_major,
+		"lasting": lasting,
 	}
+
+
+func _pulses_hesitate(pulses: Array) -> bool:
+	if pulses.size() < 2:
+		return false
+	var first_sign: float = signf(float((pulses[0] as Dictionary).get("move", 0.0)))
+	for i in range(1, pulses.size()):
+		var pulse: Dictionary = pulses[i]
+		var pulse_sign: float = signf(float(pulse.get("move", 0.0)))
+		if first_sign != 0.0 and pulse_sign != 0.0 and pulse_sign != first_sign:
+			return true
+	return false
 
 
 func _priced_in_reaction(headline_sign: float, category: String) -> String:
@@ -425,11 +498,7 @@ func roll_to_next_day() -> void:
 	revert_ticks = 0
 	lasting_bias = 0.0
 	lasting_ticks = 0
-	pending_news_move = 0.0
-	pending_news_delay = 0
-	pending_news_duration = 12
-	pending_news_major = false
-	pending_news_lasting = false
+	digest_queue.clear()
 	momentum = 0.0
 	volume = randi_range(800000, 2500000)
 	price_history = PackedFloat32Array()
@@ -480,36 +549,43 @@ func get_day_change_pct() -> float:
 
 
 func apply_interpreted_news(result: Dictionary, duration_ticks: int, is_major: bool, lasting: bool, overnight: bool = false) -> void:
-	var immediate: float = float(result.get("move", 0.0))
-	var delay_move: float = float(result.get("delay_move", 0.0))
-	var delay_ticks: int = int(result.get("delay_ticks", 0))
-	var duration: int = maxi(int(round(float(duration_ticks) * randf_range(0.65, 1.45))), 1)
-	if overnight:
-		if absf(immediate) >= 0.0008:
-			apply_overnight_gap(immediate, is_major, lasting)
-	elif absf(immediate) >= 0.0004:
-		apply_news_impact(immediate, duration, is_major, lasting)
-	if absf(delay_move) >= 0.0005 and delay_ticks > 0:
-		pending_news_move = delay_move
-		pending_news_delay = delay_ticks
-		pending_news_duration = duration
-		pending_news_major = is_major
-		pending_news_lasting = lasting
+	var pulses: Array = result.get("pulses", [])
+	var duration: int = maxi(int(round(float(duration_ticks) * randf_range(0.65, 1.45))), 3)
+	if typeof(pulses) != TYPE_ARRAY or pulses.is_empty():
+		return
+	for item in pulses:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var pulse: Dictionary = item
+		var wait: int = int(pulse.get("wait", 4))
+		if overnight:
+			wait = maxi(2, int(round(float(wait) * 0.45)) - randi_range(0, 3))
+		digest_queue.append({
+			"wait": wait,
+			"move": float(pulse.get("move", 0.0)),
+			"duration": maxi(int(pulse.get("duration", duration)), 3),
+			"major": bool(pulse.get("major", is_major)),
+			"lasting": bool(pulse.get("lasting", lasting)),
+		})
 
 
 func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = false, lasting: bool = false) -> void:
-	news_move_remaining = total_move
-	news_move_ticks = maxi(duration_ticks, 1)
-	news_initial_ticks = news_move_ticks
-	news_is_major = is_major
-	news_is_lasting = lasting
-	revert_remaining = 0.0
-	revert_ticks = 0
-	if total_move == 0.0:
-		news_move_ticks = 0
-		news_initial_ticks = 0
-		news_is_major = false
+	if absf(total_move) < 0.0002:
 		return
+	if news_move_ticks > 0:
+		news_move_remaining += total_move
+		news_move_ticks = maxi(news_move_ticks, duration_ticks)
+		news_initial_ticks = maxi(news_initial_ticks, news_move_ticks)
+		news_is_major = news_is_major or is_major
+		news_is_lasting = news_is_lasting or lasting
+	else:
+		news_move_remaining = total_move
+		news_move_ticks = maxi(duration_ticks, 1)
+		news_initial_ticks = news_move_ticks
+		news_is_major = is_major
+		news_is_lasting = lasting
+		revert_remaining = 0.0
+		revert_ticks = 0
 	if lasting:
 		sentiment = clampf(sentiment + total_move * randf_range(4.0, 9.0), -1.0, 1.0)
 		_set_lasting_bias(total_move, is_major)
@@ -517,20 +593,16 @@ func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = 
 			trend = Trend.BULLISH if total_move > 0.0 else Trend.BEARISH
 	else:
 		sentiment = clampf(sentiment + total_move * randf_range(1.5, 4.5), -1.0, 1.0)
-		if randf() < 0.72:
+		if randf() < 0.55:
 			_queue_flash_revert(total_move)
 		if absf(total_move) > 0.004 and randf() < 0.18:
 			trend = Trend.BULLISH if total_move > 0.0 else Trend.BEARISH
 
 
 func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
+	_tick_digest_queue()
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
 	var news_move: float = _consume_news_or_revert()
-	if pending_news_delay > 0:
-		pending_news_delay -= 1
-		if pending_news_delay <= 0 and absf(pending_news_move) >= 0.0005:
-			apply_news_impact(pending_news_move, pending_news_duration, pending_news_major, pending_news_lasting)
-			pending_news_move = 0.0
 	var vol_mult: float = float(p_regime.get("vol_mult", 1.0))
 	var flip_mult: float = float(p_regime.get("flip_mult", 1.0))
 	var regime_drift: float = float(p_regime.get("drift", 0.0))
@@ -580,6 +652,25 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 
 	_update_spread()
 	_record_history()
+
+
+func _tick_digest_queue() -> void:
+	var i: int = 0
+	while i < digest_queue.size():
+		var pulse: Dictionary = digest_queue[i]
+		var wait: int = int(pulse.get("wait", 1)) - 1
+		if wait <= 0:
+			digest_queue.remove_at(i)
+			apply_news_impact(
+				float(pulse.get("move", 0.0)),
+				int(pulse.get("duration", 8)),
+				bool(pulse.get("major", false)),
+				bool(pulse.get("lasting", false))
+			)
+		else:
+			pulse["wait"] = wait
+			digest_queue[i] = pulse
+			i += 1
 
 
 func _consume_news_move() -> float:
