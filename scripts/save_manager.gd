@@ -33,7 +33,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 5,
+		"version": 6,
 		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
@@ -51,6 +51,11 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		"best_alpha": portfolio.best_alpha,
 		"worst_alpha": portfolio.worst_alpha,
 		"has_alpha_stats": portfolio.has_alpha_stats,
+		"chapter_open_equity": portfolio.chapter_open_equity,
+		"chapter_alpha_sum": portfolio.chapter_alpha_sum,
+		"chapter_beats": portfolio.chapter_beats,
+		"chapter_days": portfolio.chapter_days,
+		"pending_chapter": portfolio.pending_chapter,
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)

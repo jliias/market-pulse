@@ -40,6 +40,28 @@ func set_watchlist(symbols: Array) -> void:
 		stocks[symbol] = CompanyCatalog.make_stock(symbol)
 
 
+func swap_watchlist_name(drop: String, add: String) -> void:
+	if drop.is_empty() or add.is_empty() or drop == add:
+		return
+	if not watchlist.has(drop) or not CompanyCatalog.has_symbol(add) or watchlist.has(add):
+		return
+	var next_list: Array[String] = []
+	for symbol in watchlist:
+		if symbol == drop:
+			next_list.append(add)
+		else:
+			next_list.append(symbol)
+	var kept: Dictionary = {}
+	for symbol in next_list:
+		if stocks.has(symbol):
+			kept[symbol] = stocks[symbol]
+		else:
+			kept[symbol] = CompanyCatalog.make_stock(symbol)
+	watchlist = next_list
+	stocks = kept
+	chain_director.prune_to_universe(watchlist, get_stock_list())
+
+
 func apply_saved_prices(prices: Dictionary) -> void:
 	for symbol in watchlist:
 		if prices.has(symbol) and stocks.has(symbol):

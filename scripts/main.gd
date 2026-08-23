@@ -26,6 +26,18 @@ var watchlist_cards: Dictionary = {}
 var awaiting_open := false
 var preopen_remaining := 0.0
 var menu_confirm_open := false
+var chapter_overlay: ColorRect
+var recap_page: VBoxContainer
+var recap_label: Label
+var rebalance_page: VBoxContainer
+var rebalance_hint: Label
+var keep_book_button: Button
+var drop_list: VBoxContainer
+var add_list: VBoxContainer
+var confirm_swap_button: Button
+var drop_pick: String = ""
+var add_pick: String = ""
+var keep_book: bool = true
 
 @onready var body_columns: BoxContainer = %BodyColumns
 @onready var watchlist_column: Control = %WatchlistColumn
@@ -89,15 +101,21 @@ func _ready() -> void:
 	_build_timeframe_buttons()
 	_apply_launch_mode()
 	_build_watchlist()
+	_build_chapter_overlay()
 	market.player_portfolio = portfolio
-	_begin_session()
 	tick_timer.wait_time = TICK_INTERVAL
 	tick_timer.timeout.connect(_on_market_tick)
 	_apply_responsive_layout()
+	if portfolio.pending_chapter:
+		_show_chapter_recap()
+	else:
+		_begin_session()
 
 
 func _process(_delta: float) -> void:
 	if menu_confirm_open:
+		return
+	if chapter_overlay != null and chapter_overlay.visible:
 		return
 	if awaiting_open:
 		preopen_remaining = maxf(preopen_remaining - _delta, 0.0)
@@ -337,6 +355,11 @@ func _end_session() -> void:
 	market.regime.on_day_close()
 	portfolio.record_session_close(portfolio.get_portfolio_value(market.stocks), alpha_pct)
 	portfolio.days_played += 1
+	if portfolio.chapter_just_finished():
+		portfolio.pending_chapter = true
+		new_day_button.text = "Chapter Recap"
+	else:
+		new_day_button.text = "New Day"
 	var hook: String = market.chain_director.hook_line()
 	if hook.is_empty():
 		hook = "No open story on the board."
@@ -402,6 +425,13 @@ func _return_to_menu() -> void:
 
 
 func _restart_session() -> void:
+	if portfolio.pending_chapter:
+		_show_chapter_recap()
+		return
+	_start_next_trading_day()
+
+
+func _start_next_trading_day() -> void:
 	market.roll_to_next_day()
 	_begin_session()
 
@@ -626,3 +656,232 @@ func _pl_color(value: float) -> Color:
 	if value >= 0.0:
 		return Color(0.35, 0.85, 0.45)
 	return Color(0.95, 0.38, 0.38)
+
+
+func _build_chapter_overlay() -> void:
+	chapter_overlay = ColorRect.new()
+	chapter_overlay.visible = false
+	chapter_overlay.color = Color(0.04, 0.05, 0.07, 0.9)
+	chapter_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	chapter_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(chapter_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	chapter_overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(560, 0)
+	center.add_child(panel)
+	var panel_box := StyleBoxFlat.new()
+	panel_box.bg_color = Color(0.1, 0.11, 0.14, 1)
+	panel_box.border_color = Color(0.78, 0.82, 0.9, 0.7)
+	panel_box.set_border_width_all(1)
+	panel_box.set_corner_radius_all(10)
+	panel_box.content_margin_left = 20
+	panel_box.content_margin_right = 20
+	panel_box.content_margin_top = 18
+	panel_box.content_margin_bottom = 18
+	panel.add_theme_stylebox_override("panel", panel_box)
+
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 12)
+	panel.add_child(stack)
+
+	recap_page = VBoxContainer.new()
+	recap_page.add_theme_constant_override("separation", 12)
+	stack.add_child(recap_page)
+	var recap_title := Label.new()
+	recap_title.text = "CHAPTER RECAP"
+	recap_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	recap_title.add_theme_color_override("font_color", SELECTED_ACCENT)
+	recap_title.add_theme_font_size_override("font_size", 22)
+	recap_page.add_child(recap_title)
+	recap_label = Label.new()
+	recap_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	recap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	recap_label.add_theme_font_size_override("font_size", 15)
+	recap_page.add_child(recap_label)
+	var recap_next := Button.new()
+	recap_next.text = "Rebalance Watchlist"
+	recap_next.custom_minimum_size = Vector2(0, 44)
+	recap_next.pressed.connect(_show_chapter_rebalance)
+	recap_page.add_child(recap_next)
+	_apply_button_style(recap_next, SELECTED_ACCENT, UI_BORDER, true)
+
+	rebalance_page = VBoxContainer.new()
+	rebalance_page.visible = false
+	rebalance_page.add_theme_constant_override("separation", 10)
+	stack.add_child(rebalance_page)
+	var rebalance_title := Label.new()
+	rebalance_title.text = "ONE SWAP"
+	rebalance_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rebalance_title.add_theme_color_override("font_color", SELECTED_ACCENT)
+	rebalance_title.add_theme_font_size_override("font_size", 20)
+	rebalance_page.add_child(rebalance_title)
+	rebalance_hint = Label.new()
+	rebalance_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rebalance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rebalance_hint.add_theme_font_size_override("font_size", 14)
+	rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
+	rebalance_page.add_child(rebalance_hint)
+	keep_book_button = Button.new()
+	keep_book_button.toggle_mode = true
+	keep_book_button.text = "Keep this book"
+	keep_book_button.pressed.connect(_on_keep_book)
+	rebalance_page.add_child(keep_book_button)
+	var drop_header := Label.new()
+	drop_header.text = "Drop (optional)"
+	drop_header.add_theme_font_size_override("font_size", 13)
+	rebalance_page.add_child(drop_header)
+	drop_list = VBoxContainer.new()
+	drop_list.add_theme_constant_override("separation", 6)
+	rebalance_page.add_child(drop_list)
+	var add_header := Label.new()
+	add_header.text = "Add"
+	add_header.add_theme_font_size_override("font_size", 13)
+	rebalance_page.add_child(add_header)
+	add_list = VBoxContainer.new()
+	add_list.add_theme_constant_override("separation", 6)
+	rebalance_page.add_child(add_list)
+	confirm_swap_button = Button.new()
+	confirm_swap_button.text = "Continue"
+	confirm_swap_button.custom_minimum_size = Vector2(0, 44)
+	confirm_swap_button.pressed.connect(_confirm_chapter_rebalance)
+	rebalance_page.add_child(confirm_swap_button)
+
+
+func _show_chapter_recap() -> void:
+	session_active = false
+	awaiting_open = false
+	tick_timer.stop()
+	open_countdown_overlay.visible = false
+	closed_overlay.visible = false
+	new_day_button.visible = false
+	end_session_button.visible = false
+	recap_page.visible = true
+	rebalance_page.visible = false
+	recap_label.text = portfolio.recap_text(market.regime.status_text(), market.watchlist)
+	chapter_overlay.visible = true
+
+
+func _show_chapter_rebalance() -> void:
+	recap_page.visible = false
+	rebalance_page.visible = true
+	keep_book = true
+	drop_pick = ""
+	add_pick = ""
+	_rebuild_rebalance_lists()
+	_refresh_rebalance_state()
+
+
+func _rebuild_rebalance_lists() -> void:
+	for child in drop_list.get_children():
+		drop_list.remove_child(child)
+		child.free()
+	for child in add_list.get_children():
+		add_list.remove_child(child)
+		child.free()
+	for symbol in market.watchlist:
+		var button := Button.new()
+		button.toggle_mode = true
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.text = _rebalance_row_text(symbol)
+		button.pressed.connect(_on_drop_pressed.bind(symbol))
+		drop_list.add_child(button)
+	for symbol in CompanyCatalog.bench_symbols(market.watchlist):
+		var button := Button.new()
+		button.toggle_mode = true
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.text = _rebalance_row_text(symbol)
+		button.pressed.connect(_on_add_pressed.bind(symbol))
+		add_list.add_child(button)
+
+
+func _rebalance_row_text(symbol: String) -> String:
+	var data: Dictionary = CompanyCatalog.spec(symbol)
+	return "%s  %s  ·  %s" % [symbol, str(data.get("name", symbol)), str(data.get("label", ""))]
+
+
+func _on_keep_book() -> void:
+	keep_book = true
+	drop_pick = ""
+	add_pick = ""
+	_refresh_rebalance_state()
+
+
+func _on_drop_pressed(symbol: String) -> void:
+	keep_book = false
+	if drop_pick == symbol:
+		drop_pick = ""
+		keep_book = true
+	else:
+		drop_pick = symbol
+	add_pick = ""
+	_refresh_rebalance_state()
+
+
+func _on_add_pressed(symbol: String) -> void:
+	if drop_pick.is_empty():
+		add_pick = ""
+		_refresh_rebalance_state()
+		return
+	keep_book = false
+	add_pick = "" if add_pick == symbol else symbol
+	_refresh_rebalance_state()
+
+
+func _refresh_rebalance_state() -> void:
+	keep_book_button.button_pressed = keep_book
+	_apply_button_style(keep_book_button, SELECTED_ACCENT if keep_book else UI_ACCENT, UI_BORDER, keep_book)
+	var drop_i := 0
+	for child in drop_list.get_children():
+		var button := child as Button
+		var symbol: String = market.watchlist[drop_i]
+		var on: bool = drop_pick == symbol
+		button.button_pressed = on
+		_apply_button_style(button, SELECTED_ACCENT if on else CompanyCatalog.risk_color(CompanyCatalog.risk_key(symbol)), UI_BORDER, on)
+		drop_i += 1
+	var bench: Array[String] = CompanyCatalog.bench_symbols(market.watchlist)
+	var add_i := 0
+	for child in add_list.get_children():
+		var button := child as Button
+		var symbol: String = bench[add_i]
+		var on: bool = add_pick == symbol
+		button.disabled = drop_pick.is_empty()
+		button.button_pressed = on
+		var accent: Color = SELECTED_ACCENT if on else CompanyCatalog.risk_color(CompanyCatalog.risk_key(symbol))
+		_apply_button_style(button, accent, UI_BORDER, on)
+		add_i += 1
+	var ready: bool = keep_book or (not drop_pick.is_empty() and not add_pick.is_empty())
+	confirm_swap_button.disabled = not ready
+	confirm_swap_button.text = "Keep book and continue" if keep_book else "Swap %s → %s" % [drop_pick, add_pick]
+	_apply_button_style(confirm_swap_button, BUY_ACCENT, UI_BORDER, ready, ready)
+
+
+func _confirm_chapter_rebalance() -> void:
+	if not keep_book:
+		if drop_pick.is_empty() or add_pick.is_empty():
+			return
+		_flatten_symbol(drop_pick)
+		market.swap_watchlist_name(drop_pick, add_pick)
+		if selected_symbol == drop_pick:
+			selected_symbol = add_pick
+		_build_watchlist()
+	portfolio.begin_next_chapter()
+	SaveManager.save_game(portfolio, market)
+	chapter_overlay.visible = false
+	drop_pick = ""
+	add_pick = ""
+	keep_book = true
+	_start_next_trading_day()
+
+
+func _flatten_symbol(symbol: String) -> void:
+	var shares: int = portfolio.get_shares(symbol)
+	if shares <= 0:
+		return
+	var stock: Stock = market.get_stock(symbol)
+	if stock == null:
+		return
+	portfolio.sell(symbol, shares, stock.bid)

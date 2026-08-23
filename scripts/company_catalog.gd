@@ -239,3 +239,11 @@ static func sanitize_watchlist(symbols: Array) -> Array[String]:
 	if out.size() != 3:
 		return DEFAULT_WATCHLIST.duplicate()
 	return out
+
+
+static func bench_symbols(watchlist: Array) -> Array[String]:
+	var names: Array[String] = []
+	for symbol in ORDER:
+		if not watchlist.has(symbol):
+			names.append(symbol)
+	return names

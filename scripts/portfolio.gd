@@ -4,6 +4,7 @@ extends RefCounted
 const STARTING_CASH := 10000.0
 const FIXED_COMMISSION := 2.0
 const PERCENT_COMMISSION := 0.002
+const CHAPTER_LENGTH := 5
 
 var cash: float = STARTING_CASH
 var holdings: Dictionary = {}
@@ -20,6 +21,11 @@ var best_beat_streak: int = 0
 var best_alpha: float = 0.0
 var worst_alpha: float = 0.0
 var has_alpha_stats: bool = false
+var chapter_open_equity: float = STARTING_CASH
+var chapter_alpha_sum: float = 0.0
+var chapter_beats: int = 0
+var chapter_days: int = 0
+var pending_chapter: bool = false
 
 
 func reset_new_game() -> void:
@@ -38,6 +44,11 @@ func reset_new_game() -> void:
 	best_alpha = 0.0
 	worst_alpha = 0.0
 	has_alpha_stats = false
+	chapter_open_equity = STARTING_CASH
+	chapter_alpha_sum = 0.0
+	chapter_beats = 0
+	chapter_days = 0
+	pending_chapter = false
 
 
 func apply_save(data: Dictionary) -> void:
@@ -63,6 +74,11 @@ func apply_save(data: Dictionary) -> void:
 	best_alpha = float(data.get("best_alpha", 0.0))
 	worst_alpha = float(data.get("worst_alpha", 0.0))
 	has_alpha_stats = bool(data.get("has_alpha_stats", false))
+	chapter_open_equity = float(data.get("chapter_open_equity", last_equity))
+	chapter_alpha_sum = float(data.get("chapter_alpha_sum", 0.0))
+	chapter_beats = int(data.get("chapter_beats", 0))
+	chapter_days = int(data.get("chapter_days", days_played % CHAPTER_LENGTH))
+	pending_chapter = bool(data.get("pending_chapter", false))
 
 
 func get_avg_cost(symbol: String) -> float:
@@ -123,6 +139,10 @@ func record_session_close(equity: float, alpha_pct: float) -> void:
 		best_beat_streak = maxi(best_beat_streak, beat_streak)
 	elif alpha_pct < -0.05:
 		beat_streak = 0
+	chapter_alpha_sum += alpha_pct
+	chapter_days += 1
+	if alpha_pct > 0.05:
+		chapter_beats += 1
 
 
 func streak_line() -> String:
@@ -141,6 +161,43 @@ func career_close_line() -> String:
 	lines.append("Book $%.0f  ·  ATH $%.0f" % [last_equity, equity_ath])
 	if has_alpha_stats:
 		lines.append("Best day %+.1f%% vs tape  ·  Worst %+.1f%%" % [best_alpha, worst_alpha])
+	return "\n".join(lines)
+
+
+func chapter_just_finished() -> bool:
+	return days_played > 0 and days_played % CHAPTER_LENGTH == 0
+
+
+func begin_next_chapter() -> void:
+	pending_chapter = false
+	chapter_open_equity = last_equity
+	chapter_alpha_sum = 0.0
+	chapter_beats = 0
+	chapter_days = 0
+
+
+func recap_text(climate_line: String, watchlist: Array[String]) -> String:
+	var chapter_n: int = maxi(days_played / CHAPTER_LENGTH, 1)
+	var counted: int = maxi(chapter_days, 1)
+	var avg_alpha: float = chapter_alpha_sum / float(counted)
+	var book_pct: float = 0.0
+	if chapter_open_equity > 0.01:
+		book_pct = ((last_equity - chapter_open_equity) / chapter_open_equity) * 100.0
+	var names: PackedStringArray = []
+	for symbol in watchlist:
+		names.append(str(symbol))
+	var lines: PackedStringArray = []
+	lines.append("Chapter %d complete  ·  days %d–%d" % [
+		chapter_n,
+		days_played - counted + 1,
+		days_played,
+	])
+	lines.append("Book $%.0f → $%.0f  (%+.1f%%)" % [chapter_open_equity, last_equity, book_pct])
+	lines.append("Ahead of the tape %d of %d days  ·  avg alpha %+.1f%%" % [chapter_beats, counted, avg_alpha])
+	if not climate_line.is_empty():
+		lines.append(climate_line)
+	lines.append(streak_line())
+	lines.append("Watchlist  %s" % ", ".join(names))
 	return "\n".join(lines)
 
 
