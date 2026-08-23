@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://bmarketpulse001"]
+[gd_scene format=3 uid="uid://dcqsiwitmpfu3"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
-[ext_resource type="Script" path="res://scripts/price_chart.gd" id="2_chart"]
+[ext_resource type="Script" uid="uid://pnwsuaj0v3yq" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://clteyv1s1ynt7" path="res://scripts/price_chart.gd" id="2_chart"]
 
-[node name="Main" type="Control"]
+[node name="Main" type="Control" unique_id=700527566]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,7 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=205593966]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,7 +21,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.07, 0.08, 0.11, 1)
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=110219534]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,78 +33,78 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="RootVBox" type="VBoxContainer" parent="MarginContainer"]
+[node name="RootVBox" type="VBoxContainer" parent="MarginContainer" unique_id=964460437]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HeaderBar" type="PanelContainer" parent="MarginContainer/RootVBox"]
+[node name="HeaderBar" type="PanelContainer" parent="MarginContainer/RootVBox" unique_id=1089411457]
 layout_mode = 2
 
-[node name="HeaderMargin" type="MarginContainer" parent="MarginContainer/RootVBox/HeaderBar"]
+[node name="HeaderMargin" type="MarginContainer" parent="MarginContainer/RootVBox/HeaderBar" unique_id=1462687651]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="HeaderRow" type="HBoxContainer" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin"]
+[node name="HeaderRow" type="HBoxContainer" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin" unique_id=1223673182]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="Title" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=2093391415]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
 theme_override_font_sizes/font_size = 22
 text = "MARKET PULSE"
 
-[node name="PortfolioValueLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="PortfolioValueLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=424283589]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Portfolio: $10,000.00"
 
-[node name="CashValueLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="CashValueLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=1026168483]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Cash: $10,000.00"
 
-[node name="DailyPLLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="DailyPLLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=590418279]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 18
 text = "Daily P/L: +$0.00 (+0.00%)"
 
-[node name="VsMarketLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="VsMarketLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=2001098017]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "vs Market: +0.0%"
 
-[node name="SessionLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="SessionLabel" type="Label" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=563574243]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Session: 09:30 — MARKET OPEN"
 
-[node name="SettingsButton" type="Button" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="SettingsButton" type="Button" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=1269999938]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Settings"
 
-[node name="MenuButton" type="Button" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow"]
+[node name="MenuButton" type="Button" parent="MarginContainer/RootVBox/HeaderBar/HeaderMargin/HeaderRow" unique_id=142825354]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Menu"
 
-[node name="BodyColumns" type="BoxContainer" parent="MarginContainer/RootVBox"]
+[node name="BodyColumns" type="BoxContainer" parent="MarginContainer/RootVBox" unique_id=737906702]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="WatchlistColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns"]
+[node name="WatchlistColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=1827180769]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
@@ -112,75 +112,75 @@ size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.9
 theme_override_constants/separation = 8
 
-[node name="WatchlistHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn"]
+[node name="WatchlistHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1989078665]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "WATCHLIST"
 
-[node name="WatchlistList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn"]
+[node name="WatchlistList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1967248601]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="PortfolioHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn"]
+[node name="PortfolioHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=529352896]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "PORTFOLIO"
 
-[node name="PortfolioList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn"]
+[node name="PortfolioList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1877519657]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="PortfolioTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn"]
+[node name="PortfolioTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1342024128]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Open P/L: +$0.00"
 
-[node name="ChartColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns"]
+[node name="ChartColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=276356270]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 1.8
 theme_override_constants/separation = 8
 
-[node name="SelectedHeader" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn"]
+[node name="SelectedHeader" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=376605065]
 layout_mode = 2
 
-[node name="SelectedNameLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader"]
+[node name="SelectedNameLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader" unique_id=441211770]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ALPH — Alpha Technologies"
 
-[node name="SelectedPriceRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader"]
+[node name="SelectedPriceRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader" unique_id=1576983348]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="SelectedPriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader/SelectedPriceRow"]
+[node name="SelectedPriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader/SelectedPriceRow" unique_id=1096577191]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "$0.00"
 
-[node name="SelectedChangeLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader/SelectedPriceRow"]
+[node name="SelectedChangeLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader/SelectedPriceRow" unique_id=2055806795]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "+$0.00 (+0.00%)"
 
-[node name="SelectedMetaLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader"]
+[node name="SelectedMetaLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader" unique_id=1079512714]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.72, 0.78, 1)
 text = "Technology · Large Cap"
 
-[node name="TimeframeButtons" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn"]
+[node name="TimeframeButtons" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=800011717]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="MainChart" type="Control" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn"]
+[node name="MainChart" type="Control" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=98253840]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
@@ -188,7 +188,7 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 1.6
 script = ExtResource("2_chart")
 
-[node name="ClosedOverlay" type="CenterContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart"]
+[node name="ClosedOverlay" type="CenterContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart" unique_id=1983052116]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -199,30 +199,29 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ClosedOverlayLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay"]
+[node name="ClosedOverlayLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay" unique_id=2064278818]
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.72)
 theme_override_font_sizes/font_size = 42
 text = "Market closed"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn"]
+[node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=1346972357]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "NEWS FEED"
 
-[node name="NewsFeed" type="RichTextLabel" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn"]
+[node name="NewsFeed" type="RichTextLabel" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=2007835809]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 13
 bbcode_enabled = true
 scroll_following = true
-theme_override_font_sizes/normal_font_size = 13
 
-[node name="TradeColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns"]
+[node name="TradeColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=1743375647]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
@@ -230,172 +229,171 @@ size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.85
 theme_override_constants/separation = 8
 
-[node name="TradeSymbolLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="TradeSymbolLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=436210269]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "TRADE  ALPH"
 
-[node name="TradePriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="TradePriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1991308063]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "$0.00"
 
-[node name="ModeRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="ModeRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1497590106]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BuyModeButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/ModeRow"]
+[node name="BuyModeButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/ModeRow" unique_id=254642394]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "BUY"
 
-[node name="SellModeButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/ModeRow"]
+[node name="SellModeButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/ModeRow" unique_id=685185372]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SELL"
 
-[node name="QtyHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="QtyHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1322760474]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "QUANTITY"
 
-[node name="QtyRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="QtyRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=852030653]
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 12
+alignment = 1
 
-[node name="QtyMinusButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QtyRow"]
+[node name="QtyMinusButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QtyRow" unique_id=1482619555]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 40)
 layout_mode = 2
 text = "−"
 
-[node name="QtyLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QtyRow"]
+[node name="QtyLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QtyRow" unique_id=65399801]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "20"
 horizontal_alignment = 1
 
-[node name="QtyPlusButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QtyRow"]
+[node name="QtyPlusButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QtyRow" unique_id=311644013]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 40)
 layout_mode = 2
 text = "+"
 
-[node name="QuickQtyRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="QuickQtyRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1930970803]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Qty10Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow"]
+[node name="Qty10Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow" unique_id=999122691]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "10"
 
-[node name="Qty20Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow"]
+[node name="Qty20Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow" unique_id=1065562973]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "20"
 
-[node name="Qty50Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow"]
+[node name="Qty50Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow" unique_id=1614007378]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "50"
 
-[node name="Qty100Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow"]
+[node name="Qty100Button" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow" unique_id=853559857]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "100"
 
-[node name="QtyMaxButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow"]
+[node name="QtyMaxButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/QuickQtyRow" unique_id=520890962]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MAX"
 
-[node name="EstPriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="EstPriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1960023480]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Estimated price: $0.00"
 
-[node name="EstTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="EstTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1958505004]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Estimated total: $0.00"
 
-[node name="CommissionLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="CommissionLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1964345840]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Commission: $0.00"
 
-[node name="FinalTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="FinalTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=2141088500]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Total: $0.00"
 
-[node name="PlaceOrderButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="PlaceOrderButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1348875354]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "PLACE BUY ORDER"
 
-[node name="TradeMessageLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn"]
+[node name="TradeMessageLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1969568505]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-autowrap_mode = 3
 theme_override_colors/font_color = Color(0.75, 0.78, 0.84, 1)
-text = ""
+autowrap_mode = 3
 
-[node name="StatusBar" type="HBoxContainer" parent="MarginContainer/RootVBox"]
+[node name="StatusBar" type="HBoxContainer" parent="MarginContainer/RootVBox" unique_id=1705662604]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="DayLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar"]
+[node name="DayLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=1156268523]
 unique_name_in_owner = true
 layout_mode = 2
 text = "DAY 1"
 
-[node name="MarketStatusLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar"]
+[node name="MarketStatusLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=947028755]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MARKET STATUS: NORMAL"
 
-[node name="UpdateSpeedLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar"]
+[node name="UpdateSpeedLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=238083810]
 unique_name_in_owner = true
 layout_mode = 2
 text = "UPDATE SPEED: 1 SECOND"
 
-[node name="NextUpdateLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar"]
+[node name="NextUpdateLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=310701140]
 unique_name_in_owner = true
 layout_mode = 2
 text = "NEXT UPDATE: 00:01"
 
-[node name="EndSessionButton" type="Button" parent="MarginContainer/RootVBox/StatusBar"]
+[node name="EndSessionButton" type="Button" parent="MarginContainer/RootVBox/StatusBar" unique_id=1194884936]
 unique_name_in_owner = true
 layout_mode = 2
 text = "End Session"
 
-[node name="NewDayButton" type="Button" parent="MarginContainer/RootVBox/StatusBar"]
+[node name="NewDayButton" type="Button" parent="MarginContainer/RootVBox/StatusBar" unique_id=191449903]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 text = "New Day"
 
-[node name="TickTimer" type="Timer" parent="."]
+[node name="TickTimer" type="Timer" parent="." unique_id=739598605]
 unique_name_in_owner = true
 
-[node name="OpenCountdownOverlay" type="CenterContainer" parent="."]
+[node name="OpenCountdownOverlay" type="CenterContainer" parent="." unique_id=847362995]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -406,23 +404,22 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="OpenCountdownLabel" type="Label" parent="OpenCountdownOverlay"]
+[node name="OpenCountdownLabel" type="Label" parent="OpenCountdownOverlay" unique_id=2051112442]
 unique_name_in_owner = true
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.72)
 theme_override_font_sizes/font_size = 42
 text = "Market will open in 10 seconds"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SettingsDialog" type="AcceptDialog" parent="."]
+[node name="SettingsDialog" type="AcceptDialog" parent="." unique_id=1237482330]
 unique_name_in_owner = true
 title = "Settings"
 ok_button_text = "Close"
 dialog_text = "Settings will land in a later pass. Speed control and layout options belong here."
 
-[node name="MenuDialog" type="ConfirmationDialog" parent="."]
+[node name="MenuDialog" type="ConfirmationDialog" parent="." unique_id=1831903832]
 unique_name_in_owner = true
 title = "Return to Menu"
 ok_button_text = "Return to Menu"
@@ -431,7 +428,7 @@ dialog_text = "Are you sure you want to return to the menu?
 If the market is still open, the rest of the day will be marked to the close. Your cash and holdings will be saved."
 dialog_autowrap = true
 
-[node name="EndSessionDialog" type="ConfirmationDialog" parent="."]
+[node name="EndSessionDialog" type="ConfirmationDialog" parent="." unique_id=158884281]
 unique_name_in_owner = true
 title = "End Session"
 ok_button_text = "End Session"

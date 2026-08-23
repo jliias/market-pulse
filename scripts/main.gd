@@ -332,11 +332,17 @@ func _end_session() -> void:
 		result_text = "Closed. You matched the tape."
 	if left_before_close:
 		result_text = "Tape run to the close. " + result_text
-	trade_message_label.text = result_text
 	market.chain_director.calendar_day = market.calendar_day
 	market.chain_director.on_session_end()
 	market.regime.on_day_close()
+	portfolio.record_session_close(portfolio.get_portfolio_value(market.stocks), alpha_pct)
 	portfolio.days_played += 1
+	var hook: String = market.chain_director.hook_line()
+	if hook.is_empty():
+		hook = "No open story on the board."
+	else:
+		hook = "Tomorrow: " + hook
+	trade_message_label.text = "%s\n%s\n%s" % [result_text, portfolio.career_close_line(), hook]
 	SaveManager.save_game(portfolio, market)
 	_update_ui()
 

@@ -420,6 +420,61 @@ func serialize() -> Dictionary:
 	}
 
 
+static func hook_from_save(data: Variant) -> String:
+	if typeof(data) != TYPE_DICTIONARY:
+		return ""
+	var saved_chains: Variant = (data as Dictionary).get("active", [])
+	if typeof(saved_chains) != TYPE_ARRAY:
+		return ""
+	for item in saved_chains:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var line: String = _hook_from_dict(item)
+		if not line.is_empty():
+			return line
+	return ""
+
+
+func hook_line() -> String:
+	for chain in active:
+		var line: String = hook_text(chain)
+		if not line.is_empty():
+			return line
+	return ""
+
+
+func hook_text(chain: EventChain) -> String:
+	if chain.pending.is_empty():
+		return ""
+	var stage: String = EventChain.display_stage(chain.pending)
+	match chain.scope:
+		"company":
+			return "%s — %s still unresolved" % [CompanyCatalog.display_name(chain.subject), stage]
+		"industry":
+			var industry_name: String = chain.industry if not chain.industry.is_empty() else "Sector"
+			return "%s story — %s still unresolved" % [industry_name, stage]
+		_:
+			return "Policy tape — %s still unresolved" % stage
+
+
+static func _hook_from_dict(item: Dictionary) -> String:
+	var pending: String = str(item.get("pending", ""))
+	if pending.is_empty():
+		return ""
+	var stage: String = EventChain.display_stage(pending)
+	var scope: String = str(item.get("scope", "company"))
+	match scope:
+		"company":
+			return "%s — %s still unresolved" % [CompanyCatalog.display_name(str(item.get("subject", ""))), stage]
+		"industry":
+			var industry_name: String = str(item.get("industry", "Sector"))
+			if industry_name.is_empty():
+				industry_name = "Sector"
+			return "%s story — %s still unresolved" % [industry_name, stage]
+		_:
+			return "Policy tape — %s still unresolved" % stage
+
+
 func deserialize(data: Dictionary) -> void:
 	active.clear()
 	cooldowns.clear()

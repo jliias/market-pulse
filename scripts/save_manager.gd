@@ -33,7 +33,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 4,
+		"version": 5,
 		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
@@ -43,6 +43,14 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		"stock_prices": prices,
 		"event_chains": market.chain_director.serialize(),
 		"regime": market.regime.serialize(),
+		"last_equity": portfolio.last_equity,
+		"last_alpha": portfolio.last_alpha,
+		"equity_ath": portfolio.equity_ath,
+		"beat_streak": portfolio.beat_streak,
+		"best_beat_streak": portfolio.best_beat_streak,
+		"best_alpha": portfolio.best_alpha,
+		"worst_alpha": portfolio.worst_alpha,
+		"has_alpha_stats": portfolio.has_alpha_stats,
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -78,6 +86,9 @@ static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictio
 		market.regime.deserialize(data["regime"])
 	else:
 		market.regime.reset()
+	if not data.has("last_equity"):
+		portfolio.last_equity = portfolio.get_portfolio_value(market.stocks)
+		portfolio.equity_ath = maxf(portfolio.equity_ath, portfolio.last_equity)
 
 
 static func watchlist_from_save(data: Dictionary) -> Array[String]:
@@ -91,7 +102,81 @@ static func watchlist_from_save(data: Dictionary) -> Array[String]:
 static func summary_text() -> String:
 	var data := load_game()
 	if data.is_empty():
-		return "No saved game"
+		return "No saved game yet."
+	return "\n".join(cliffhanger_lines(data))
+
+
+static func equity_from_save(data: Dictionary) -> float:
+	if data.has("last_equity"):
+		return float(data["last_equity"])
 	var cash: float = float(data.get("cash", 0.0))
+	var holdings: Variant = data.get("holdings", {})
+	var prices: Variant = data.get("stock_prices", {})
+	if typeof(holdings) != TYPE_DICTIONARY or typeof(prices) != TYPE_DICTIONARY:
+		return cash
+	var total: float = cash
+	for symbol in holdings:
+		total += float(holdings[symbol]) * float((prices as Dictionary).get(symbol, 0.0))
+	return total
+
+
+static func cliffhanger_lines(data: Dictionary) -> PackedStringArray:
+	var lines: PackedStringArray = []
 	var days: int = int(data.get("days_played", 0))
-	return "Day %d  ·  Cash $%.2f" % [days, cash]
+	var equity: float = equity_from_save(data)
+	var ath: float = float(data.get("equity_ath", equity))
+	lines.append("Day %d  ·  Book $%.0f  ·  ATH $%.0f" % [days, equity, maxf(ath, equity)])
+
+	var watch: Variant = data.get("watchlist", [])
+	if typeof(watch) == TYPE_ARRAY and not (watch as Array).is_empty():
+		var names: PackedStringArray = []
+		for item in watch:
+			names.append(str(item))
+		lines.append("Watchlist  %s" % ", ".join(names))
+
+	var climate_bit: String = _climate_line(data)
+	var streak_bit: String = _streak_line(data)
+	if climate_bit.is_empty():
+		lines.append(streak_bit)
+	else:
+		lines.append("%s  ·  %s" % [climate_bit, streak_bit])
+
+	var hook: String = EventChainDirector.hook_from_save(data.get("event_chains", {}))
+	if hook.is_empty():
+		hook = "No open story on the board."
+	lines.append(hook)
+
+	if bool(data.get("has_alpha_stats", false)):
+		lines.append("Last close  %+.1f%% vs tape" % float(data.get("last_alpha", 0.0)))
+	return lines
+
+
+static func _climate_line(data: Dictionary) -> String:
+	var regime: Variant = data.get("regime", {})
+	if typeof(regime) != TYPE_DICTIONARY:
+		return ""
+	var climate: String = str((regime as Dictionary).get("climate", "normal"))
+	var days_left: int = int((regime as Dictionary).get("climate_days", 0))
+	match climate:
+		"bull":
+			if days_left > 0:
+				return "BULL MARKET (%d days left)" % days_left
+			return "BULL MARKET"
+		"bear":
+			if days_left > 0:
+				return "BEAR MARKET (%d days left)" % days_left
+			return "BEAR MARKET"
+		_:
+			return "NORMAL TAPE"
+
+
+static func _streak_line(data: Dictionary) -> String:
+	var streak: int = int(data.get("beat_streak", 0))
+	var best: int = int(data.get("best_beat_streak", 0))
+	if streak > 0:
+		if best > streak:
+			return "%d days ahead of the tape (best %d)" % [streak, best]
+		return "%d days ahead of the tape" % streak
+	if best > 0:
+		return "Streak broken  ·  best was %d days" % best
+	return "No beat-the-market streak yet"

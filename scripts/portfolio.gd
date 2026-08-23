@@ -12,6 +12,14 @@ var trade_history: Array[Dictionary] = []
 var total_commissions: float = 0.0
 var day_start_value: float = STARTING_CASH
 var days_played: int = 0
+var last_equity: float = STARTING_CASH
+var last_alpha: float = 0.0
+var equity_ath: float = STARTING_CASH
+var beat_streak: int = 0
+var best_beat_streak: int = 0
+var best_alpha: float = 0.0
+var worst_alpha: float = 0.0
+var has_alpha_stats: bool = false
 
 
 func reset_new_game() -> void:
@@ -22,6 +30,14 @@ func reset_new_game() -> void:
 	total_commissions = 0.0
 	day_start_value = STARTING_CASH
 	days_played = 0
+	last_equity = STARTING_CASH
+	last_alpha = 0.0
+	equity_ath = STARTING_CASH
+	beat_streak = 0
+	best_beat_streak = 0
+	best_alpha = 0.0
+	worst_alpha = 0.0
+	has_alpha_stats = false
 
 
 func apply_save(data: Dictionary) -> void:
@@ -39,6 +55,14 @@ func apply_save(data: Dictionary) -> void:
 		for symbol in saved_avg:
 			avg_cost[str(symbol)] = float(saved_avg[symbol])
 	day_start_value = cash
+	last_equity = float(data.get("last_equity", cash))
+	last_alpha = float(data.get("last_alpha", 0.0))
+	equity_ath = float(data.get("equity_ath", maxf(last_equity, STARTING_CASH)))
+	beat_streak = int(data.get("beat_streak", 0))
+	best_beat_streak = int(data.get("best_beat_streak", beat_streak))
+	best_alpha = float(data.get("best_alpha", 0.0))
+	worst_alpha = float(data.get("worst_alpha", 0.0))
+	has_alpha_stats = bool(data.get("has_alpha_stats", false))
 
 
 func get_avg_cost(symbol: String) -> float:
@@ -80,6 +104,44 @@ func get_holdings_value(stocks: Dictionary) -> float:
 
 func get_portfolio_value(stocks: Dictionary) -> float:
 	return cash + get_holdings_value(stocks)
+
+
+func record_session_close(equity: float, alpha_pct: float) -> void:
+	last_equity = equity
+	last_alpha = alpha_pct
+	if equity > equity_ath:
+		equity_ath = equity
+	if not has_alpha_stats:
+		best_alpha = alpha_pct
+		worst_alpha = alpha_pct
+		has_alpha_stats = true
+	else:
+		best_alpha = maxf(best_alpha, alpha_pct)
+		worst_alpha = minf(worst_alpha, alpha_pct)
+	if alpha_pct > 0.05:
+		beat_streak += 1
+		best_beat_streak = maxi(best_beat_streak, beat_streak)
+	elif alpha_pct < -0.05:
+		beat_streak = 0
+
+
+func streak_line() -> String:
+	if beat_streak > 0:
+		if best_beat_streak > beat_streak:
+			return "%d days ahead of the tape (best %d)" % [beat_streak, best_beat_streak]
+		return "%d days ahead of the tape" % beat_streak
+	if best_beat_streak > 0:
+		return "Streak broken  ·  best was %d days" % best_beat_streak
+	return "No beat-the-market streak yet"
+
+
+func career_close_line() -> String:
+	var lines: PackedStringArray = []
+	lines.append(streak_line())
+	lines.append("Book $%.0f  ·  ATH $%.0f" % [last_equity, equity_ath])
+	if has_alpha_stats:
+		lines.append("Best day %+.1f%% vs tape  ·  Worst %+.1f%%" % [best_alpha, worst_alpha])
+	return "\n".join(lines)
 
 
 func mark_day_start(stocks: Dictionary) -> void:
