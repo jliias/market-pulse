@@ -397,6 +397,7 @@ var news_generator: NewsGenerator
 
 
 var last_tick: int = 0
+var skip_premarket_chains: bool = false
 
 
 func _init(p_generator: NewsGenerator) -> void:
@@ -408,6 +409,7 @@ func reset() -> void:
 	cooldowns.clear()
 	calendar_day = 0
 	last_tick = 0
+	skip_premarket_chains = false
 
 
 func serialize() -> Dictionary:
@@ -501,6 +503,9 @@ func occupied_subjects() -> Array[String]:
 func collect_premarket(stocks: Array[Stock], session_time: String) -> Array[NewsEvent]:
 	last_tick = 0
 	_prune_cooldowns()
+	if skip_premarket_chains:
+		skip_premarket_chains = false
+		return []
 	var events: Array[NewsEvent] = []
 	var due: Array[EventChain] = []
 	for chain in active:
@@ -533,6 +538,21 @@ func try_fire_due(stocks: Array[Stock], session_time: String, tick_count: int) -
 
 func try_intraday(stocks: Array[Stock], session_time: String, tick_count: int) -> NewsEvent:
 	return try_fire_due(stocks, session_time, tick_count)
+
+
+func try_away_beat(stocks: Array[Stock], session_time: String) -> NewsEvent:
+	_prune_cooldowns()
+	for chain in active:
+		if chain.pending.is_empty():
+			continue
+		skip_premarket_chains = true
+		return _fire(chain, stocks, session_time, true)
+	if active.size() < MAX_ACTIVE and randf() < 0.28:
+		var started: NewsEvent = try_start(stocks, session_time, true)
+		if started != null:
+			skip_premarket_chains = true
+		return started
+	return null
 
 
 func try_start(stocks: Array[Stock], session_time: String, premarket: bool) -> NewsEvent:

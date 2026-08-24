@@ -7,6 +7,7 @@ const OPEN_HOUR := 9
 const OPEN_MINUTE := 30
 const CLOSE_HOUR := 16
 const CLOSE_MINUTE := 0
+const END_SESSION_UNLOCK_MINUTES := 60
 var watchlist: Array[String] = CompanyCatalog.DEFAULT_WATCHLIST.duplicate()
 var stocks: Dictionary = {}
 var news_feed: Array[NewsEvent] = []
@@ -20,6 +21,8 @@ var is_closed: bool = false
 var market_sentiment: float = 0.0
 var opening_index: float = 0.0
 var premarket_events: Array[NewsEvent] = []
+var overnight_events: Array[NewsEvent] = []
+var away_applied: bool = false
 var mood_hold: float = 0.0
 var mood_hold_ticks: int = 0
 var calendar_day: int = 0
@@ -73,6 +76,99 @@ func roll_to_next_day() -> void:
 		stocks[symbol].roll_to_next_day()
 
 
+func apply_away_step(hours: float) -> void:
+	away_applied = true
+	overnight_events.clear()
+	session_minutes = 4
+	session_seconds = 0
+	chain_director.calendar_day = calendar_day
+	var scale: float = clampf(hours / SaveManager.AWAY_GAP_HOURS, 0.7, 1.5)
+	regime.drift_while_away()
+
+	var climate_line: String = regime.take_climate_headline()
+	if not climate_line.is_empty():
+		var climate_event := NewsEvent.new(
+			get_time_string(),
+			_overnight_text(climate_line),
+			[],
+			0.2 if regime.climate == MarketRegime.CLIMATE_BULL else (-0.2 if regime.climate == MarketRegime.CLIMATE_BEAR else 0.0),
+			0.0,
+			0,
+			false,
+			true,
+			"macro",
+			"system"
+		)
+		overnight_events.append(climate_event)
+
+	var gap_sum := 0.0
+	for symbol in watchlist:
+		var stock: Stock = stocks[symbol]
+		var gap: float = _away_gap_for(symbol, scale)
+		gap_sum += gap
+		stock.apply_overnight_gap(gap, absf(gap) > 0.025, true)
+
+	var avg_gap: float = gap_sum / float(maxi(watchlist.size(), 1))
+	var gapped_names: Array[String] = []
+	for symbol in watchlist:
+		gapped_names.append(symbol)
+	var gap_event := NewsEvent.new(
+		get_time_string(),
+		"OVERNIGHT: while you were away, the watchlist marked — names gapped with the climate.",
+		gapped_names,
+		clampf(avg_gap * 8.0, -0.4, 0.4),
+		0.0,
+		0,
+		absf(avg_gap) > 0.02,
+		true,
+		"macro",
+		"market"
+	)
+	gap_event.reaction = "The open will inherit last night's print."
+	overnight_events.append(gap_event)
+
+	var beat: NewsEvent = chain_director.try_away_beat(get_stock_list(), get_time_string())
+	if beat != null:
+		beat.headline = _overnight_text(beat.headline)
+		beat.is_premarket = true
+		_apply_premarket_news(beat)
+		overnight_events.append(beat)
+		var weather_note: NewsEvent = _maybe_shift_regime(beat, true)
+		if weather_note != null:
+			weather_note.headline = _overnight_text(weather_note.headline)
+			overnight_events.append(weather_note)
+
+
+func _away_gap_for(symbol: String, scale: float) -> float:
+	var climate_bias := 0.0
+	match regime.climate:
+		MarketRegime.CLIMATE_BULL:
+			climate_bias = 0.008
+		MarketRegime.CLIMATE_BEAR:
+			climate_bias = -0.008
+	var vol := 0.012
+	var cap := 0.035
+	match CompanyCatalog.risk_key(symbol):
+		"growth":
+			vol = 0.022
+			cap = 0.06
+		"volatile":
+			vol = 0.038
+			cap = 0.11
+	var gap: float = (climate_bias + randfn(0.0, vol)) * scale
+	return clampf(gap, -cap * scale, cap * scale)
+
+
+func _overnight_text(headline: String) -> String:
+	if headline.begins_with("OVERNIGHT"):
+		return headline
+	if headline.begins_with("PREMARKET: "):
+		return "OVERNIGHT: " + headline.substr(11)
+	if headline.begins_with("PREMARKET:"):
+		return "OVERNIGHT:" + headline.substr(10)
+	return "OVERNIGHT: " + headline
+
+
 func prepare() -> void:
 	is_running = false
 	is_closed = false
@@ -86,6 +182,11 @@ func prepare() -> void:
 	news_feed.clear()
 	drama.reset()
 	chain_director.calendar_day = calendar_day
+	away_applied = not overnight_events.is_empty()
+	for carried in overnight_events:
+		news_feed.append(carried)
+		premarket_events.append(carried)
+	overnight_events.clear()
 
 	var climate_line: String = regime.take_climate_headline()
 	if not climate_line.is_empty():
@@ -443,6 +544,20 @@ func _is_at_or_after_close() -> bool:
 	if session_minutes > CLOSE_HOUR:
 		return true
 	return session_minutes == CLOSE_HOUR and session_seconds >= CLOSE_MINUTE
+
+
+func minutes_since_open() -> int:
+	return (session_minutes - OPEN_HOUR) * 60 + (session_seconds - OPEN_MINUTE)
+
+
+func can_end_session() -> bool:
+	if is_closed:
+		return true
+	return minutes_since_open() >= END_SESSION_UNLOCK_MINUTES
+
+
+func minutes_until_end_session() -> int:
+	return maxi(END_SESSION_UNLOCK_MINUTES - minutes_since_open(), 0)
 
 
 func get_time_string() -> String:

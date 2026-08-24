@@ -196,6 +196,27 @@ func on_day_close() -> void:
 	high_vol_ticks_today = 0
 
 
+func drift_while_away() -> void:
+	if climate_days > 0:
+		climate_days -= 1
+	if climate != CLIMATE_NORMAL and climate_days <= 0:
+		_set_climate(CLIMATE_NORMAL, 0)
+	elif climate == CLIMATE_NORMAL and randf() < 0.18:
+		if randf() < 0.5:
+			_set_climate(CLIMATE_BULL, randi_range(3, 9))
+		else:
+			_set_climate(CLIMATE_BEAR, randi_range(3, 9))
+	elif climate != CLIMATE_NORMAL and randf() < 0.16:
+		_set_climate(CLIMATE_NORMAL, 0)
+	elif climate != CLIMATE_NORMAL and randf() < 0.22:
+		climate_days = maxi(climate_days, randi_range(2, 6))
+	weather = WEATHER_NONE
+	weather_ticks = 0
+	panic_ticks_today = 0
+	euphoria_ticks_today = 0
+	high_vol_ticks_today = 0
+
+
 func take_climate_headline() -> String:
 	if not announce_climate:
 		return ""

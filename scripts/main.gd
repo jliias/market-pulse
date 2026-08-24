@@ -166,6 +166,7 @@ func _apply_launch_mode() -> void:
 		portfolio.reset_new_game()
 		market.chain_director.reset()
 		market.regime.reset()
+		SaveManager.clear_away()
 	SaveManager.launch_mode = "new"
 
 
@@ -206,6 +207,7 @@ func _begin_session() -> void:
 	awaiting_open = true
 	preopen_remaining = PREOPEN_SECONDS
 	market.calendar_day = portfolio.days_played
+	_consume_away_step()
 	market.prepare()
 	portfolio.mark_day_start(market.stocks)
 	news_feed.clear()
@@ -213,10 +215,13 @@ func _begin_session() -> void:
 	_set_buy_mode(true)
 	_set_quantity(20)
 	trade_message_label.text = "Premarket is out. Read the tape — the open is in 10 seconds."
+	if market.away_applied:
+		trade_message_label.text = "The desk moved overnight. Read the tape — the open is in 10 seconds."
 	for event in market.premarket_events:
 		_add_news_to_feed(event)
 	new_day_button.visible = false
 	end_session_button.visible = true
+	_refresh_end_session_button()
 	place_order_button.disabled = true
 	tick_timer.stop()
 	open_countdown_overlay.visible = true
@@ -394,8 +399,27 @@ func _confirm_end_session() -> void:
 	if market.is_closed:
 		_end_session()
 		return
+	if not market.can_end_session():
+		trade_message_label.text = "The open has to trade. End Session unlocks at 10:30."
+		return
 	_pause_for_confirm()
 	end_session_dialog.popup_centered()
+
+
+func _refresh_end_session_button() -> void:
+	if not end_session_button.visible:
+		return
+	if session_active and not market.is_closed and not market.can_end_session():
+		end_session_button.disabled = true
+		end_session_button.tooltip_text = "The open has to trade. Unlocks after the first hour of tape."
+		if awaiting_open:
+			end_session_button.text = "End Session  10:30"
+		else:
+			end_session_button.text = "End Session  %dm" % market.minutes_until_end_session()
+	else:
+		end_session_button.disabled = false
+		end_session_button.text = "End Session"
+		end_session_button.tooltip_text = "Skip to the close. Today still marks overnight."
 
 
 func _confirm_leave_desk(intent: String) -> void:
@@ -413,7 +437,7 @@ func _confirm_leave_desk(intent: String) -> void:
 	if session_active and not market.is_closed:
 		lines.append("If the market is still open, today will be marked to the close.")
 	if has_positions:
-		lines.append("A long gap before you return can move the calendar. Open positions may gap up or down while you are away.")
+		lines.append("A long real-world gap before you return can gap names overnight. Open positions may move while you are away.")
 		lines.append("Hold them overnight, or sell everything at the bid now.")
 		menu_dialog.ok_button_text = "Hold and leave"
 	else:
@@ -450,6 +474,7 @@ func _leave_desk(cash_out: bool) -> void:
 		_end_session()
 	if cash_out:
 		_cash_out_all()
+	SaveManager.stamp_left_desk()
 	SaveManager.save_game(portfolio, market)
 	if leave_intent == "quit":
 		get_tree().quit()
@@ -468,6 +493,15 @@ func _restart_session() -> void:
 		_show_chapter_recap()
 		return
 	_start_next_trading_day()
+
+
+func _consume_away_step() -> void:
+	var hours: float = SaveManager.pending_away_hours
+	if hours < SaveManager.AWAY_GAP_HOURS:
+		return
+	market.apply_away_step(hours)
+	SaveManager.clear_away()
+	SaveManager.save_game(portfolio, market)
 
 
 func _start_next_trading_day() -> void:
@@ -521,6 +555,7 @@ func _update_ui() -> void:
 	market_status_label.text = "MARKET STATUS:  %s" % market.regime.status_text()
 	market_status_label.add_theme_color_override("font_color", market.regime.status_color())
 	update_speed_label.text = "UPDATE SPEED: 1 SECOND"
+	_refresh_end_session_button()
 
 
 func _refresh_selected_stock() -> void:

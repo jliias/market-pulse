@@ -4,6 +4,9 @@ extends RefCounted
 const SAVE_PATH := "user://market_pulse_save.json"
 static var launch_mode: String = "new"
 static var pending_watchlist: Array[String] = []
+static var left_at: float = 0.0
+static var pending_away_hours: float = 0.0
+const AWAY_GAP_HOURS := 8.0
 
 
 static func has_save() -> bool:
@@ -33,7 +36,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 6,
+		"version": 7,
 		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
@@ -56,6 +59,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		"chapter_beats": portfolio.chapter_beats,
 		"chapter_days": portfolio.chapter_days,
 		"pending_chapter": portfolio.pending_chapter,
+		"left_at": left_at,
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -94,6 +98,35 @@ static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictio
 	if not data.has("last_equity"):
 		portfolio.last_equity = portfolio.get_portfolio_value(market.stocks)
 		portfolio.equity_ath = maxf(portfolio.equity_ath, portfolio.last_equity)
+	left_at = float(data.get("left_at", 0.0))
+	pending_away_hours = hours_away()
+	if pending_away_hours < AWAY_GAP_HOURS:
+		pending_away_hours = 0.0
+		left_at = 0.0
+
+
+static func stamp_left_desk() -> void:
+	left_at = Time.get_unix_time_from_system()
+
+
+static func clear_away() -> void:
+	left_at = 0.0
+	pending_away_hours = 0.0
+
+
+static func hours_away() -> float:
+	if left_at <= 0.0:
+		return 0.0
+	return (Time.get_unix_time_from_system() - left_at) / 3600.0
+
+
+static func is_away_due(data: Dictionary = {}) -> bool:
+	var stamp: float = left_at
+	if not data.is_empty():
+		stamp = float(data.get("left_at", 0.0))
+	if stamp <= 0.0:
+		return false
+	return (Time.get_unix_time_from_system() - stamp) / 3600.0 >= AWAY_GAP_HOURS
 
 
 static func watchlist_from_save(data: Dictionary) -> Array[String]:
@@ -153,6 +186,8 @@ static func cliffhanger_lines(data: Dictionary) -> PackedStringArray:
 
 	if bool(data.get("has_alpha_stats", false)):
 		lines.append("Last close  %+.1f%% vs tape" % float(data.get("last_alpha", 0.0)))
+	if is_away_due(data):
+		lines.append("The desk has been dark. Overnight risk is in play.")
 	return lines
 
 
