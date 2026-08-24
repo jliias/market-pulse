@@ -38,6 +38,8 @@ var confirm_swap_button: Button
 var drop_pick: String = ""
 var add_pick: String = ""
 var keep_book: bool = true
+var leave_intent: String = "menu"
+var cash_out_button: Button
 
 @onready var body_columns: BoxContainer = %BodyColumns
 @onready var watchlist_column: Control = %WatchlistColumn
@@ -89,13 +91,11 @@ var keep_book: bool = true
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		if session_active:
-			_end_session()
-		else:
-			SaveManager.save_game(portfolio, market)
+		_confirm_leave_desk("quit")
 
 
 func _ready() -> void:
+	get_tree().set_auto_accept_quit(false)
 	resized.connect(_apply_responsive_layout)
 	_connect_controls()
 	_build_timeframe_buttons()
@@ -141,10 +141,13 @@ func _connect_controls() -> void:
 	end_session_button.pressed.connect(_confirm_end_session)
 	new_day_button.pressed.connect(_restart_session)
 	%SettingsButton.pressed.connect(func() -> void: settings_dialog.popup_centered())
-	%MenuButton.pressed.connect(_confirm_return_to_menu)
-	menu_dialog.confirmed.connect(_return_to_menu)
+	%MenuButton.pressed.connect(func() -> void: _confirm_leave_desk("menu"))
+	menu_dialog.confirmed.connect(_on_leave_hold)
 	menu_dialog.canceled.connect(_cancel_confirm_dialog)
 	menu_dialog.get_cancel_button().text = "Stay"
+	menu_dialog.ok_button_text = "Hold and leave"
+	cash_out_button = menu_dialog.add_button("Cash out and leave", true, "cash_out")
+	menu_dialog.custom_action.connect(_on_leave_custom_action)
 	end_session_dialog.confirmed.connect(_end_session)
 	end_session_dialog.canceled.connect(_cancel_confirm_dialog)
 	end_session_dialog.get_cancel_button().text = "Stay"
@@ -395,12 +398,28 @@ func _confirm_end_session() -> void:
 	end_session_dialog.popup_centered()
 
 
-func _confirm_return_to_menu() -> void:
+func _confirm_leave_desk(intent: String) -> void:
+	leave_intent = intent
 	_pause_for_confirm()
-	if session_active and not market.is_closed:
-		menu_dialog.dialog_text = "Are you sure you want to return to the menu?\n\nThe rest of the trading day will be marked to the close. Your cash and holdings will be saved."
+	var has_positions: bool = not portfolio.holdings.is_empty()
+	if cash_out_button != null:
+		cash_out_button.visible = has_positions
+	if intent == "quit":
+		menu_dialog.title = "Leave the Desk"
 	else:
-		menu_dialog.dialog_text = "Return to the menu?\n\nYour cash and holdings are already saved."
+		menu_dialog.title = "Return to Menu"
+
+	var lines: PackedStringArray = []
+	if session_active and not market.is_closed:
+		lines.append("If the market is still open, today will be marked to the close.")
+	if has_positions:
+		lines.append("A long gap before you return can move the calendar. Open positions may gap up or down while you are away.")
+		lines.append("Hold them overnight, or sell everything at the bid now.")
+		menu_dialog.ok_button_text = "Hold and leave"
+	else:
+		lines.append("Your book is cash. Nothing is left overnight in names.")
+		menu_dialog.ok_button_text = "Leave"
+	menu_dialog.dialog_text = "\n\n".join(lines)
 	menu_dialog.popup_centered()
 
 
@@ -415,13 +434,33 @@ func _cancel_confirm_dialog() -> void:
 		tick_timer.start()
 
 
-func _return_to_menu() -> void:
+func _on_leave_custom_action(action: StringName) -> void:
+	if str(action) != "cash_out":
+		return
+	_leave_desk(true)
+
+
+func _on_leave_hold() -> void:
+	_leave_desk(false)
+
+
+func _leave_desk(cash_out: bool) -> void:
 	menu_confirm_open = false
 	if session_active:
 		_end_session()
+	if cash_out:
+		_cash_out_all()
+	SaveManager.save_game(portfolio, market)
+	if leave_intent == "quit":
+		get_tree().quit()
 	else:
-		SaveManager.save_game(portfolio, market)
-	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+func _cash_out_all() -> void:
+	var symbols: Array = portfolio.holdings.keys()
+	for item in symbols:
+		_flatten_symbol(str(item))
 
 
 func _restart_session() -> void:

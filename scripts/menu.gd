@@ -7,6 +7,7 @@ const BUY_ACCENT := Color(0.32, 0.92, 0.48)
 
 
 func _ready() -> void:
+	get_tree().set_auto_accept_quit(true)
 	_style_button(%NewGameButton, BUY_ACCENT, true)
 	_style_button(%ContinueButton, SELECTED_ACCENT, SaveManager.has_save())
 	_style_button(%ExitButton, UI_ACCENT, true)

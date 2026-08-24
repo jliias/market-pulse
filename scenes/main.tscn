@@ -421,11 +421,11 @@ dialog_text = "Settings will land in a later pass. Speed control and layout opti
 
 [node name="MenuDialog" type="ConfirmationDialog" parent="." unique_id=1831903832]
 unique_name_in_owner = true
-title = "Return to Menu"
-ok_button_text = "Return to Menu"
-dialog_text = "Are you sure you want to return to the menu?
+title = "Leave the Desk"
+ok_button_text = "Hold and leave"
+dialog_text = "A long gap before you return can move the calendar. Open positions may gap up or down while you are away.
 
-If the market is still open, the rest of the day will be marked to the close. Your cash and holdings will be saved."
+Hold them overnight, or sell everything at the bid now."
 dialog_autowrap = true
 
 [node name="EndSessionDialog" type="ConfirmationDialog" parent="." unique_id=158884281]
