@@ -76,7 +76,6 @@ var cash_out_button: Button
 
 @onready var market_status_label: Label = %MarketStatusLabel
 @onready var day_label: Label = %DayLabel
-@onready var update_speed_label: Label = %UpdateSpeedLabel
 @onready var next_update_label: Label = %NextUpdateLabel
 @onready var end_session_button: Button = %EndSessionButton
 @onready var new_day_button: Button = %NewDayButton
@@ -212,6 +211,12 @@ func _apply_hud_tooltips() -> void:
 	CopyHints.hover(commission_label, CopyHints.HUD_COMMISSION)
 	CopyHints.hover(est_price_label, CopyHints.HUD_BID_ASK)
 	CopyHints.hover(trade_price_label, CopyHints.HUD_BID_ASK)
+
+
+func _displayed_day_number() -> int:
+	if session_active:
+		return portfolio.days_played + 1
+	return maxi(portfolio.days_played, 1)
 
 
 func _begin_session() -> void:
@@ -377,7 +382,7 @@ func _end_session() -> void:
 	portfolio.days_played += 1
 	if portfolio.chapter_just_finished():
 		portfolio.pending_chapter = true
-		new_day_button.text = "Chapter Recap"
+		new_day_button.text = "Week Recap"
 	else:
 		new_day_button.text = "New Day"
 	var hook: String = market.chain_director.hook_line()
@@ -548,7 +553,7 @@ func _update_ui() -> void:
 	elif session_active and not market.is_closed:
 		status = "MARKET OPEN"
 	session_label.text = "Session: %s — %s" % [market.get_time_string(), status]
-	day_label.text = "DAY %d" % (portfolio.days_played + 1)
+	day_label.text = Portfolio.session_heading(_displayed_day_number())
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(pl_pct)
 	vs_market_label.text = "vs Market: %+.1f%%  (market %+.1f%%)" % [alpha_pct, market_pct]
@@ -566,7 +571,6 @@ func _update_ui() -> void:
 
 	market_status_label.text = "MARKET STATUS:  %s" % market.regime.status_text()
 	market_status_label.add_theme_color_override("font_color", market.regime.status_color())
-	update_speed_label.text = "UPDATE SPEED: 1 SECOND"
 	_refresh_end_session_button()
 
 
@@ -780,7 +784,7 @@ func _build_chapter_overlay() -> void:
 	recap_page.add_theme_constant_override("separation", 12)
 	stack.add_child(recap_page)
 	var recap_title := Label.new()
-	recap_title.text = "CHAPTER RECAP"
+	recap_title.text = "WEEK RECAP"
 	recap_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	recap_title.add_theme_color_override("font_color", SELECTED_ACCENT)
 	recap_title.add_theme_font_size_override("font_size", 22)

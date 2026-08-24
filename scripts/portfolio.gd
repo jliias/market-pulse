@@ -5,6 +5,9 @@ const STARTING_CASH := 10000.0
 const FIXED_COMMISSION := 2.0
 const PERCENT_COMMISSION := 0.002
 const CHAPTER_LENGTH := 5
+const WEEKDAYS: Array[String] = [
+	"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
+]
 
 var cash: float = STARTING_CASH
 var holdings: Dictionary = {}
@@ -177,7 +180,7 @@ func begin_next_chapter() -> void:
 
 
 func recap_text(climate_line: String, watchlist: Array[String]) -> String:
-	var chapter_n: int = maxi(days_played / CHAPTER_LENGTH, 1)
+	var week_n: int = maxi(days_played / CHAPTER_LENGTH, 1)
 	var counted: int = maxi(chapter_days, 1)
 	var avg_alpha: float = chapter_alpha_sum / float(counted)
 	var book_pct: float = 0.0
@@ -187,9 +190,12 @@ func recap_text(climate_line: String, watchlist: Array[String]) -> String:
 	for symbol in watchlist:
 		names.append(str(symbol))
 	var lines: PackedStringArray = []
-	lines.append("Chapter %d complete  ·  days %d–%d" % [
-		chapter_n,
-		days_played - counted + 1,
+	var start_day: int = days_played - counted + 1
+	lines.append("Week %d complete  ·  %s–%s  ·  days %d–%d" % [
+		week_n,
+		weekday_name(start_day),
+		weekday_name(days_played),
+		start_day,
 		days_played,
 	])
 	lines.append("Book $%.0f → $%.0f  (%+.1f%%)" % [chapter_open_equity, last_equity, book_pct])
@@ -199,6 +205,23 @@ func recap_text(climate_line: String, watchlist: Array[String]) -> String:
 	lines.append(streak_line())
 	lines.append("Watchlist  %s" % ", ".join(names))
 	return "\n".join(lines)
+
+
+static func weekday_name(day_number: int) -> String:
+	var n: int = maxi(day_number, 1)
+	return WEEKDAYS[(n - 1) % WEEKDAYS.size()]
+
+
+static func week_number(day_number: int) -> int:
+	return (maxi(day_number, 1) - 1) / CHAPTER_LENGTH + 1
+
+
+static func session_heading(day_number: int) -> String:
+	return "DAY %d (%s, Week %d)" % [day_number, weekday_name(day_number), week_number(day_number)]
+
+
+static func career_heading(day_number: int) -> String:
+	return "Day %d (%s, Week %d)" % [day_number, weekday_name(day_number), week_number(day_number)]
 
 
 func mark_day_start(stocks: Dictionary) -> void:

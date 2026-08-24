@@ -163,7 +163,9 @@ static func cliffhanger_lines(data: Dictionary) -> PackedStringArray:
 	var days: int = int(data.get("days_played", 0))
 	var equity: float = equity_from_save(data)
 	var ath: float = float(data.get("equity_ath", equity))
-	lines.append("Day %d  ·  Book $%.0f  ·  ATH $%.0f" % [days, equity, maxf(ath, equity)])
+	lines.append("%s  ·  Book $%.0f  ·  ATH $%.0f" % [
+		Portfolio.career_heading(maxi(days, 1)), equity, maxf(ath, equity)
+	])
 
 	var watch: Variant = data.get("watchlist", [])
 	if typeof(watch) == TYPE_ARRAY and not (watch as Array).is_empty():

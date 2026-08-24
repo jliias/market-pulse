@@ -361,18 +361,13 @@ theme_override_constants/separation = 16
 [node name="DayLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=1156268523]
 unique_name_in_owner = true
 layout_mode = 2
-text = "DAY 1"
+text = "DAY 1 (Monday, Week 1)"
 
 [node name="MarketStatusLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=947028755]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MARKET STATUS: NORMAL"
-
-[node name="UpdateSpeedLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=238083810]
-unique_name_in_owner = true
-layout_mode = 2
-text = "UPDATE SPEED: 1 SECOND"
 
 [node name="NextUpdateLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=310701140]
 unique_name_in_owner = true

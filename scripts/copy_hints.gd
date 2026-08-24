@@ -93,7 +93,7 @@ static func annotate(text: String) -> String:
 	while found != null:
 		out += text.substr(pos, found.get_start() - pos)
 		var form: String = found.get_string()
-		out += "[hint=%s]%s[/hint]" % [str(_HINTS.get(form, "")), form]
+		out += "[hint=%s][u]%s[/u][/hint]" % [str(_HINTS.get(form, "")), form]
 		pos = found.get_end()
 		found = re.search(text, pos)
 	out += text.substr(pos)
