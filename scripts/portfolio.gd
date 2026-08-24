@@ -148,8 +148,8 @@ func record_session_close(equity: float, alpha_pct: float) -> void:
 func streak_line() -> String:
 	if beat_streak > 0:
 		if best_beat_streak > beat_streak:
-			return "%d days ahead of the tape (best %d)" % [beat_streak, best_beat_streak]
-		return "%d days ahead of the tape" % beat_streak
+			return "%d days ahead of the market (best %d)" % [beat_streak, best_beat_streak]
+		return "%d days ahead of the market" % beat_streak
 	if best_beat_streak > 0:
 		return "Streak broken  ·  best was %d days" % best_beat_streak
 	return "No beat-the-market streak yet"
@@ -160,7 +160,7 @@ func career_close_line() -> String:
 	lines.append(streak_line())
 	lines.append("Book $%.0f  ·  ATH $%.0f" % [last_equity, equity_ath])
 	if has_alpha_stats:
-		lines.append("Best day %+.1f%% vs tape  ·  Worst %+.1f%%" % [best_alpha, worst_alpha])
+		lines.append("Best day %+.1f%% vs Market  ·  Worst %+.1f%%" % [best_alpha, worst_alpha])
 	return "\n".join(lines)
 
 
@@ -193,7 +193,7 @@ func recap_text(climate_line: String, watchlist: Array[String]) -> String:
 		days_played,
 	])
 	lines.append("Book $%.0f → $%.0f  (%+.1f%%)" % [chapter_open_equity, last_equity, book_pct])
-	lines.append("Ahead of the tape %d of %d days  ·  avg alpha %+.1f%%" % [chapter_beats, counted, avg_alpha])
+	lines.append("Ahead of the market %d of %d days  ·  avg vs Market %+.1f%%" % [chapter_beats, counted, avg_alpha])
 	if not climate_line.is_empty():
 		lines.append(climate_line)
 	lines.append(streak_line())

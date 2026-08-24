@@ -4,7 +4,7 @@ extends RefCounted
 const RISK_PROFILES := {
 	"safe": {
 		"label": "Safe",
-		"blurb": "Smaller swings. Harder to outrun the tape in a hurry.",
+		"blurb": "Smaller swings. Harder to outrun the market in a hurry.",
 		"typical": "±0.4–1.2% / day",
 		"organic_mult": 0.52,
 		"news_mult": 0.40,
@@ -206,13 +206,13 @@ static func mix_summary(symbols: Array) -> String:
 	if volatile_n == 3:
 		return "Aggressive board — large gains and large losses are both in play."
 	if volatile_n == 2:
-		return "High risk — two volatile names will dominate the tape."
+		return "High risk — two volatile names will dominate the market."
 	if safe_n == 2:
 		return "Defensive board — two safe names, muted upside unless the third rips."
 	if volatile_n == 1 and safe_n == 1:
 		return "Mixed board — one safe, one growth, one volatile."
 	if volatile_n == 1:
-		return "Tilted growth — moderate tape with one volatile kicker."
+		return "Tilted growth — moderate market with one volatile kicker."
 	return "Tilted defensive — mostly muted, with some growth in the mix."
 
 

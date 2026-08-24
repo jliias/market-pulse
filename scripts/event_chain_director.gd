@@ -388,6 +388,523 @@ const ARCS := {
 			},
 		},
 	},
+	"alph_cloud": {
+		"scope": "company",
+		"subject": "ALPH",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Alpha Technologies says enterprise cloud bookings are tracking ahead.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Alpha Technologies warns enterprise cloud bookings may slip.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: two large accounts are said to be expanding Alpha Technologies deployments.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: CIOs are said to be stretching Alpha Technologies refresh cycles.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: growth desks bid Alpha Technologies on the cloud tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Alpha Technologies is offered as desks fade the cloud rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a hyperscaler is said to have lifted Alpha Technologies allocation.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a large customer is said to have paused an Alpha Technologies rollout.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Alpha Technologies confirms the cloud miss was noise and holds the outlook.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Alpha Technologies cuts cloud commentary — the demand scare sticks.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"grne_storage": {
+		"scope": "company",
+		"subject": "GRNE",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Green Energy Corp says a flagship storage project is nearing commissioning.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Green Energy Corp warns a flagship storage project may slip commissioning.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: interconnection chatter for Green Energy Corp turns constructive.", "category": "regulatory", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: interconnection delays are said to be hanging over Green Energy Corp.", "category": "regulatory", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: speculative flow chases Green Energy Corp on the project tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Green Energy Corp is sold as traders fade the project rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: Green Energy Corp gets an earlier grid slot than billed.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a supplier issue is said to be wider at Green Energy Corp.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Green Energy Corp commissions the storage project and holds guidance.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Green Energy Corp delays the project and trims the pipeline.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"nmin_offtake": {
+		"scope": "company",
+		"subject": "NMIN",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "North Mining Ltd is said to be near a long-term offtake extension.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "North Mining Ltd warns a key offtake may be reopened.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: the buyer is said to want more tonnes from North Mining Ltd.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: the buyer is said to be pressing North Mining Ltd on price.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: miners bid North Mining Ltd as the offtake story spreads.", "category": "commodity", "strength": "minor", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: North Mining Ltd slips as desks fade the contract tape.", "category": "commodity", "strength": "minor", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a second offtaker is said to have joined the North Mining Ltd talks.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a rival is said to be undercutting North Mining Ltd on the same tonnes.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: North Mining Ltd extends the offtake and holds the volume guide.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: North Mining Ltd loses the offtake window and trims shipments.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"helx_fda": {
+		"scope": "company",
+		"subject": "HELX",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Helix Biotech says it has a clear path into a regulatory filing window.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Helix Biotech warns the filing window may slip after a regulator note.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Helix Biotech commentary on the filing stays constructive.", "category": "regulatory", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: Helix Biotech is said to be gathering extra data for the file.", "category": "regulatory", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: biotech flow chases Helix Biotech on the filing tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Helix Biotech is offered as desks fade the filing rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a regulator meeting for Helix Biotech is said to have gone clean.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: Helix Biotech is said to have drawn a request for more data.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Helix Biotech files on time — the path holds.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Helix Biotech delays the file — the timeline is under review.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"retl_holiday": {
+		"scope": "company",
+		"subject": "RETL",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Redline Retail says holiday traffic is tracking ahead of plan.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Redline Retail warns holiday traffic may come in light.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Redline Retail mix looks better than the traffic print implied.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: Redline Retail is leaning harder on promotions than billed.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: defensive flow bids Redline Retail on the traffic tape.", "category": "rumor", "strength": "minor", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Redline Retail slips as desks fade the holiday rumor.", "category": "rumor", "strength": "minor", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a category beat at Redline Retail is wider than first billed.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: inventory at Redline Retail looks heavier than the company guided.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Redline Retail holds the holiday outlook after the traffic print.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Redline Retail cuts near-term sales after the traffic miss.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"aero_program": {
+		"scope": "company",
+		"subject": "AERO",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Aether Aerospace says a key program is moving into rate production.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Aether Aerospace warns a key program may slip rate production.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Aether Aerospace supplier commentary stays constructive.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: a supplier is said to be the bottleneck at Aether Aerospace.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: industrials bid Aether Aerospace on the program tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Aether Aerospace is offered as desks fade the program rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: the customer is said to have lifted Aether Aerospace's near-term slot.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a quality hold is said to be hanging over an Aether Aerospace lot.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Aether Aerospace confirms rate production and holds deliveries.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Aether Aerospace trims the delivery guide after the program slip.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"bank_credit": {
+		"scope": "company",
+		"subject": "BANK",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Bastion Bank says credit trends look cleaner than the street billed.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Bastion Bank warns credit costs may run hotter than billed.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Bastion Bank deposit costs look more stable than feared.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: Bastion Bank is said to be paying up more for deposits.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: financials bid Bastion Bank on the credit tape.", "category": "rumor", "strength": "minor", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Bastion Bank slips as desks fade the credit rumor.", "category": "rumor", "strength": "minor", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a regulator note on Bastion Bank comes in quieter than feared.", "category": "regulatory", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a pocket of consumer credit at Bastion Bank looks worse than billed.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Bastion Bank holds provisions and lifts capital-return commentary.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Bastion Bank lifts provisions and trims the return outlook.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"food_costs": {
+		"scope": "company",
+		"subject": "FOOD",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Harbor Foods says input costs are easing faster than the street billed.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Harbor Foods warns input costs may stay hot into the next print.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Harbor Foods mix in grocery looks firmer than volume implied.", "category": "earnings", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: retailers are said to be pressing Harbor Foods on price.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: defensive flow bids Harbor Foods on the cost tape.", "category": "rumor", "strength": "minor", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Harbor Foods slips as desks fade the cost rumor.", "category": "rumor", "strength": "minor", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: Harbor Foods locks a lower private-label supply print.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a limited Harbor Foods recall is wider than first billed.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Harbor Foods holds margins and lifts volume commentary.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Harbor Foods trims the margin outlook after the cost miss.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"consumer_traffic": {
+		"scope": "industry",
+		"subject": "CONSUMER",
+		"industry": "Consumer",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Desks call a consumer bounce: traffic and mix look firmer across the group.", "category": "industry", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Desks warn a consumer squeeze: traffic looks light and promotions are rising.", "category": "industry", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: consumer-factor flows stay bid into the session.", "category": "industry", "strength": "minor", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: consumer names stay offered as traffic chatter stays soft.", "category": "industry", "strength": "minor", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: consumer names on the board catch the bid.", "category": "industry", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: consumer names on the board are offered as traffic fades.", "category": "industry", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a retail print comes in hotter than the consumer group priced.", "category": "macro", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a retail print comes in colder than the consumer group priced.", "category": "macro", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: the consumer bounce holds — desks stay in the defensive names.", "category": "industry", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: the consumer squeeze is done — desks call the traffic reset complete.", "category": "industry", "strength": "moderate", "lasting": true},
+				],
+			},
+		},
+	},
+	"commodities_swing": {
+		"scope": "industry",
+		"subject": "COMMODITIES",
+		"industry": "Commodities",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Commodity desks call a bid: metals and energy both look supported.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Commodity desks warn of a dump: metals and energy both look heavy.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: the dollar ease keeps the commodity bid intact.", "category": "commodity", "strength": "minor", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: inventory data keeps the commodity offer intact.", "category": "commodity", "strength": "minor", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: commodity names on the board catch the bid.", "category": "commodity", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: commodity names on the board are offered with the complex.", "category": "commodity", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a supply scare supercharges the commodity bid.", "category": "commodity", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a demand scare torches the commodity trade.", "category": "commodity", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: the commodity bid holds — desks stay long the complex.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: the commodity dump is done — desks call the reset complete.", "category": "commodity", "strength": "moderate", "lasting": true},
+				],
+			},
+		},
+	},
+	"inflation_print": {
+		"scope": "market",
+		"subject": "MARKET",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Leak: the inflation print may come in cooler than the street priced.", "category": "macro", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Leak: the inflation print may come in hotter than the street priced.", "category": "macro", "strength": "moderate", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: overnight inflation chatter stays cooler versus the leak.", "category": "macro", "strength": "minor", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: overnight inflation chatter stays hotter versus the leak.", "category": "macro", "strength": "minor", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: risk appetite returns as duration catches a bid.", "category": "macro", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: risk-off hits every name as duration is cut.", "category": "macro", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a core print looks even cooler than the headline leak.", "category": "macro", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a core print looks even hotter than the headline leak.", "category": "macro", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: the official inflation print lands cool — the risk-on story holds.", "category": "macro", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: the official inflation print lands hot — the risk-off story holds.", "category": "macro", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
 }
 
 var active: Array[EventChain] = []
@@ -456,7 +973,7 @@ func hook_text(chain: EventChain) -> String:
 			var industry_name: String = chain.industry if not chain.industry.is_empty() else "Sector"
 			return "%s story — %s still unresolved" % [industry_name, stage]
 		_:
-			return "Policy tape — %s still unresolved" % stage
+			return "Policy story — %s still unresolved" % stage
 
 
 static func _hook_from_dict(item: Dictionary) -> String:
@@ -474,7 +991,7 @@ static func _hook_from_dict(item: Dictionary) -> String:
 				industry_name = "Sector"
 			return "%s story — %s still unresolved" % [industry_name, stage]
 		_:
-			return "Policy tape — %s still unresolved" % stage
+			return "Policy story — %s still unresolved" % stage
 
 
 func deserialize(data: Dictionary) -> void:

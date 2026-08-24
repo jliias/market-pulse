@@ -180,6 +180,7 @@ func _build_timeframe_buttons() -> void:
 		button.toggle_mode = true
 		button.button_pressed = tf == timeframe
 		button.pressed.connect(_on_timeframe_pressed.bind(tf))
+		button.tooltip_text = CopyHints.chart_tooltip(tf)
 		timeframe_buttons.add_child(button)
 	_style_timeframe_buttons()
 
@@ -214,9 +215,9 @@ func _begin_session() -> void:
 	selected_symbol = market.watchlist[0]
 	_set_buy_mode(true)
 	_set_quantity(20)
-	trade_message_label.text = "Premarket is out. Read the tape — the open is in 10 seconds."
+	trade_message_label.text = "Premarket is out. Read the headlines — the open is in 10 seconds."
 	if market.away_applied:
-		trade_message_label.text = "The desk moved overnight. Read the tape — the open is in 10 seconds."
+		trade_message_label.text = "The desk moved overnight. Read the headlines — the open is in 10 seconds."
 	for event in market.premarket_events:
 		_add_news_to_feed(event)
 	new_day_button.visible = false
@@ -239,7 +240,7 @@ func _open_market() -> void:
 	var open_bell: NewsEvent = market.open()
 	_add_news_to_feed(open_bell)
 	place_order_button.disabled = false
-	trade_message_label.text = "Market is open. Try to beat the tape."
+	trade_message_label.text = "Market is open. Try to beat the market."
 	tick_timer.start()
 	_update_ui()
 
@@ -355,9 +356,9 @@ func _end_session() -> void:
 	elif alpha_pct < -0.05:
 		result_text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
 	else:
-		result_text = "Closed. You matched the tape."
+		result_text = "Closed. You matched the market."
 	if left_before_close:
-		result_text = "Tape run to the close. " + result_text
+		result_text = "Marked to the close. " + result_text
 	market.chain_director.calendar_day = market.calendar_day
 	market.chain_director.on_session_end()
 	market.regime.on_day_close()
@@ -411,7 +412,7 @@ func _refresh_end_session_button() -> void:
 		return
 	if session_active and not market.is_closed and not market.can_end_session():
 		end_session_button.disabled = true
-		end_session_button.tooltip_text = "The open has to trade. Unlocks after the first hour of tape."
+		end_session_button.tooltip_text = "The open has to trade. Unlocks after the first hour of the session."
 		if awaiting_open:
 			end_session_button.text = "End Session  10:30"
 		else:
@@ -539,7 +540,7 @@ func _update_ui() -> void:
 	day_label.text = "DAY %d" % (portfolio.days_played + 1)
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(pl_pct)
-	vs_market_label.text = "vs Market: %+.1f%%  (tape %+.1f%%)" % [alpha_pct, market_pct]
+	vs_market_label.text = "vs Market: %+.1f%%  (market %+.1f%%)" % [alpha_pct, market_pct]
 	vs_market_label.add_theme_color_override("font_color", _pl_color(alpha_pct))
 
 	for symbol in watchlist_cards:
@@ -712,14 +713,14 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 	var effect: String = event.effect_label()
 	if effect.is_empty():
 		news_feed.append_text("[color=%s]%s  [b]%s[/b] — %s[/color]\n" % [
-			color, event.timestamp, tag, event.headline
+			color, event.timestamp, tag, CopyHints.annotate(event.headline)
 		])
 	else:
 		news_feed.append_text("[color=%s]%s  [b]%s[/b] · %s — %s[/color]\n" % [
-			color, event.timestamp, tag, effect, event.headline
+			color, event.timestamp, tag, effect, CopyHints.annotate(event.headline)
 		])
 	if not event.reaction.is_empty():
-		news_feed.append_text("[color=#888888]    %s[/color]\n" % event.reaction)
+		news_feed.append_text("[color=#888888]    %s[/color]\n" % CopyHints.annotate(event.reaction))
 
 
 func _sign(value: float) -> String:

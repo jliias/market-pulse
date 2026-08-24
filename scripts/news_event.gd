@@ -82,7 +82,7 @@ func feed_tag() -> String:
 				return affected_symbols[0]
 			return "NAMES"
 		_:
-			return "TAPE"
+			return "MARKET"
 
 
 func attach_chain(p_chain_id: String, p_stage: String) -> void:

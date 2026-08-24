@@ -185,7 +185,7 @@ static func cliffhanger_lines(data: Dictionary) -> PackedStringArray:
 	lines.append(hook)
 
 	if bool(data.get("has_alpha_stats", false)):
-		lines.append("Last close  %+.1f%% vs tape" % float(data.get("last_alpha", 0.0)))
+		lines.append("Last close  %+.1f%% vs Market" % float(data.get("last_alpha", 0.0)))
 	if is_away_due(data):
 		lines.append("The desk has been dark. Overnight risk is in play.")
 	return lines
@@ -207,7 +207,7 @@ static func _climate_line(data: Dictionary) -> String:
 				return "BEAR MARKET (%d days left)" % days_left
 			return "BEAR MARKET"
 		_:
-			return "NORMAL TAPE"
+			return "NORMAL MARKET"
 
 
 static func _streak_line(data: Dictionary) -> String:
@@ -215,8 +215,8 @@ static func _streak_line(data: Dictionary) -> String:
 	var best: int = int(data.get("best_beat_streak", 0))
 	if streak > 0:
 		if best > streak:
-			return "%d days ahead of the tape (best %d)" % [streak, best]
-		return "%d days ahead of the tape" % streak
+			return "%d days ahead of the market (best %d)" % [streak, best]
+		return "%d days ahead of the market" % streak
 	if best > 0:
 		return "Streak broken  ·  best was %d days" % best
 	return "No beat-the-market streak yet"
