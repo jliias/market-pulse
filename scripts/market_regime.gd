@@ -250,6 +250,37 @@ func status_text() -> String:
 			return climate_label
 
 
+func status_tooltip() -> String:
+	var lines: PackedStringArray = []
+	match climate:
+		CLIMATE_BULL:
+			lines.append("Bull market: the lasting tilt is up. Dips are more likely to get bought.")
+		CLIMATE_BEAR:
+			lines.append("Bear market: the lasting tilt is down. Rallies are more likely to fail.")
+		_:
+			lines.append("Normal: no lasting bull or bear tilt. The session can still swing.")
+	if climate != CLIMATE_NORMAL and climate_days > 0:
+		lines.append("This tilt is set to last about %d more trading day(s)." % climate_days)
+	match weather:
+		WEATHER_PANIC:
+			lines.append("Panic: short-lived selling weather. Fast, messy drops on top of the climate.")
+		WEATHER_EUPHORIA:
+			lines.append("Euphoria: short-lived buying weather. Fast, messy rips on top of the climate.")
+		WEATHER_HIGH_VOL:
+			lines.append("High vol: ranges are stretched. Both sides can print hard.")
+	if climate == CLIMATE_BEAR and weather == WEATHER_EUPHORIA:
+		lines.append("Together: a bounce inside a bear market. It can feel like a new uptrend and still roll over.")
+	elif climate == CLIMATE_BULL and weather == WEATHER_PANIC:
+		lines.append("Together: a dump inside a bull market. Ugly, but dips may still get bought.")
+	elif climate == CLIMATE_BEAR and weather == WEATHER_PANIC:
+		lines.append("Together: selling feeding on itself. Hard to fade until it cools.")
+	elif climate == CLIMATE_BULL and weather == WEATHER_EUPHORIA:
+		lines.append("Together: a chase. Easy to overpay if you buy the rip.")
+	elif weather == WEATHER_HIGH_VOL and climate != CLIMATE_NORMAL:
+		lines.append("Together: the lasting tilt is still in force, but the path is noisy.")
+	return "\n".join(lines)
+
+
 func status_color() -> Color:
 	if weather == WEATHER_PANIC:
 		return Color(0.95, 0.38, 0.38)

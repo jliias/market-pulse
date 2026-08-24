@@ -211,6 +211,7 @@ func _apply_hud_tooltips() -> void:
 	CopyHints.hover(commission_label, CopyHints.HUD_COMMISSION)
 	CopyHints.hover(est_price_label, CopyHints.HUD_BID_ASK)
 	CopyHints.hover(trade_price_label, CopyHints.HUD_BID_ASK)
+	CopyHints.hover(market_status_label, market.regime.status_tooltip())
 
 
 func _displayed_day_number() -> int:
@@ -571,6 +572,7 @@ func _update_ui() -> void:
 
 	market_status_label.text = "MARKET STATUS:  %s" % market.regime.status_text()
 	market_status_label.add_theme_color_override("font_color", market.regime.status_color())
+	market_status_label.tooltip_text = market.regime.status_tooltip()
 	_refresh_end_session_button()
 
 
