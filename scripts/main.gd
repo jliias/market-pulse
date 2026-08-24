@@ -99,6 +99,7 @@ func _ready() -> void:
 	resized.connect(_apply_responsive_layout)
 	_connect_controls()
 	_build_timeframe_buttons()
+	_apply_hud_tooltips()
 	_apply_launch_mode()
 	_build_watchlist()
 	_build_chapter_overlay()
@@ -201,6 +202,16 @@ func _build_watchlist() -> void:
 		watchlist_list.add_child(card)
 		card.selected.connect(_select_stock)
 		watchlist_cards[symbol] = card
+
+
+func _apply_hud_tooltips() -> void:
+	CopyHints.hover(daily_pl_label, CopyHints.HUD_PL)
+	CopyHints.hover(portfolio_total_label, CopyHints.HUD_PL)
+	CopyHints.hover(vs_market_label, CopyHints.HUD_VS)
+	CopyHints.hover(portfolio_value_label, CopyHints.HUD_BOOK)
+	CopyHints.hover(commission_label, CopyHints.HUD_COMMISSION)
+	CopyHints.hover(est_price_label, CopyHints.HUD_BID_ASK)
+	CopyHints.hover(trade_price_label, CopyHints.HUD_BID_ASK)
 
 
 func _begin_session() -> void:
@@ -631,8 +642,10 @@ func _refresh_trade_panel() -> void:
 	commission_label.text = "Commission: $%.2f" % float(estimate["commission"])
 	if buy_mode:
 		final_total_label.text = "Total: $%.2f" % float(estimate["total"])
+		trade_price_label.tooltip_text = CopyHints.HUD_ASK
 	else:
 		final_total_label.text = "Total proceeds: $%.2f" % float(estimate["proceeds"])
+		trade_price_label.tooltip_text = CopyHints.HUD_BID
 
 
 func _style_ui_buttons() -> void:
@@ -777,6 +790,7 @@ func _build_chapter_overlay() -> void:
 	recap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	recap_label.add_theme_font_size_override("font_size", 15)
 	recap_page.add_child(recap_label)
+	CopyHints.hover(recap_label, "%s\n%s\n%s" % [CopyHints.HUD_BOOK, CopyHints.HUD_ATH, CopyHints.HUD_VS])
 	var recap_next := Button.new()
 	recap_next.text = "Rebalance Watchlist"
 	recap_next.custom_minimum_size = Vector2(0, 44)
@@ -799,10 +813,12 @@ func _build_chapter_overlay() -> void:
 	rebalance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rebalance_hint.add_theme_font_size_override("font_size", 14)
 	rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
+	CopyHints.hover(rebalance_hint, CopyHints.HUD_BID)
 	rebalance_page.add_child(rebalance_hint)
 	keep_book_button = Button.new()
 	keep_book_button.toggle_mode = true
 	keep_book_button.text = "Keep this book"
+	CopyHints.hover(keep_book_button, CopyHints.HUD_BOOK)
 	keep_book_button.pressed.connect(_on_keep_book)
 	rebalance_page.add_child(keep_book_button)
 	var drop_header := Label.new()

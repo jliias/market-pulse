@@ -13,6 +13,7 @@ func _ready() -> void:
 	_style_button(%ExitButton, UI_ACCENT, true)
 	%ContinueButton.disabled = not SaveManager.has_save()
 	%SaveSummaryLabel.text = SaveManager.summary_text() if SaveManager.has_save() else "No saved game yet."
+	CopyHints.hover(%SaveSummaryLabel, CopyHints.HUD_MENU)
 	%NewGameButton.pressed.connect(_on_new_game)
 	%ContinueButton.pressed.connect(_on_continue)
 	%ExitButton.pressed.connect(_on_exit)
