@@ -369,11 +369,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "MARKET STATUS: NORMAL"
 
-[node name="NextUpdateLabel" type="Label" parent="MarginContainer/RootVBox/StatusBar" unique_id=310701140]
-unique_name_in_owner = true
-layout_mode = 2
-text = "NEXT UPDATE: 00:01"
-
 [node name="EndSessionButton" type="Button" parent="MarginContainer/RootVBox/StatusBar" unique_id=1194884936]
 unique_name_in_owner = true
 layout_mode = 2

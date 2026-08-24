@@ -76,7 +76,6 @@ var cash_out_button: Button
 
 @onready var market_status_label: Label = %MarketStatusLabel
 @onready var day_label: Label = %DayLabel
-@onready var next_update_label: Label = %NextUpdateLabel
 @onready var end_session_button: Button = %EndSessionButton
 @onready var new_day_button: Button = %NewDayButton
 @onready var tick_timer: Timer = %TickTimer
@@ -123,8 +122,6 @@ func _process(_delta: float) -> void:
 		if preopen_remaining <= 0.0:
 			_open_market()
 		return
-	if session_active and not tick_timer.is_stopped():
-		next_update_label.text = "NEXT UPDATE: %02d:%02d" % [int(tick_timer.time_left) / 60, int(tick_timer.time_left) % 60]
 
 
 func _connect_controls() -> void:
@@ -265,7 +262,6 @@ func _open_market() -> void:
 func _refresh_open_countdown() -> void:
 	var seconds: int = maxi(ceili(preopen_remaining), 0)
 	open_countdown_label.text = "Market will open in %d seconds" % seconds
-	next_update_label.text = "OPENS IN: %02d:%02d" % [seconds / 60, seconds % 60]
 
 
 func _on_market_tick() -> void:
