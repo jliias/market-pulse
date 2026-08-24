@@ -259,8 +259,6 @@ func status_tooltip() -> String:
 			lines.append("Bear market: the lasting tilt is down. Rallies are more likely to fail.")
 		_:
 			lines.append("Normal: no lasting bull or bear tilt. The session can still swing.")
-	if climate != CLIMATE_NORMAL and climate_days > 0:
-		lines.append("This tilt is set to last about %d more trading day(s)." % climate_days)
 	match weather:
 		WEATHER_PANIC:
 			lines.append("Panic: short-lived selling weather. Fast, messy drops on top of the climate.")
