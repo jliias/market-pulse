@@ -35,7 +35,8 @@ func _draw() -> void:
 	var volume_h: float = 0.0 if compact else rect.size.y * 0.22
 	var chart_h: float = rect.size.y - volume_h
 	var pad: float = 4.0 if compact else 10.0
-	var chart_rect := Rect2(pad, pad, rect.size.x - pad * 2.0, chart_h - pad * 2.0)
+	var axis_w: float = 0.0 if compact else 62.0
+	var chart_rect := Rect2(pad, pad, rect.size.x - pad * 2.0 - axis_w, chart_h - pad * 2.0)
 
 	var min_p: float = prices[0]
 	var max_p: float = prices[0]
@@ -47,9 +48,27 @@ func _draw() -> void:
 		max_p += 0.5
 
 	if not compact:
+		var font: Font = ThemeDB.fallback_font
+		var last_y: float = -999.0
+		if prices.size() >= 1:
+			var last_n: float = (prices[prices.size() - 1] - min_p) / (max_p - min_p)
+			last_y = chart_rect.end.y - last_n * chart_rect.size.y
 		for i in range(5):
-			var y: float = chart_rect.position.y + chart_rect.size.y * float(i) / 4.0
+			var t: float = float(i) / 4.0
+			var y: float = chart_rect.position.y + chart_rect.size.y * t
 			draw_line(Vector2(chart_rect.position.x, y), Vector2(chart_rect.end.x, y), Color(1, 1, 1, 0.06), 1.0)
+			if absf(y - last_y) < 14.0:
+				continue
+			var level: float = max_p - (max_p - min_p) * t
+			_draw_axis_label(font, y, level, Color(0.72, 0.76, 0.84, 0.9))
+		var last_price: float = prices[prices.size() - 1]
+		draw_line(
+			Vector2(chart_rect.end.x, last_y),
+			Vector2(chart_rect.end.x + 6.0, last_y),
+			line_color,
+			1.5
+		)
+		_draw_axis_label(font, last_y, last_price, line_color)
 
 	var pts: PackedVector2Array = PackedVector2Array()
 	for i in range(prices.size()):
@@ -103,3 +122,11 @@ func _draw() -> void:
 		var up: bool = i == 0 or (i < prices.size() and prices[i] >= prices[maxi(i - 1, 0)])
 		var bar_color := Color(0.32, 0.78, 0.48, 0.7) if up else Color(0.9, 0.38, 0.4, 0.7)
 		draw_rect(bar, bar_color, true)
+
+
+func _draw_axis_label(font: Font, y: float, price: float, color: Color) -> void:
+	var text: String = "$%.2f" % price
+	var font_size := 12
+	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var pos := Vector2(size.x - 8.0 - text_size.x, y + 4.0)
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
