@@ -161,6 +161,15 @@ Odd pairings are intentional (bear + euphoria = bounce in a down market that can
 
 Two layers:
 
+### Halts
+
+Two outcomes share the same **HALTED** card:
+
+- **Resume (circuit):** growth and volatile names only, **once per name per day**. If price moves about **5% (growth)** or **8% (volatile)** in five market minutes, trading pauses 2–5 minutes, then the name **reopens listed** near the last print. Safe names never circuit. Fast-forward to close does not fire new circuits.
+- **Distress (existential print):** tagged negative resolutions still halt, then reopen **−80% to −95%**, sell-only, forced off the board at week recap (see below).
+
+A name already halted or distressed cannot take a second halt.
+
 ### Existential resolutions (halt → distressed)
 
 A **negative resolution** on a tagged company arc can **wipe the equity stub**, not just print a normal dip.

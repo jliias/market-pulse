@@ -117,6 +117,7 @@ func apply_away_step(hours: float) -> void:
 	session_minutes = 4
 	session_seconds = 0
 	chain_director.calendar_day = calendar_day
+	news_generator.calendar_day = calendar_day
 	var scale: float = clampf(hours / SaveManager.AWAY_GAP_HOURS, 0.7, 1.5)
 	regime.drift_while_away()
 
@@ -219,6 +220,7 @@ func prepare() -> void:
 	news_feed.clear()
 	drama.reset()
 	chain_director.calendar_day = calendar_day
+	news_generator.calendar_day = calendar_day
 	away_applied = not overnight_events.is_empty()
 	for carried in overnight_events:
 		news_feed.append(carried)
@@ -270,7 +272,7 @@ func reopen_halts_at_open() -> Array[NewsEvent]:
 			continue
 		var stock: Stock = stocks[symbol]
 		if stock.is_halted() and stock.reopen_at_open:
-			stock.reopen_distressed()
+			stock.reopen()
 			var note: NewsEvent = _reopen_event(stock, false)
 			news_feed.append(note)
 			events.append(note)
@@ -284,7 +286,7 @@ func settle_halts() -> Array[NewsEvent]:
 			continue
 		var stock: Stock = stocks[symbol]
 		if stock.is_halted():
-			stock.reopen_distressed()
+			stock.reopen()
 			events.append(_reopen_event(stock, false))
 	return events
 
@@ -378,7 +380,11 @@ func tick() -> Array[NewsEvent]:
 		_push_regime_note(event, new_events)
 
 	for symbol in stocks:
-		stocks[symbol].tick(market_sentiment, regime.tick_modifiers())
+		stocks[symbol].tick(market_sentiment, regime.tick_modifiers(), not drama.spectator)
+		if stocks[symbol].just_halted:
+			var halt_note: NewsEvent = _halt_event(stocks[symbol], false)
+			news_feed.append(halt_note)
+			new_events.append(halt_note)
 		if stocks[symbol].just_reopened:
 			var reopen_note: NewsEvent = _reopen_event(stocks[symbol], false)
 			news_feed.append(reopen_note)
@@ -467,7 +473,7 @@ func _apply_existential(event: NewsEvent, premarket: bool) -> void:
 		var stock: Stock = stocks[symbol]
 		if stock.is_distressed():
 			continue
-		stock.begin_halt(premarket)
+		stock.begin_halt(premarket, Stock.HALT_EXISTENTIAL, Stock.OUTCOME_DISTRESS)
 		names.append(stock.company_name)
 	if names.is_empty():
 		return
@@ -475,33 +481,72 @@ func _apply_existential(event: NewsEvent, premarket: bool) -> void:
 	_nudge_market_mood(event, -0.35)
 
 
-func _reopen_event(stock: Stock, premarket: bool) -> NewsEvent:
-	var from_close: float = stock.previous_close if stock.previous_close > 0.01 else stock.price
-	var gap_pct: float = 0.0
-	if from_close > 0.01:
-		gap_pct = ((stock.price - from_close) / from_close) * 100.0
-	var headline := "REOPEN: %s marked distressed after a %.0f%% gap. Sell-only until week recap." % [
-		stock.company_name, gap_pct
-	]
+func _halt_event(stock: Stock, premarket: bool) -> NewsEvent:
+	var headline: String
+	var reaction: String
+	if stock.halt_reason == Stock.HALT_VOLATILITY:
+		headline = "HALTED: %s — volatility pause after a fast move." % stock.company_name
+		reaction = "No trading for a few minutes. It should reopen listed."
+	else:
+		headline = "HALTED: %s — trading stopped pending the print." % stock.company_name
+		reaction = "No buys or sells until reopen. This one is set to come back distressed."
 	if premarket and not headline.begins_with("PREMARKET"):
 		headline = "PREMARKET: " + headline
 	var event := NewsEvent.new(
 		get_time_string(),
 		headline,
 		[stock.symbol],
-		-1.0,
-		-0.5,
+		-0.2,
+		0.0,
 		0,
 		true,
 		premarket,
-		"product",
+		"general",
 		"company",
-		"existential",
-		true,
+		"major",
+		false,
 		""
 	)
-	event.existential = true
-	event.reaction = "The residual bid is live. You can sell; you cannot buy this name back."
+	event.existential = stock.halt_outcome == Stock.OUTCOME_DISTRESS
+	event.reaction = reaction
+	return event
+
+
+func _reopen_event(stock: Stock, premarket: bool) -> NewsEvent:
+	var headline: String
+	var reaction: String
+	var wipe: bool = stock.last_reopen == Stock.OUTCOME_DISTRESS or stock.is_distressed()
+	if wipe:
+		var from_close: float = stock.previous_close if stock.previous_close > 0.01 else stock.price
+		var gap_pct: float = 0.0
+		if from_close > 0.01:
+			gap_pct = ((stock.price - from_close) / from_close) * 100.0
+		headline = "REOPEN: %s marked distressed after a %.0f%% gap. Sell-only until week recap." % [
+			stock.company_name, gap_pct
+		]
+		reaction = "The residual bid is live. You can sell; you cannot buy this name back."
+	else:
+		headline = "REOPEN: %s is live again after the volatility halt." % stock.company_name
+		reaction = "Trading is back. The last print stands."
+	if premarket and not headline.begins_with("PREMARKET"):
+		headline = "PREMARKET: " + headline
+	var event := NewsEvent.new(
+		get_time_string(),
+		headline,
+		[stock.symbol],
+		-1.0 if wipe else 0.0,
+		-0.5 if wipe else 0.0,
+		0,
+		true,
+		premarket,
+		"product" if wipe else "general",
+		"company",
+		"existential" if wipe else "moderate",
+		wipe,
+		""
+	)
+	event.existential = wipe
+	event.reaction = reaction
 	return event
 
 

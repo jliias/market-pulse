@@ -14,6 +14,14 @@ const LISTING_LISTED := "listed"
 const LISTING_HALTED := "halted"
 const LISTING_DISTRESSED := "distressed"
 
+const HALT_EXISTENTIAL := "existential"
+const HALT_VOLATILITY := "volatility"
+
+const OUTCOME_RESUME := "resume"
+const OUTCOME_DISTRESS := "distress"
+
+const CIRCUIT_LOOKBACK := 5
+
 var symbol: String
 var company_name: String
 var sector: String
@@ -68,7 +76,12 @@ var listing: String = LISTING_LISTED
 var halt_ticks: int = 0
 var reopen_at_open: bool = false
 var reopen_price: float = 0.0
+var halt_reason: String = ""
+var halt_outcome: String = OUTCOME_DISTRESS
+var last_reopen: String = ""
+var circuit_used_today: bool = false
 var just_reopened: bool = false
+var just_halted: bool = false
 
 
 func _init(
@@ -185,14 +198,36 @@ func listing_label() -> String:
 			return personality_label.to_upper()
 
 
-func begin_halt(until_open: bool) -> void:
+func halt_tooltip() -> String:
 	if listing == LISTING_DISTRESSED:
+		return CopyHints.HUD_DISTRESSED
+	if listing != LISTING_HALTED:
+		return ""
+	if halt_outcome == OUTCOME_RESUME:
+		return CopyHints.HUD_HALTED_RESUME
+	return CopyHints.HUD_HALTED_DISTRESS
+
+
+func begin_halt(until_open: bool, reason: String = HALT_EXISTENTIAL, outcome: String = OUTCOME_DISTRESS) -> void:
+	if listing == LISTING_DISTRESSED or listing == LISTING_HALTED:
 		return
 	listing = LISTING_HALTED
+	halt_reason = reason
+	halt_outcome = outcome if outcome == OUTCOME_RESUME else OUTCOME_DISTRESS
 	just_reopened = false
+	just_halted = true
+	last_reopen = ""
 	reopen_at_open = until_open
-	halt_ticks = 0 if until_open else randi_range(3, 8)
-	reopen_price = maxf(DISTRESSED_FLOOR, price * randf_range(0.05, 0.20))
+	if until_open:
+		halt_ticks = 0
+	elif halt_outcome == OUTCOME_RESUME:
+		halt_ticks = randi_range(2, 5)
+	else:
+		halt_ticks = randi_range(3, 8)
+	if halt_outcome == OUTCOME_DISTRESS:
+		reopen_price = maxf(DISTRESSED_FLOOR, price * randf_range(0.05, 0.20))
+	else:
+		reopen_price = price
 	news_move_remaining = 0.0
 	news_move_ticks = 0
 	news_initial_ticks = 0
@@ -207,6 +242,31 @@ func begin_halt(until_open: bool) -> void:
 	_update_spread()
 
 
+func reopen() -> void:
+	if listing != LISTING_HALTED:
+		return
+	if halt_outcome == OUTCOME_RESUME:
+		reopen_listed()
+	else:
+		reopen_distressed()
+
+
+func reopen_listed() -> void:
+	listing = LISTING_LISTED
+	halt_ticks = 0
+	reopen_at_open = false
+	just_reopened = true
+	just_halted = false
+	last_reopen = OUTCOME_RESUME
+	price = clampf(price * (1.0 + randf_range(-0.008, 0.008)), floor_price(), MAX_PRICE)
+	halt_reason = ""
+	reopen_price = 0.0
+	last_tick_volume = randi_range(90000, 180000)
+	volume += last_tick_volume
+	_update_spread()
+	_record_history()
+
+
 func reopen_distressed() -> void:
 	if listing == LISTING_DISTRESSED:
 		return
@@ -214,6 +274,10 @@ func reopen_distressed() -> void:
 	halt_ticks = 0
 	reopen_at_open = false
 	just_reopened = true
+	just_halted = false
+	last_reopen = OUTCOME_DISTRESS
+	halt_reason = HALT_EXISTENTIAL
+	halt_outcome = OUTCOME_DISTRESS
 	price = clampf(reopen_price if reopen_price > 0.0 else price * 0.1, DISTRESSED_FLOOR, MAX_PRICE)
 	trend = Trend.BEARISH
 	sentiment = -1.0
@@ -235,6 +299,9 @@ func serialize_listing() -> Dictionary:
 		"halt_ticks": halt_ticks,
 		"reopen_at_open": reopen_at_open,
 		"reopen_price": reopen_price,
+		"halt_reason": halt_reason,
+		"halt_outcome": halt_outcome,
+		"circuit_used_today": circuit_used_today,
 	}
 
 
@@ -245,6 +312,11 @@ func apply_listing(data: Dictionary) -> void:
 	halt_ticks = int(data.get("halt_ticks", 0))
 	reopen_at_open = bool(data.get("reopen_at_open", false))
 	reopen_price = float(data.get("reopen_price", 0.0))
+	halt_reason = str(data.get("halt_reason", ""))
+	halt_outcome = str(data.get("halt_outcome", OUTCOME_DISTRESS))
+	if halt_outcome != OUTCOME_RESUME:
+		halt_outcome = OUTCOME_DISTRESS
+	circuit_used_today = bool(data.get("circuit_used_today", false))
 	price = clampf(price, floor_price(), MAX_PRICE)
 	_update_spread()
 
@@ -568,6 +640,7 @@ func roll_to_next_day() -> void:
 	price_history = PackedFloat32Array()
 	volume_history = PackedInt32Array()
 	last_tick_volume = randi_range(40000, 90000)
+	circuit_used_today = false
 	_update_spread()
 	_record_history()
 
@@ -683,13 +756,14 @@ func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = 
 			trend = Trend.BULLISH if total_move > 0.0 else Trend.BEARISH
 
 
-func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
+func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}, allow_circuit: bool = true) -> void:
 	just_reopened = false
+	just_halted = false
 	if listing == LISTING_HALTED:
 		if not reopen_at_open:
 			halt_ticks -= 1
 			if halt_ticks <= 0:
-				reopen_distressed()
+				reopen()
 				return
 		last_tick_volume = randi_range(8000, 18000)
 		_update_spread()
@@ -751,6 +825,25 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 
 	_update_spread()
 	_record_history()
+	_maybe_circuit_halt(allow_circuit)
+
+
+func _maybe_circuit_halt(allow_circuit: bool) -> void:
+	if not allow_circuit or circuit_used_today or not is_listed():
+		return
+	if risk_key == "safe":
+		return
+	if price_history.size() < CIRCUIT_LOOKBACK + 1:
+		return
+	var then_px: float = price_history[price_history.size() - 1 - CIRCUIT_LOOKBACK]
+	if then_px < 0.05:
+		return
+	var window: float = absf((price - then_px) / then_px)
+	var need: float = 0.05 if risk_key == "growth" else 0.08
+	if window < need:
+		return
+	circuit_used_today = true
+	begin_halt(false, HALT_VOLATILITY, OUTCOME_RESUME)
 
 
 func _tick_digest_queue() -> void:

@@ -31,6 +31,8 @@ var recap_page: VBoxContainer
 var recap_label: Label
 var rebalance_page: VBoxContainer
 var rebalance_hint: Label
+var rebalance_title: Label
+var drop_header: Label
 var keep_book_button: Button
 var drop_list: VBoxContainer
 var add_list: VBoxContainer
@@ -87,6 +89,7 @@ var cash_out_button: Button
 @onready var open_countdown_overlay: CenterContainer = %OpenCountdownOverlay
 @onready var open_countdown_label: Label = %OpenCountdownLabel
 @onready var closed_overlay: CenterContainer = %ClosedOverlay
+@onready var closed_overlay_label: Label = %ClosedOverlayLabel
 
 
 func _notification(what: int) -> void:
@@ -605,9 +608,12 @@ func _refresh_selected_stock() -> void:
 	selected_change_label.add_theme_color_override("font_color", _pl_color(change))
 	var typical: String = str(CompanyCatalog.risk_profile(stock.symbol).get("typical", ""))
 	if stock.is_halted():
-		selected_meta_label.text = "HALTED · no trading until reopen"
+		if stock.halt_outcome == Stock.OUTCOME_RESUME:
+			selected_meta_label.text = "HALTED · volatility pause · reopens listed"
+		else:
+			selected_meta_label.text = "HALTED · no trading until distressed reopen"
 		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.28))
-		CopyHints.hover(selected_meta_label, CopyHints.HUD_HALTED)
+		CopyHints.hover(selected_meta_label, stock.halt_tooltip())
 	elif stock.is_distressed():
 		selected_meta_label.text = "DISTRESSED · sell-only residual · replaced at week recap"
 		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.38, 0.38))
@@ -626,6 +632,37 @@ func _refresh_chart() -> void:
 	var slice: Dictionary = stock.get_chart_slice(points, 1)
 	main_chart.compact = false
 	main_chart.set_series(slice["prices"], slice["volumes"])
+	var session_over: bool = closed_overlay.visible or market.is_closed
+	if session_over:
+		main_chart.set_status_banner("")
+	elif stock.is_halted():
+		var sub: String = "No trading · reopens listed" if stock.halt_outcome == Stock.OUTCOME_RESUME else "No trading · reopens distressed"
+		main_chart.set_status_banner("HALTED", sub, Color(0.95, 0.78, 0.28))
+	elif stock.is_distressed():
+		main_chart.set_status_banner("DISTRESSED", "Sell-only residual", Color(0.95, 0.38, 0.38))
+	else:
+		main_chart.set_status_banner("")
+	_refresh_closed_overlay(stock)
+
+
+func _refresh_closed_overlay(stock: Stock) -> void:
+	if not closed_overlay.visible:
+		closed_overlay_label.text = "Market closed"
+		closed_overlay_label.add_theme_font_size_override("font_size", 42)
+		closed_overlay_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
+		return
+	if stock.is_distressed():
+		closed_overlay_label.text = "Market closed\nDISTRESSED · sell-only residual"
+		closed_overlay_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.52, 0.95))
+		closed_overlay_label.add_theme_font_size_override("font_size", 32)
+	elif stock.is_halted():
+		closed_overlay_label.text = "Market closed\nHALTED"
+		closed_overlay_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 0.95))
+		closed_overlay_label.add_theme_font_size_override("font_size", 32)
+	else:
+		closed_overlay_label.text = "Market closed"
+		closed_overlay_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
+		closed_overlay_label.add_theme_font_size_override("font_size", 42)
 
 
 func _refresh_portfolio() -> void:
@@ -777,7 +814,7 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		])
 	if not event.reaction.is_empty():
 		news_feed.append_text("[color=#888888]    %s[/color]\n" % CopyHints.annotate(event.reaction))
-	if event.existential or event.headline.begins_with("REOPEN") or event.headline.begins_with("PREMARKET: REOPEN"):
+	if event.existential or event.headline.begins_with("HALTED") or event.headline.begins_with("REOPEN") or event.headline.begins_with("PREMARKET: HALTED") or event.headline.begins_with("PREMARKET: REOPEN"):
 		trade_message_label.text = "%s\n%s" % [event.headline, event.reaction]
 
 
@@ -847,7 +884,7 @@ func _build_chapter_overlay() -> void:
 	rebalance_page.visible = false
 	rebalance_page.add_theme_constant_override("separation", 10)
 	stack.add_child(rebalance_page)
-	var rebalance_title := Label.new()
+	rebalance_title = Label.new()
 	rebalance_title.text = "ONE SWAP"
 	rebalance_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rebalance_title.add_theme_color_override("font_color", SELECTED_ACCENT)
@@ -868,7 +905,7 @@ func _build_chapter_overlay() -> void:
 	CopyHints.hover(keep_book_button, CopyHints.HUD_BOOK)
 	keep_book_button.pressed.connect(_on_keep_book)
 	rebalance_page.add_child(keep_book_button)
-	var drop_header := Label.new()
+	drop_header = Label.new()
 	drop_header.text = "Drop (optional)"
 	drop_header.add_theme_font_size_override("font_size", 13)
 	rebalance_page.add_child(drop_header)
@@ -997,11 +1034,16 @@ func _on_add_pressed(symbol: String) -> void:
 func _refresh_rebalance_state() -> void:
 	var forced: bool = not forced_drops.is_empty()
 	keep_book_button.disabled = forced
+	keep_book_button.visible = not forced
 	keep_book_button.button_pressed = keep_book and not forced
 	_apply_button_style(keep_book_button, SELECTED_ACCENT if keep_book and not forced else UI_ACCENT, UI_BORDER, keep_book and not forced)
 	if forced:
+		rebalance_title.text = "REPLACE DISTRESSED"
+		drop_header.text = "Must drop"
 		rebalance_hint.text = "Distressed names must leave the board. Pick %d replacement(s). Residual shares sell at the bid." % forced_drops.size()
 	else:
+		rebalance_title.text = "ONE SWAP"
+		drop_header.text = "Drop (optional)"
 		rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
 	var drop_i := 0
 	for child in drop_list.get_children():
@@ -1074,5 +1116,5 @@ func _flatten_symbol(symbol: String) -> void:
 	if stock == null:
 		return
 	if stock.is_halted():
-		stock.reopen_distressed()
+		stock.reopen()
 	portfolio.sell(symbol, shares, stock.bid)

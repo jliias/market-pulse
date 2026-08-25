@@ -35,7 +35,7 @@ func refresh(stock: Stock, owned_shares: int = 0) -> void:
 	risk_label.text = stock.listing_label()
 	if stock.is_halted():
 		risk_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.28))
-		CopyHints.hover(risk_label, CopyHints.HUD_HALTED)
+		CopyHints.hover(risk_label, stock.halt_tooltip())
 	elif stock.is_distressed():
 		risk_label.add_theme_color_override("font_color", Color(0.95, 0.38, 0.38))
 		CopyHints.hover(risk_label, CopyHints.HUD_DISTRESSED)

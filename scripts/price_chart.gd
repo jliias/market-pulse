@@ -5,6 +5,9 @@ var prices: PackedFloat32Array = PackedFloat32Array()
 var volumes: PackedInt32Array = PackedInt32Array()
 var compact: bool = false
 var line_color: Color = Color(0.35, 0.82, 0.5)
+var status_banner: String = ""
+var status_sub: String = ""
+var status_color: Color = Color(0.95, 0.78, 0.28)
 
 
 func _ready() -> void:
@@ -23,6 +26,13 @@ func set_series(p_prices: Variant, p_volumes: Variant = PackedInt32Array()) -> v
 	queue_redraw()
 
 
+func set_status_banner(title: String, subtitle: String = "", color: Color = Color(0.95, 0.78, 0.28)) -> void:
+	status_banner = title
+	status_sub = subtitle
+	status_color = color
+	queue_redraw()
+
+
 func _draw() -> void:
 	var rect: Rect2 = Rect2(Vector2.ZERO, size)
 	if rect.size.x < 8.0 or rect.size.y < 8.0:
@@ -30,6 +40,7 @@ func _draw() -> void:
 
 	draw_rect(rect, Color(0.07, 0.08, 0.11, 1.0))
 	if prices.size() < 2:
+		_draw_status_banner(rect)
 		return
 
 	var volume_h: float = 0.0 if compact else rect.size.y * 0.22
@@ -86,6 +97,7 @@ func _draw() -> void:
 	draw_polyline(pts, line_color, 2.0 if compact else 2.4, true)
 
 	if compact or volumes.is_empty() or volume_h < 16.0:
+		_draw_status_banner(rect)
 		return
 
 	var vol_top: float = chart_h
@@ -122,6 +134,34 @@ func _draw() -> void:
 		var up: bool = i == 0 or (i < prices.size() and prices[i] >= prices[maxi(i - 1, 0)])
 		var bar_color := Color(0.32, 0.78, 0.48, 0.7) if up else Color(0.9, 0.38, 0.4, 0.7)
 		draw_rect(bar, bar_color, true)
+
+	_draw_status_banner(rect)
+
+
+func _draw_status_banner(rect: Rect2) -> void:
+	if compact or status_banner.is_empty():
+		return
+	var tint := Color(status_color.r, status_color.g, status_color.b, 0.14)
+	draw_rect(rect, tint)
+	var font: Font = ThemeDB.fallback_font
+	var title_size := 52
+	var title_sz: Vector2 = font.get_string_size(status_banner, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size)
+	var title_pos := Vector2(
+		rect.position.x + (rect.size.x - title_sz.x) * 0.5,
+		rect.position.y + rect.size.y * 0.42 + title_sz.y * 0.25
+	)
+	var shadow := Color(0.04, 0.05, 0.07, 0.85)
+	draw_string(font, title_pos + Vector2(2, 2), status_banner, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, shadow)
+	draw_string(font, title_pos, status_banner, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, status_color)
+	if status_sub.is_empty():
+		return
+	var sub_size := 18
+	var sub_sz: Vector2 = font.get_string_size(status_sub, HORIZONTAL_ALIGNMENT_LEFT, -1, sub_size)
+	var sub_pos := Vector2(
+		rect.position.x + (rect.size.x - sub_sz.x) * 0.5,
+		title_pos.y + 28.0
+	)
+	draw_string(font, sub_pos, status_sub, HORIZONTAL_ALIGNMENT_LEFT, -1, sub_size, Color(status_color.r, status_color.g, status_color.b, 0.92))
 
 
 func _draw_axis_label(font: Font, y: float, price: float, color: Color) -> void:
