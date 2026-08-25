@@ -4,10 +4,15 @@ extends RefCounted
 enum Trend { BULLISH, BEARISH, SIDEWAYS }
 
 const MIN_PRICE := 1.0
+const DISTRESSED_FLOOR := 0.05
 const MAX_PRICE := 1000.0
 const MAX_NORMAL_TICK_CHANGE := 0.0016
 const MAX_ROUTINE_NEWS_TICK_CHANGE := 0.006
 const MAX_MAJOR_TICK_CHANGE := 0.12
+
+const LISTING_LISTED := "listed"
+const LISTING_HALTED := "halted"
+const LISTING_DISTRESSED := "distressed"
 
 var symbol: String
 var company_name: String
@@ -59,6 +64,12 @@ var last_tick_volume: int = 0
 var price_history: PackedFloat32Array = PackedFloat32Array()
 var volume_history: PackedInt32Array = PackedInt32Array()
 
+var listing: String = LISTING_LISTED
+var halt_ticks: int = 0
+var reopen_at_open: bool = false
+var reopen_price: float = 0.0
+var just_reopened: bool = false
+
 
 func _init(
 	p_symbol: String,
@@ -72,7 +83,7 @@ func _init(
 	company_name = p_name
 	sector = p_sector
 	market_cap_label = p_cap
-	price = clampf(start_price, MIN_PRICE, MAX_PRICE)
+	price = clampf(start_price, floor_price(), MAX_PRICE)
 	previous_close = price
 	volatility = p_volatility
 	volume = randi_range(800000, 2500000)
@@ -136,6 +147,106 @@ func _assign_industries() -> void:
 
 func in_industry(industry_name: String) -> bool:
 	return sector == industry_name or industries.has(industry_name)
+
+
+func is_listed() -> bool:
+	return listing == LISTING_LISTED
+
+
+func is_halted() -> bool:
+	return listing == LISTING_HALTED
+
+
+func is_distressed() -> bool:
+	return listing == LISTING_DISTRESSED
+
+
+func can_buy() -> bool:
+	return listing == LISTING_LISTED
+
+
+func can_sell() -> bool:
+	return listing != LISTING_HALTED
+
+
+func floor_price() -> float:
+	if listing == LISTING_DISTRESSED:
+		return DISTRESSED_FLOOR
+	return MIN_PRICE
+
+
+func listing_label() -> String:
+	match listing:
+		LISTING_HALTED:
+			return "HALTED"
+		LISTING_DISTRESSED:
+			return "DISTRESSED"
+		_:
+			return personality_label.to_upper()
+
+
+func begin_halt(until_open: bool) -> void:
+	if listing == LISTING_DISTRESSED:
+		return
+	listing = LISTING_HALTED
+	just_reopened = false
+	reopen_at_open = until_open
+	halt_ticks = 0 if until_open else randi_range(3, 8)
+	reopen_price = maxf(DISTRESSED_FLOOR, price * randf_range(0.05, 0.20))
+	news_move_remaining = 0.0
+	news_move_ticks = 0
+	news_initial_ticks = 0
+	news_is_major = false
+	news_is_lasting = false
+	revert_remaining = 0.0
+	revert_ticks = 0
+	lasting_bias = 0.0
+	lasting_ticks = 0
+	digest_queue.clear()
+	momentum = 0.0
+	_update_spread()
+
+
+func reopen_distressed() -> void:
+	if listing == LISTING_DISTRESSED:
+		return
+	listing = LISTING_DISTRESSED
+	halt_ticks = 0
+	reopen_at_open = false
+	just_reopened = true
+	price = clampf(reopen_price if reopen_price > 0.0 else price * 0.1, DISTRESSED_FLOOR, MAX_PRICE)
+	trend = Trend.BEARISH
+	sentiment = -1.0
+	momentum = -0.002
+	news_move_remaining = 0.0
+	news_move_ticks = 0
+	lasting_bias = 0.0
+	lasting_ticks = 0
+	digest_queue.clear()
+	last_tick_volume = randi_range(180000, 420000)
+	volume += last_tick_volume
+	_update_spread()
+	_record_history()
+
+
+func serialize_listing() -> Dictionary:
+	return {
+		"listing": listing,
+		"halt_ticks": halt_ticks,
+		"reopen_at_open": reopen_at_open,
+		"reopen_price": reopen_price,
+	}
+
+
+func apply_listing(data: Dictionary) -> void:
+	listing = str(data.get("listing", LISTING_LISTED))
+	if listing != LISTING_HALTED and listing != LISTING_DISTRESSED:
+		listing = LISTING_LISTED
+	halt_ticks = int(data.get("halt_ticks", 0))
+	reopen_at_open = bool(data.get("reopen_at_open", false))
+	reopen_price = float(data.get("reopen_price", 0.0))
+	price = clampf(price, floor_price(), MAX_PRICE)
+	_update_spread()
 
 
 func interpret_news(
@@ -462,12 +573,14 @@ func roll_to_next_day() -> void:
 
 
 func apply_saved_close(close_price: float) -> void:
-	price = clampf(close_price, MIN_PRICE, MAX_PRICE)
+	price = clampf(close_price, floor_price(), MAX_PRICE)
 	roll_to_next_day()
 
 
 func apply_overnight_gap(gap_pct: float, is_major: bool = true, lasting: bool = true) -> void:
-	price = clampf(price * (1.0 + gap_pct), MIN_PRICE, MAX_PRICE)
+	if not is_listed():
+		return
+	price = clampf(price * (1.0 + gap_pct), floor_price(), MAX_PRICE)
 	momentum = clampf(gap_pct * 0.4, -0.002, 0.002)
 	sentiment = clampf(sentiment + gap_pct * (6.0 if lasting else 3.0), -1.0, 1.0)
 	if gap_pct > 0.01:
@@ -502,6 +615,8 @@ func get_day_change_pct() -> float:
 
 
 func apply_interpreted_news(result: Dictionary, duration_ticks: int, is_major: bool, lasting: bool, overnight: bool = false) -> void:
+	if not is_listed():
+		return
 	var pulses: Array = result.get("pulses", [])
 	var duration: int = maxi(int(round(float(duration_ticks) * randf_range(0.65, 1.45))), 3)
 	if typeof(pulses) != TYPE_ARRAY or pulses.is_empty():
@@ -523,6 +638,8 @@ func apply_interpreted_news(result: Dictionary, duration_ticks: int, is_major: b
 
 
 func queue_scripted_move(wait: int, move: float, duration: int, is_major: bool, lasting: bool) -> void:
+	if not is_listed():
+		return
 	if absf(move) < 0.0004:
 		return
 	digest_queue.append({
@@ -535,6 +652,8 @@ func queue_scripted_move(wait: int, move: float, duration: int, is_major: bool, 
 
 
 func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = false, lasting: bool = false) -> void:
+	if not is_listed():
+		return
 	if absf(total_move) < 0.0002:
 		return
 	if news_move_ticks > 0:
@@ -565,6 +684,18 @@ func apply_news_impact(total_move: float, duration_ticks: int, is_major: bool = 
 
 
 func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
+	just_reopened = false
+	if listing == LISTING_HALTED:
+		if not reopen_at_open:
+			halt_ticks -= 1
+			if halt_ticks <= 0:
+				reopen_distressed()
+				return
+		last_tick_volume = randi_range(8000, 18000)
+		_update_spread()
+		_record_history()
+		return
+
 	_tick_digest_queue()
 	var major_news_active: bool = news_is_major and news_move_ticks > 0
 	var news_move: float = _consume_news_or_revert()
@@ -594,6 +725,9 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 
 	var organic_change: float = base_random + trend_move + momentum_move + growth_bias + liquidity_noise + mood_bias + regime_drift
 	organic_change *= lerpf(0.92, 1.08, speculation_factor) * organic_mult
+	if listing == LISTING_DISTRESSED:
+		organic_change *= 0.35
+		news_move = 0.0
 	if speculation_factor > 0.8 and randf() < 0.012 * flip_mult:
 		organic_change += randf_range(-0.0011, 0.0011) * organic_mult
 	var cap_mult: float = clampf(lerpf(1.0, 1.4, (vol_mult - 1.0) / 0.7), 1.0, 1.45)
@@ -609,7 +743,7 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}) -> void:
 		total_change = clampf(total_change, -organic_cap, organic_cap)
 
 	momentum = clampf(momentum * 0.82 + total_change * 1.5, -0.002, 0.002)
-	price = clampf(price * (1.0 + total_change), MIN_PRICE, MAX_PRICE)
+	price = clampf(price * (1.0 + total_change), floor_price(), MAX_PRICE)
 
 	var tick_volume: int = int(float(randi_range(25000, 70000) + int(abs(total_change) * 9000000.0 * popularity)) * volume_mult)
 	last_tick_volume = tick_volume
@@ -739,8 +873,14 @@ func get_chart_slice(max_points: int, stride: int = 1) -> Dictionary:
 
 
 func _update_spread() -> void:
+	if listing == LISTING_HALTED:
+		bid = price
+		ask = price
+		return
 	var spread_pct: float = 0.001 + (1.0 - liquidity) * 0.003
-	bid = price * (1.0 - spread_pct)
+	if listing == LISTING_DISTRESSED:
+		spread_pct = 0.08 + (1.0 - liquidity) * 0.06
+	bid = maxf(floor_price(), price * (1.0 - spread_pct))
 	ask = price * (1.0 + spread_pct)
 
 

@@ -32,8 +32,16 @@ func set_selected(on: bool) -> void:
 func refresh(stock: Stock, owned_shares: int = 0) -> void:
 	symbol = stock.symbol
 	ticker_label.text = stock.symbol
-	risk_label.text = stock.personality_label.to_upper()
-	risk_label.add_theme_color_override("font_color", CompanyCatalog.risk_color(stock.risk_key))
+	risk_label.text = stock.listing_label()
+	if stock.is_halted():
+		risk_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.28))
+		CopyHints.hover(risk_label, CopyHints.HUD_HALTED)
+	elif stock.is_distressed():
+		risk_label.add_theme_color_override("font_color", Color(0.95, 0.38, 0.38))
+		CopyHints.hover(risk_label, CopyHints.HUD_DISTRESSED)
+	else:
+		risk_label.add_theme_color_override("font_color", CompanyCatalog.risk_color(stock.risk_key))
+		risk_label.tooltip_text = ""
 	name_label.text = stock.company_name
 	price_label.text = "$%.2f" % stock.price
 	var change: float = stock.get_day_change()

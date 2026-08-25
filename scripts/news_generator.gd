@@ -618,8 +618,8 @@ func _from_item(
 	var sentiment: float = 1.0 if is_positive else -1.0
 	var impact: float = _roll_magnitude(strength, premarket, scope) * sentiment
 	var duration: int = _roll_duration(strength, lasting)
-	var is_major: bool = strength == "major"
-	return NewsEvent.new(
+	var is_major: bool = strength == "major" or bool(item.get("existential", false))
+	var event := NewsEvent.new(
 		session_time,
 		str(item["text"]),
 		symbols,
@@ -634,6 +634,8 @@ func _from_item(
 		lasting,
 		industry
 	)
+	event.existential = bool(item.get("existential", false))
+	return event
 
 
 func _roll_magnitude(strength: String, premarket: bool, scope: String) -> float:

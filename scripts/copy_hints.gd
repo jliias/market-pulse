@@ -8,6 +8,8 @@ const HUD_ATH := "All-time high for this book — the peak value you have marked
 const HUD_BID_ASK := "Buy at the ask (sellers' price). Sell at the bid (buyers' price). The last print sits in between."
 const HUD_BID := "Bid: what buyers will pay. You sell at this price."
 const HUD_ASK := "Ask: what sellers want. You buy at this price."
+const HUD_HALTED := "Trading is stopped on this name. Wait for the reopen — it will come back distressed."
+const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Replaced at week recap."
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
 const HUD_MENU := "Book is cash plus holdings. ATH is this book's peak. vs Market is how you did against your three names."
 
@@ -68,7 +70,11 @@ const _HINTS := {
 	"guidance": "What the company says it will earn or ship from here.",
 	"Overweight": "Analyst speak for buy — they want more of this name than the typical basket.",
 	"Underweight": "Analyst speak for sell — they want less of this name than the typical basket.",
-	"Neutral": "Analyst speak for hold — no strong buy or sell.",
+	"HALTED": "Trading stopped on this name until it reopens.",
+	"Distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
+	"distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
+	"DISTRESSED": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
+	"Binary": "The next print can make or break the name — including a halt and a near-worthless reopen.",
 }
 
 static var _term_re: RegEx

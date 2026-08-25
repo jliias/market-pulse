@@ -36,7 +36,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 7,
+		"version": 8,
 		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
@@ -44,6 +44,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		"days_played": portfolio.days_played,
 		"total_commissions": portfolio.total_commissions,
 		"stock_prices": prices,
+		"listings": _listings_from_market(market),
 		"event_chains": market.chain_director.serialize(),
 		"regime": market.regime.serialize(),
 		"last_equity": portfolio.last_equity,
@@ -84,6 +85,8 @@ static func load_game() -> Dictionary:
 static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictionary) -> void:
 	market.set_watchlist(watchlist_from_save(data))
 	portfolio.apply_save(data)
+	if data.has("listings") and typeof(data["listings"]) == TYPE_DICTIONARY:
+		market.apply_saved_listings(data["listings"])
 	if data.has("stock_prices") and typeof(data["stock_prices"]) == TYPE_DICTIONARY:
 		market.apply_saved_prices(data["stock_prices"])
 	if data.has("event_chains") and typeof(data["event_chains"]) == TYPE_DICTIONARY:
@@ -127,6 +130,14 @@ static func is_away_due(data: Dictionary = {}) -> bool:
 	if stamp <= 0.0:
 		return false
 	return (Time.get_unix_time_from_system() - stamp) / 3600.0 >= AWAY_GAP_HOURS
+
+
+static func _listings_from_market(market: MarketSimulator) -> Dictionary:
+	var listings: Dictionary = {}
+	for symbol in market.watchlist:
+		if market.stocks.has(symbol):
+			listings[symbol] = market.stocks[symbol].serialize_listing()
+	return listings
 
 
 static func watchlist_from_save(data: Dictionary) -> Array[String]:

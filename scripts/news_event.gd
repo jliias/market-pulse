@@ -17,6 +17,7 @@ var industry: String = ""
 var chain_id: String = ""
 var chain_stage: String = ""
 var reaction: String = ""
+var existential: bool = false
 
 
 func _init(
@@ -91,6 +92,8 @@ func attach_chain(p_chain_id: String, p_stage: String) -> void:
 
 
 func effect_label() -> String:
+	if existential:
+		return "resolution · existential"
 	if not chain_stage.is_empty():
 		var stage_name: String = EventChain.display_stage(chain_stage)
 		var life: String = "lasting" if lasting else "flash"

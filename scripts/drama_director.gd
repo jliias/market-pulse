@@ -23,6 +23,8 @@ func reset() -> void:
 
 
 func note_buy(symbol: String, shares: int, price: float, stock: Stock, tick: int, cash: float, portfolio_value: float) -> void:
+	if not stock.is_listed():
+		return
 	last_buy_tick[symbol] = tick
 	if spectator or not _can_fire(tick, symbol):
 		return
@@ -48,6 +50,10 @@ func note_buy(symbol: String, shares: int, price: float, stock: Stock, tick: int
 
 
 func note_sell(symbol: String, shares: int, price: float, stock: Stock, tick: int, remaining: int, avg_cost: float, portfolio_value: float) -> void:
+	if not stock.is_listed():
+		if remaining <= 0:
+			last_buy_tick.erase(symbol)
+		return
 	if remaining <= 0:
 		last_buy_tick.erase(symbol)
 	if spectator or not _can_fire(tick, symbol):
@@ -89,10 +95,14 @@ func tick(market: MarketSimulator, portfolio: Portfolio) -> Array[NewsEvent]:
 
 func _maybe_hold_too_long(market: MarketSimulator, portfolio: Portfolio) -> void:
 	for symbol in portfolio.holdings.keys():
-		var shares: int = portfolio.get_shares(str(symbol))
-		if shares <= 0 or not market.stocks.has(symbol):
+		if not market.stocks.has(symbol):
 			continue
 		var stock: Stock = market.stocks[symbol]
+		if not stock.is_listed():
+			continue
+		var shares: int = portfolio.get_shares(str(symbol))
+		if shares <= 0:
+			continue
 		var held: int = market.tick_count - int(last_buy_tick.get(symbol, market.tick_count))
 		var day_pct: float = stock.get_day_change_pct()
 		var pos_pct: float = 0.0

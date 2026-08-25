@@ -48,15 +48,34 @@ func swap_watchlist_name(drop: String, add: String) -> void:
 		return
 	if not watchlist.has(drop) or not CompanyCatalog.has_symbol(add) or watchlist.has(add):
 		return
+	replace_watchlist_names([drop], [add])
+
+
+func replace_watchlist_names(drops: Array, adds: Array) -> void:
+	if drops.size() != adds.size() or drops.is_empty():
+		return
+	var drop_set: Array[String] = []
+	for item in drops:
+		drop_set.append(str(item))
+	var add_list: Array[String] = []
+	for item in adds:
+		add_list.append(str(item))
 	var next_list: Array[String] = []
+	var add_i := 0
 	for symbol in watchlist:
-		if symbol == drop:
-			next_list.append(add)
+		if drop_set.has(symbol):
+			var incoming: String = add_list[add_i]
+			if not CompanyCatalog.has_symbol(incoming) or next_list.has(incoming):
+				return
+			next_list.append(incoming)
+			add_i += 1
 		else:
 			next_list.append(symbol)
+	if next_list.size() != 3 or add_i != add_list.size():
+		return
 	var kept: Dictionary = {}
 	for symbol in next_list:
-		if stocks.has(symbol):
+		if stocks.has(symbol) and not drop_set.has(symbol):
 			kept[symbol] = stocks[symbol]
 		else:
 			kept[symbol] = CompanyCatalog.make_stock(symbol)
@@ -69,6 +88,22 @@ func apply_saved_prices(prices: Dictionary) -> void:
 	for symbol in watchlist:
 		if prices.has(symbol) and stocks.has(symbol):
 			stocks[symbol].apply_saved_close(float(prices[symbol]))
+
+
+func apply_saved_listings(listings: Dictionary) -> void:
+	for symbol in watchlist:
+		if not stocks.has(symbol):
+			continue
+		if listings.has(symbol) and typeof(listings[symbol]) == TYPE_DICTIONARY:
+			stocks[symbol].apply_listing(listings[symbol])
+
+
+func distressed_symbols() -> Array[String]:
+	var names: Array[String] = []
+	for symbol in watchlist:
+		if stocks.has(symbol) and stocks[symbol].is_distressed():
+			names.append(symbol)
+	return names
 
 
 func roll_to_next_day() -> void:
@@ -103,6 +138,8 @@ func apply_away_step(hours: float) -> void:
 
 	var gap_sum := 0.0
 	for symbol in watchlist:
+		if not stocks.has(symbol) or not stocks[symbol].is_listed():
+			continue
 		var stock: Stock = stocks[symbol]
 		var gap: float = _away_gap_for(symbol, scale)
 		gap_sum += gap
@@ -226,6 +263,32 @@ func prepare() -> void:
 	opening_index = _current_index()
 
 
+func reopen_halts_at_open() -> Array[NewsEvent]:
+	var events: Array[NewsEvent] = []
+	for symbol in watchlist:
+		if not stocks.has(symbol):
+			continue
+		var stock: Stock = stocks[symbol]
+		if stock.is_halted() and stock.reopen_at_open:
+			stock.reopen_distressed()
+			var note: NewsEvent = _reopen_event(stock, false)
+			news_feed.append(note)
+			events.append(note)
+	return events
+
+
+func settle_halts() -> Array[NewsEvent]:
+	var events: Array[NewsEvent] = []
+	for symbol in watchlist:
+		if not stocks.has(symbol):
+			continue
+		var stock: Stock = stocks[symbol]
+		if stock.is_halted():
+			stock.reopen_distressed()
+			events.append(_reopen_event(stock, false))
+	return events
+
+
 func open() -> NewsEvent:
 	session_minutes = OPEN_HOUR
 	session_seconds = OPEN_MINUTE
@@ -277,6 +340,10 @@ func tick() -> Array[NewsEvent]:
 	if _is_at_or_after_close():
 		is_closed = true
 		is_running = false
+		var halt_settles: Array[NewsEvent] = settle_halts()
+		for settled in halt_settles:
+			news_feed.append(settled)
+			new_events.append(settled)
 		var close_event := NewsEvent.new(
 			get_time_string(),
 			"Market closed. Final prints are in — did you beat the tape?",
@@ -312,6 +379,10 @@ func tick() -> Array[NewsEvent]:
 
 	for symbol in stocks:
 		stocks[symbol].tick(market_sentiment, regime.tick_modifiers())
+		if stocks[symbol].just_reopened:
+			var reopen_note: NewsEvent = _reopen_event(stocks[symbol], false)
+			news_feed.append(reopen_note)
+			new_events.append(reopen_note)
 
 	if player_portfolio != null:
 		var drama_events: Array[NewsEvent] = drama.tick(self, player_portfolio)
@@ -355,11 +426,16 @@ func _current_index() -> float:
 
 
 func _apply_premarket_news(event: NewsEvent) -> void:
+	if event.existential:
+		_apply_existential(event, true)
+		return
 	var reactions: PackedStringArray = []
 	for symbol in event.affected_symbols:
 		if not stocks.has(symbol):
 			continue
 		var stock: Stock = stocks[symbol]
+		if not stock.is_listed():
+			continue
 		var result: Dictionary = stock.interpret_news(
 			event.impact, true, market_sentiment, event.category, regime.climate, regime.weather
 		)
@@ -383,7 +459,56 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 	_nudge_market_mood(event, event.impact)
 
 
+func _apply_existential(event: NewsEvent, premarket: bool) -> void:
+	var names: PackedStringArray = []
+	for symbol in event.affected_symbols:
+		if not stocks.has(symbol):
+			continue
+		var stock: Stock = stocks[symbol]
+		if stock.is_distressed():
+			continue
+		stock.begin_halt(premarket)
+		names.append(stock.company_name)
+	if names.is_empty():
+		return
+	event.reaction = "HALTED: %s — no trading until the name reopens distressed. Sell-only after the gap." % ", ".join(names)
+	_nudge_market_mood(event, -0.35)
+
+
+func _reopen_event(stock: Stock, premarket: bool) -> NewsEvent:
+	var from_close: float = stock.previous_close if stock.previous_close > 0.01 else stock.price
+	var gap_pct: float = 0.0
+	if from_close > 0.01:
+		gap_pct = ((stock.price - from_close) / from_close) * 100.0
+	var headline := "REOPEN: %s marked distressed after a %.0f%% gap. Sell-only until week recap." % [
+		stock.company_name, gap_pct
+	]
+	if premarket and not headline.begins_with("PREMARKET"):
+		headline = "PREMARKET: " + headline
+	var event := NewsEvent.new(
+		get_time_string(),
+		headline,
+		[stock.symbol],
+		-1.0,
+		-0.5,
+		0,
+		true,
+		premarket,
+		"product",
+		"company",
+		"existential",
+		true,
+		""
+	)
+	event.existential = true
+	event.reaction = "The residual bid is live. You can sell; you cannot buy this name back."
+	return event
+
+
 func _apply_news(event: NewsEvent) -> void:
+	if event.existential:
+		_apply_existential(event, false)
+		return
 	var reactions: PackedStringArray = []
 	var applied_moves: PackedFloat32Array = PackedFloat32Array()
 
@@ -391,6 +516,8 @@ func _apply_news(event: NewsEvent) -> void:
 		if not stocks.has(symbol):
 			continue
 		var stock: Stock = stocks[symbol]
+		if not stock.is_listed():
+			continue
 		var result: Dictionary = stock.interpret_news(
 			event.impact, event.is_major, market_sentiment, event.category, regime.climate, regime.weather
 		)

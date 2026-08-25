@@ -37,6 +37,8 @@ var add_list: VBoxContainer
 var confirm_swap_button: Button
 var drop_pick: String = ""
 var add_pick: String = ""
+var add_picks: Array[String] = []
+var forced_drops: Array[String] = []
 var keep_book: bool = true
 var leave_intent: String = "menu"
 var cash_out_button: Button
@@ -251,10 +253,14 @@ func _open_market() -> void:
 	awaiting_open = false
 	open_countdown_overlay.visible = false
 	closed_overlay.visible = false
+	var reopened: Array[NewsEvent] = market.reopen_halts_at_open()
+	for event in reopened:
+		_add_news_to_feed(event)
 	var open_bell: NewsEvent = market.open()
 	_add_news_to_feed(open_bell)
 	place_order_button.disabled = false
-	trade_message_label.text = "Market is open. Try to beat the market."
+	if reopened.is_empty():
+		trade_message_label.text = "Market is open. Try to beat the market."
 	tick_timer.start()
 	_update_ui()
 
@@ -283,6 +289,11 @@ func _select_stock(symbol: String) -> void:
 
 
 func _set_buy_mode(is_buy: bool) -> void:
+	var stock: Stock = market.get_stock(selected_symbol)
+	if is_buy and stock != null and not stock.can_buy():
+		buy_mode = false
+		_refresh_trade_panel()
+		return
 	buy_mode = is_buy
 	_refresh_trade_panel()
 
@@ -311,6 +322,12 @@ func _place_order() -> void:
 		return
 	var stock: Stock = market.get_stock(selected_symbol)
 	if stock == null:
+		return
+	if buy_mode and not stock.can_buy():
+		trade_message_label.text = "This name is %s. You cannot buy it." % stock.listing_label().to_lower()
+		return
+	if not buy_mode and not stock.can_sell():
+		trade_message_label.text = "This name is halted. Wait for the reopen."
 		return
 	var result: Dictionary
 	if buy_mode:
@@ -372,6 +389,9 @@ func _end_session() -> void:
 		result_text = "Closed. You matched the market."
 	if left_before_close:
 		result_text = "Marked to the close. " + result_text
+	var wrecked: Array[String] = market.distressed_symbols()
+	if not wrecked.is_empty():
+		result_text += "\n%s marked distressed — sell-only until week recap." % ", ".join(wrecked)
 	market.chain_director.calendar_day = market.calendar_day
 	market.chain_director.on_session_end()
 	market.regime.on_day_close()
@@ -398,6 +418,8 @@ func _run_tape_to_close() -> void:
 	if awaiting_open:
 		awaiting_open = false
 		if not market.is_closed and not market.is_running:
+			for event in market.reopen_halts_at_open():
+				_add_news_to_feed(event)
 			var open_bell: NewsEvent = market.open()
 			_add_news_to_feed(open_bell)
 	if market.is_closed:
@@ -582,8 +604,18 @@ func _refresh_selected_stock() -> void:
 	selected_change_label.text = "%s$%.2f (%s%.2f%%)" % [_sign(change), absf(change), _sign(change), absf(stock.get_day_change_pct())]
 	selected_change_label.add_theme_color_override("font_color", _pl_color(change))
 	var typical: String = str(CompanyCatalog.risk_profile(stock.symbol).get("typical", ""))
-	selected_meta_label.text = "%s · %s · %s · %s" % [stock.personality_label, typical, stock.sector, stock.market_cap_label]
-	selected_meta_label.add_theme_color_override("font_color", CompanyCatalog.risk_color(stock.risk_key))
+	if stock.is_halted():
+		selected_meta_label.text = "HALTED · no trading until reopen"
+		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.28))
+		CopyHints.hover(selected_meta_label, CopyHints.HUD_HALTED)
+	elif stock.is_distressed():
+		selected_meta_label.text = "DISTRESSED · sell-only residual · replaced at week recap"
+		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.38, 0.38))
+		CopyHints.hover(selected_meta_label, CopyHints.HUD_DISTRESSED)
+	else:
+		selected_meta_label.text = "%s · %s · %s · %s" % [stock.personality_label, typical, stock.sector, stock.market_cap_label]
+		selected_meta_label.add_theme_color_override("font_color", CompanyCatalog.risk_color(stock.risk_key))
+		selected_meta_label.tooltip_text = ""
 
 
 func _refresh_chart() -> void:
@@ -632,10 +664,19 @@ func _refresh_trade_panel() -> void:
 	if stock == null:
 		return
 	trade_symbol_label.text = "TRADE  %s" % stock.symbol
+	if stock.is_distressed() and buy_mode:
+		buy_mode = false
 	var px: float = stock.ask if buy_mode else stock.bid
 	trade_price_label.text = "$%.2f" % px
 	qty_label.text = str(quantity)
 	place_order_button.text = "PLACE BUY ORDER" if buy_mode else "PLACE SELL ORDER"
+	var can_order: bool = session_active and not awaiting_open and not market.is_closed
+	if stock.is_halted() or (buy_mode and not stock.can_buy()) or (not buy_mode and not stock.can_sell()):
+		can_order = false
+	if not buy_mode and portfolio.get_shares(selected_symbol) <= 0:
+		can_order = false
+	place_order_button.disabled = not can_order
+	buy_mode_button.disabled = not stock.can_buy()
 	_style_trade_buttons()
 
 	var estimate: Dictionary = portfolio.estimate(quantity, px)
@@ -736,6 +777,8 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		])
 	if not event.reaction.is_empty():
 		news_feed.append_text("[color=#888888]    %s[/color]\n" % CopyHints.annotate(event.reaction))
+	if event.existential or event.headline.begins_with("REOPEN") or event.headline.begins_with("PREMARKET: REOPEN"):
+		trade_message_label.text = "%s\n%s" % [event.headline, event.reaction]
 
 
 func _sign(value: float) -> String:
@@ -815,6 +858,8 @@ func _build_chapter_overlay() -> void:
 	rebalance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rebalance_hint.add_theme_font_size_override("font_size", 14)
 	rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
+	if not forced_drops.is_empty():
+		rebalance_hint.text = "Distressed names must leave the board. Pick a replacement for each. Residual shares sell at the bid."
 	CopyHints.hover(rebalance_hint, CopyHints.HUD_BID)
 	rebalance_page.add_child(rebalance_hint)
 	keep_book_button = Button.new()
@@ -855,15 +900,20 @@ func _show_chapter_recap() -> void:
 	recap_page.visible = true
 	rebalance_page.visible = false
 	recap_label.text = portfolio.recap_text(market.regime.status_text(), market.watchlist)
+	var wrecked: Array[String] = market.distressed_symbols()
+	if not wrecked.is_empty():
+		recap_label.text += "\n%s distressed — must replace. Residual shares sell at the bid." % ", ".join(wrecked)
 	chapter_overlay.visible = true
 
 
 func _show_chapter_rebalance() -> void:
 	recap_page.visible = false
 	rebalance_page.visible = true
-	keep_book = true
+	forced_drops = market.distressed_symbols()
+	keep_book = forced_drops.is_empty()
 	drop_pick = ""
 	add_pick = ""
+	add_picks.clear()
 	_rebuild_rebalance_lists()
 	_refresh_rebalance_state()
 
@@ -893,17 +943,30 @@ func _rebuild_rebalance_lists() -> void:
 
 func _rebalance_row_text(symbol: String) -> String:
 	var data: Dictionary = CompanyCatalog.spec(symbol)
-	return "%s  %s  ·  %s" % [symbol, str(data.get("name", symbol)), str(data.get("label", ""))]
+	var line: String = "%s  %s  ·  %s" % [symbol, str(data.get("name", symbol)), str(data.get("label", ""))]
+	if market.stocks.has(symbol) and market.stocks[symbol].is_distressed():
+		line += "  ·  DISTRESSED"
+	return line
 
 
 func _on_keep_book() -> void:
+	if not forced_drops.is_empty():
+		keep_book_button.button_pressed = false
+		return
 	keep_book = true
 	drop_pick = ""
 	add_pick = ""
+	add_picks.clear()
 	_refresh_rebalance_state()
 
 
 func _on_drop_pressed(symbol: String) -> void:
+	if forced_drops.has(symbol):
+		_refresh_rebalance_state()
+		return
+	if not forced_drops.is_empty():
+		_refresh_rebalance_state()
+		return
 	keep_book = false
 	if drop_pick == symbol:
 		drop_pick = ""
@@ -915,6 +978,13 @@ func _on_drop_pressed(symbol: String) -> void:
 
 
 func _on_add_pressed(symbol: String) -> void:
+	if not forced_drops.is_empty():
+		if add_picks.has(symbol):
+			add_picks.erase(symbol)
+		elif add_picks.size() < forced_drops.size():
+			add_picks.append(symbol)
+		_refresh_rebalance_state()
+		return
 	if drop_pick.is_empty():
 		add_pick = ""
 		_refresh_rebalance_state()
@@ -925,14 +995,22 @@ func _on_add_pressed(symbol: String) -> void:
 
 
 func _refresh_rebalance_state() -> void:
-	keep_book_button.button_pressed = keep_book
-	_apply_button_style(keep_book_button, SELECTED_ACCENT if keep_book else UI_ACCENT, UI_BORDER, keep_book)
+	var forced: bool = not forced_drops.is_empty()
+	keep_book_button.disabled = forced
+	keep_book_button.button_pressed = keep_book and not forced
+	_apply_button_style(keep_book_button, SELECTED_ACCENT if keep_book and not forced else UI_ACCENT, UI_BORDER, keep_book and not forced)
+	if forced:
+		rebalance_hint.text = "Distressed names must leave the board. Pick %d replacement(s). Residual shares sell at the bid." % forced_drops.size()
+	else:
+		rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
 	var drop_i := 0
 	for child in drop_list.get_children():
 		var button := child as Button
 		var symbol: String = market.watchlist[drop_i]
-		var on: bool = drop_pick == symbol
+		var locked: bool = forced_drops.has(symbol)
+		var on: bool = locked or drop_pick == symbol
 		button.button_pressed = on
+		button.disabled = forced and not locked
 		_apply_button_style(button, SELECTED_ACCENT if on else CompanyCatalog.risk_color(CompanyCatalog.risk_key(symbol)), UI_BORDER, on)
 		drop_i += 1
 	var bench: Array[String] = CompanyCatalog.bench_symbols(market.watchlist)
@@ -940,20 +1018,36 @@ func _refresh_rebalance_state() -> void:
 	for child in add_list.get_children():
 		var button := child as Button
 		var symbol: String = bench[add_i]
-		var on: bool = add_pick == symbol
-		button.disabled = drop_pick.is_empty()
+		var on: bool = add_picks.has(symbol) if forced else add_pick == symbol
+		button.disabled = not forced and drop_pick.is_empty()
 		button.button_pressed = on
 		var accent: Color = SELECTED_ACCENT if on else CompanyCatalog.risk_color(CompanyCatalog.risk_key(symbol))
 		_apply_button_style(button, accent, UI_BORDER, on)
 		add_i += 1
-	var ready: bool = keep_book or (not drop_pick.is_empty() and not add_pick.is_empty())
+	var ready: bool
+	if forced:
+		ready = add_picks.size() == forced_drops.size()
+		confirm_swap_button.text = "Replace distressed names"
+		if ready:
+			confirm_swap_button.text = "Replace %s → %s" % [", ".join(forced_drops), ", ".join(add_picks)]
+	else:
+		ready = keep_book or (not drop_pick.is_empty() and not add_pick.is_empty())
+		confirm_swap_button.text = "Keep book and continue" if keep_book else "Swap %s → %s" % [drop_pick, add_pick]
 	confirm_swap_button.disabled = not ready
-	confirm_swap_button.text = "Keep book and continue" if keep_book else "Swap %s → %s" % [drop_pick, add_pick]
 	_apply_button_style(confirm_swap_button, BUY_ACCENT, UI_BORDER, ready, ready)
 
 
 func _confirm_chapter_rebalance() -> void:
-	if not keep_book:
+	if not forced_drops.is_empty():
+		if add_picks.size() != forced_drops.size():
+			return
+		for symbol in forced_drops:
+			_flatten_symbol(symbol)
+		market.replace_watchlist_names(forced_drops, add_picks)
+		if forced_drops.has(selected_symbol):
+			selected_symbol = market.watchlist[0]
+		_build_watchlist()
+	elif not keep_book:
 		if drop_pick.is_empty() or add_pick.is_empty():
 			return
 		_flatten_symbol(drop_pick)
@@ -966,6 +1060,8 @@ func _confirm_chapter_rebalance() -> void:
 	chapter_overlay.visible = false
 	drop_pick = ""
 	add_pick = ""
+	add_picks.clear()
+	forced_drops.clear()
 	keep_book = true
 	_start_next_trading_day()
 
@@ -977,4 +1073,6 @@ func _flatten_symbol(symbol: String) -> void:
 	var stock: Stock = market.get_stock(symbol)
 	if stock == null:
 		return
+	if stock.is_halted():
+		stock.reopen_distressed()
 	portfolio.sell(symbol, shares, stock.bid)

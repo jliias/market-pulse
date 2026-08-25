@@ -101,7 +101,7 @@ const ARCS := {
 					{"text": "Resolution: the subsidy bill clears — Green Energy Corp keeps the support.", "category": "regulatory", "strength": "major", "lasting": true},
 				],
 				"negative": [
-					{"text": "Resolution: the subsidy effort dies — Green Energy Corp loses the support.", "category": "regulatory", "strength": "major", "lasting": true},
+					{"text": "Resolution: the subsidy effort dies — Green Energy Corp loses the support.", "category": "regulatory", "strength": "major", "lasting": true, "existential": true},
 				],
 			},
 		},
@@ -242,7 +242,7 @@ const ARCS := {
 					{"text": "Resolution: Helix Biotech confirms the trial met the primary endpoint.", "category": "product", "strength": "major", "lasting": true},
 				],
 				"negative": [
-					{"text": "Resolution: Helix Biotech says the trial missed and the timeline is under review.", "category": "product", "strength": "major", "lasting": true},
+					{"text": "Resolution: Helix Biotech says the trial missed and the timeline is under review.", "category": "product", "strength": "major", "lasting": true, "existential": true},
 				],
 			},
 		},
@@ -289,7 +289,7 @@ const ARCS := {
 					{"text": "Resolution: CyberNest Inc confirms the multi-year security award.", "category": "product", "strength": "major", "lasting": true},
 				],
 				"negative": [
-					{"text": "Resolution: CyberNest Inc loses the award — the rumor dies.", "category": "product", "strength": "major", "lasting": true},
+					{"text": "Resolution: CyberNest Inc loses the award — the rumor dies.", "category": "product", "strength": "major", "lasting": true, "existential": true},
 				],
 			},
 		},
@@ -336,7 +336,7 @@ const ARCS := {
 					{"text": "Resolution: Qubit Labs completes the demo and holds the narrative.", "category": "product", "strength": "major", "lasting": true},
 				],
 				"negative": [
-					{"text": "Resolution: Qubit Labs postpones the demo — the squeeze unwinds.", "category": "product", "strength": "major", "lasting": true},
+					{"text": "Resolution: Qubit Labs postpones the demo — the squeeze unwinds.", "category": "product", "strength": "major", "lasting": true, "existential": true},
 				],
 			},
 		},
@@ -571,7 +571,7 @@ const ARCS := {
 					{"text": "Resolution: Helix Biotech files on time — the path holds.", "category": "regulatory", "strength": "major", "lasting": true},
 				],
 				"negative": [
-					{"text": "Resolution: Helix Biotech delays the file — the timeline is under review.", "category": "regulatory", "strength": "major", "lasting": true},
+					{"text": "Resolution: Helix Biotech delays the file — the timeline is under review.", "category": "regulatory", "strength": "major", "lasting": true, "existential": true},
 				],
 			},
 		},
@@ -966,6 +966,12 @@ func hook_text(chain: EventChain) -> String:
 	if chain.pending.is_empty():
 		return ""
 	var stage: String = EventChain.display_stage(chain.pending)
+	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
+		match chain.scope:
+			"company":
+				return "%s — resolution tomorrow. Binary." % CompanyCatalog.display_name(chain.subject)
+			_:
+				return "Resolution tomorrow. Binary."
 	match chain.scope:
 		"company":
 			return "%s — %s still unresolved" % [CompanyCatalog.display_name(chain.subject), stage]
@@ -982,6 +988,11 @@ static func _hook_from_dict(item: Dictionary) -> String:
 		return ""
 	var stage: String = EventChain.display_stage(pending)
 	var scope: String = str(item.get("scope", "company"))
+	var arc_id: String = str(item.get("arc_id", ""))
+	if pending == "resolution" and float(item.get("polarity", 1.0)) < 0.0 and arc_is_existential(arc_id):
+		if scope == "company":
+			return "%s — resolution tomorrow. Binary." % CompanyCatalog.display_name(str(item.get("subject", "")))
+		return "Resolution tomorrow. Binary."
 	match scope:
 		"company":
 			return "%s — %s still unresolved" % [CompanyCatalog.display_name(str(item.get("subject", ""))), stage]
@@ -1155,6 +1166,7 @@ func _fire(chain: EventChain, stocks: Array[Stock], session_time: String, premar
 		headline = "PREMARKET: " + headline
 	event.headline = headline
 	event.attach_chain(chain.arc_id, stage)
+	event.existential = bool(item.get("existential", false))
 	_advance(chain, stage)
 	return event
 
@@ -1248,10 +1260,35 @@ func _pick_available_arc(stocks: Array[Stock]) -> String:
 func _arc_allowed(spec: Dictionary, watchlist: Array[String], stocks: Array[Stock]) -> bool:
 	var scope: String = str(spec.get("scope", ""))
 	if scope == "company":
-		return watchlist.has(str(spec.get("subject", "")))
+		var subject: String = str(spec.get("subject", ""))
+		if not watchlist.has(subject):
+			return false
+		for stock in stocks:
+			if stock.symbol == subject:
+				return stock.is_listed()
+		return true
 	if scope == "industry":
 		return not news_generator.symbols_for_industry(stocks, str(spec.get("industry", ""))).is_empty()
 	return true
+
+
+static func arc_is_existential(arc_id: String) -> bool:
+	if not ARCS.has(arc_id):
+		return false
+	var spec: Dictionary = ARCS[arc_id]
+	var stages: Variant = spec.get("stages", {})
+	if typeof(stages) != TYPE_DICTIONARY or not (stages as Dictionary).has("resolution"):
+		return false
+	var sides: Variant = (stages as Dictionary)["resolution"]
+	if typeof(sides) != TYPE_DICTIONARY:
+		return false
+	var negatives: Variant = (sides as Dictionary).get("negative", [])
+	if typeof(negatives) != TYPE_ARRAY:
+		return false
+	for item in negatives:
+		if typeof(item) == TYPE_DICTIONARY and bool((item as Dictionary).get("existential", false)):
+			return true
+	return false
 
 
 func _stage_item(arc_id: String, stage: String, positive: bool) -> Dictionary:
