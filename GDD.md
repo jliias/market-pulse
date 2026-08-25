@@ -2,7 +2,7 @@
 
 **Status:** living document of what is implemented (Godot 4.6 prototype).  
 **Entry scene:** `scenes/menu.tscn`  
-**Save format:** `user://market_pulse_save.json` (version 8)
+**Save format:** `user://market_pulse_save.json` (version 9)
 
 This is not a pitch for unbuilt features. Where something exists only as a stub, it is called out.
 
@@ -112,8 +112,9 @@ Prices are clamped between **$1** and **$1000** while listed. Distressed residua
 
 - Starting cash: **$10,000**
 - Commission: **$2 + 0.2%** of notional, **every** fill (buy and sell)
-- Quantity: ±1, presets 10 / 20 / 50 / 100, Max (affordable on buy)
-- No shorts, no options, no limit orders — marketable size at current bid/ask
+- Quantity: ±1, presets 10 / 20 / 50 / 100, Max (affordable on buy; fade size on fade)
+- No options, no limit orders — marketable size at current bid/ask
+- **Fade** — synthetic short on one listed name you do not hold. Pays if that last print falls. Cap **20% of book** (cash + longs). Commission on open and cover. Auto-covers at the close. Counts in vs Market. Cannot fade halted/distressed names.
 - Average cost tracked per name; position P/L vs that cost
 
 HUD shows estimated price, notional, commission, and final debit/credit before you hit Place Order.
@@ -125,15 +126,19 @@ HUD shows estimated price, notional, commission, and final debit/credit before y
 Three columns (stack on a narrow window):
 
 1. **Watchlist** — ticker cards: risk, last, day change, volume, shares owned, mini chart. Click to select.
-2. **Chart + news** — main line chart; feed of timestamped headlines with a reaction line. Desk terms in the feed are **underlined**; hover for a short definition.
-3. **Trade ticket + book** — selected name, bid/ask, buy/sell, qty, fills, cash, positions, session P/L.
+2. **Chart + news** — main line chart; **story cards** (up to two open arcs) above the feed; feed of timestamped headlines with a reaction line. Desk terms in the feed are **underlined**; hover for a short definition. Player-triggered tape is tagged **YOUR TAPE** (gift or trap).
+3. **Trade ticket + book** — selected name, bid/ask, buy/sell/**fade**, qty, fills, cash, positions, session P/L.
 
 Top: book value, cash, session P/L, clock, **vs Market**.  
 Bottom: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, End Session / New Day.
 
+**Act on the print:** chain beats, major headlines, existential halt/reopen, weather flips, and YOUR TAPE pause the clock **8–15 real seconds**. Hold (or timeout) resumes. To ticket selects the named watchlist name and resumes — you still size the order on the live tape. Circuit volatility pauses do **not** stack this overlay. End Session / leave desk treats a pause as Hold. Fast-forward to close does not pause.
+
 Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prints**, not calendar months and not OHLC candles. Tooltips say so.
 
-**Settings** is a stub (“later pass”).
+**Settings:** tape speed **1× / 2× / 3×** (tick interval only). Pause windows stay wall-clock.
+
+Close overlay: large **vs Market**, Beat / Matched / Lost, streak, one book-vs-story line, tomorrow’s hook, listing stamp if halted/distressed.
 
 ---
 
@@ -242,7 +247,7 @@ Player-facing word is **week**. Save keys still say `chapter`.
 
 ## 13. Drama (player-triggered tape)
 
-Separate from authored arcs. After a **meaningful** buy or sell, there is a chance a delayed headline and move fire (e.g. sellers overwhelm after a chase buy; late money chases after you sold a winner). Capped per day, with gaps between events. Does not fire while the engine is catching the tape up to the close.
+Separate from authored arcs. After a **meaningful** buy or sell (and some hold / miss-the-move checks), a delayed headline and move can fire. **~50/50 gift vs trap** when a beat is eligible. Capped at **two per day**, with gaps between events. Tagged **YOUR TAPE** in the feed (`gift` or `trap`). Examples: flow confirms a dip-buy; sellers stay on a name you faded by selling; chase-buy then dump; sold a winner then it rips. Does not **start** new drama while the engine is catching the tape up to the close; already-queued beats still print. Does not fire on halted/distressed names.
 
 ---
 
@@ -250,7 +255,7 @@ Separate from authored arcs. After a **meaningful** buy or sell, there is a chan
 
 One local save. New game **deletes** it after you lock three names.
 
-Saved: cash, holdings, avg cost, watchlist, last prices, days played, commissions, regime climate, event chains, equity ATH, streak and vs-Market stats, week recap pending, leave-desk timestamp.
+Saved: cash, holdings, avg cost, **fades**, watchlist, last prices, days played, commissions, regime climate, event chains, equity ATH, streak and vs-Market stats, week recap pending, leave-desk timestamp, **tape speed**.
 
 Menu **Continue** card is a cliffhanger: day/week, book, ATH, watchlist, climate (with days left **there** — designer/career info, not the live HUD tooltip), streak, story hook, last close vs Market, overnight-risk line if away is due.
 
@@ -268,11 +273,12 @@ No tutorial mission. Learning is:
 
 ## 16. Explicitly not shipped
 
-- Settings (speed, layout)
+- Layout options in Settings (speed is shipped)
 - Multiplayer / social
 - Auto-sim of many missed **calendar** days (only the single 8-hour away step)
 - Daily “shop a new watchlist” outside week recap
-- Shorts, limits, more than three names
+- Broker-style shorts (borrow/margin). Fade is the game verb.
+- Limit orders, more than three names
 - Legacy `command_handler.gd` (CLI leftover, not on the desk)
 
 ---
@@ -297,6 +303,9 @@ No tutorial mission. Learning is:
 | Starting cash | $10,000 |
 | Commission | $2 + 0.2% |
 | Watchlist | 3 names |
+| Fade cap | 20% of cash + longs |
+| Tape speed | 1× / 2× / 3× |
+| Print pause | 10s major / 14s existential |
 | Week length | 5 trading days |
 | Away trigger | 8 real hours |
 | Max active arcs | 2 |

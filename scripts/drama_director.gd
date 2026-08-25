@@ -31,21 +31,32 @@ func note_buy(symbol: String, shares: int, price: float, stock: Stock, tick: int
 	var notional: float = float(shares) * price
 	if not _meaningful(notional, portfolio_value):
 		return
-	var chase: bool = stock.get_day_change_pct() > 0.7
-	var odds: float = 0.16 if chase else 0.07
-	if randf() > odds:
-		return
+	var gift: bool = randf() < 0.5
 	var wait: int = randi_range(8, 22)
-	var move: float = -randf_range(0.016, 0.036)
+	if gift:
+		var lift: float = randf_range(0.014, 0.034)
+		if stock.get_day_change_pct() < -0.35:
+			lift += randf_range(0.004, 0.012)
+		_schedule(
+			stock,
+			tick,
+			wait,
+			lift,
+			_headline(stock, "Flow confirms %s — the dip gets bought." % stock.company_name, 1.0, "gift"),
+			"gift"
+		)
+		return
+	var chase: bool = stock.get_day_change_pct() > 0.7
+	var dump: float = -randf_range(0.016, 0.036)
 	if chase:
-		move -= randf_range(0.004, 0.01)
+		dump -= randf_range(0.004, 0.01)
 	_schedule(
 		stock,
 		tick,
 		wait,
-		move,
-		_headline(stock, "Sellers overwhelm %s after the squeeze." % stock.company_name, -1.0),
-		"crash"
+		dump,
+		_headline(stock, "Sellers overwhelm %s after the squeeze." % stock.company_name, -1.0, "trap"),
+		"trap"
 	)
 
 
@@ -61,23 +72,32 @@ func note_sell(symbol: String, shares: int, price: float, stock: Stock, tick: in
 	var notional: float = float(shares) * price
 	if not _meaningful(notional, portfolio_value):
 		return
-	var winner: bool = avg_cost > 0.0 and price > avg_cost * 1.004
-	var odds: float = 0.18 if winner else 0.08
-	if stock.get_day_change_pct() > 0.4:
-		odds += 0.04
-	if randf() > odds:
-		return
+	var gift: bool = randf() < 0.5
 	var wait: int = randi_range(10, 28)
-	var move: float = randf_range(0.015, 0.038)
+	if gift:
+		var dump: float = -randf_range(0.015, 0.038)
+		if stock.get_day_change_pct() > 0.4:
+			dump -= randf_range(0.004, 0.01)
+		_schedule(
+			stock,
+			tick,
+			wait,
+			dump,
+			_headline(stock, "Sellers stay on %s after you stepped aside." % stock.company_name, -1.0, "gift"),
+			"gift"
+		)
+		return
+	var winner: bool = avg_cost > 0.0 and price > avg_cost * 1.004
+	var rip: float = randf_range(0.015, 0.038)
 	if winner:
-		move += randf_range(0.004, 0.012)
+		rip += randf_range(0.004, 0.012)
 	_schedule(
 		stock,
 		tick,
 		wait,
-		move,
-		_headline(stock, "Late money chases %s after the dip." % stock.company_name, 1.0),
-		"sold_early"
+		rip,
+		_headline(stock, "Late money chases %s after the dip." % stock.company_name, 1.0, "trap"),
+		"trap"
 	)
 
 
@@ -124,8 +144,8 @@ func _maybe_hold_too_long(market: MarketSimulator, portfolio: Portfolio) -> void
 			market.tick_count,
 			wait,
 			move,
-			_headline(stock, "Profit-taking hits %s after the run." % stock.company_name, -1.0),
-			"held_long"
+			_headline(stock, "Profit-taking hits %s after the run." % stock.company_name, -1.0, "trap"),
+			"trap"
 		)
 		return
 	return
@@ -156,8 +176,8 @@ func _maybe_missed_breakout(market: MarketSimulator, portfolio: Portfolio) -> vo
 		market.tick_count,
 		wait,
 		move,
-		_headline(stock, "%s breaks out on a burst of fresh flow." % stock.company_name, 1.0),
-		"missed_breakout"
+		_headline(stock, "%s breaks out on a burst of fresh flow." % stock.company_name, 1.0, "trap"),
+		"trap"
 	)
 
 
@@ -208,8 +228,8 @@ func _meaningful(notional: float, portfolio_value: float) -> bool:
 	return notional >= portfolio_value * 0.07
 
 
-func _headline(stock: Stock, text: String, sentiment: float) -> NewsEvent:
-	return NewsEvent.new(
+func _headline(stock: Stock, text: String, sentiment: float, kind: String) -> NewsEvent:
+	var event := NewsEvent.new(
 		"",
 		text,
 		[stock.symbol],
@@ -224,3 +244,5 @@ func _headline(stock: Stock, text: String, sentiment: float) -> NewsEvent:
 		false,
 		""
 	)
+	event.drama_kind = kind
+	return event

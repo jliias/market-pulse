@@ -4,6 +4,7 @@ extends RefCounted
 const STARTING_CASH := 10000.0
 const FIXED_COMMISSION := 2.0
 const PERCENT_COMMISSION := 0.002
+const FADE_BOOK_CAP := 0.2
 const CHAPTER_LENGTH := 5
 const WEEKDAYS: Array[String] = [
 	"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
@@ -29,6 +30,7 @@ var chapter_alpha_sum: float = 0.0
 var chapter_beats: int = 0
 var chapter_days: int = 0
 var pending_chapter: bool = false
+var fades: Dictionary = {}
 
 
 func reset_new_game() -> void:
@@ -52,6 +54,7 @@ func reset_new_game() -> void:
 	chapter_beats = 0
 	chapter_days = 0
 	pending_chapter = false
+	fades.clear()
 
 
 func apply_save(data: Dictionary) -> void:
@@ -82,6 +85,17 @@ func apply_save(data: Dictionary) -> void:
 	chapter_beats = int(data.get("chapter_beats", 0))
 	chapter_days = int(data.get("chapter_days", days_played % CHAPTER_LENGTH))
 	pending_chapter = bool(data.get("pending_chapter", false))
+	fades.clear()
+	var saved_fades: Variant = data.get("fades", {})
+	if typeof(saved_fades) == TYPE_DICTIONARY:
+		for symbol in saved_fades:
+			var row: Variant = saved_fades[symbol]
+			if typeof(row) != TYPE_DICTIONARY:
+				continue
+			fades[str(symbol)] = {
+				"shares": int(row.get("shares", 0)),
+				"entry": float(row.get("entry", 0.0)),
+			}
 
 
 func get_avg_cost(symbol: String) -> float:
@@ -121,8 +135,47 @@ func get_holdings_value(stocks: Dictionary) -> float:
 	return total
 
 
+func get_fade_shares(symbol: String) -> int:
+	if not fades.has(symbol):
+		return 0
+	return int((fades[symbol] as Dictionary).get("shares", 0))
+
+
+func get_fade_entry(symbol: String) -> float:
+	if not fades.has(symbol):
+		return 0.0
+	return float((fades[symbol] as Dictionary).get("entry", 0.0))
+
+
+func get_fade_pl(stocks: Dictionary) -> float:
+	var total := 0.0
+	for symbol in fades:
+		if not stocks.has(symbol):
+			continue
+		var shares: int = get_fade_shares(str(symbol))
+		var entry: float = get_fade_entry(str(symbol))
+		total += (entry - stocks[symbol].price) * float(shares)
+	return total
+
+
+func fade_notional(stocks: Dictionary) -> float:
+	var total := 0.0
+	for symbol in fades:
+		if stocks.has(symbol):
+			total += float(get_fade_shares(str(symbol))) * stocks[symbol].price
+	return total
+
+
+func max_fadable(price: float, stocks: Dictionary) -> int:
+	if price <= 0.0:
+		return 0
+	var cap: float = (cash + get_holdings_value(stocks)) * FADE_BOOK_CAP
+	var room: float = cap - fade_notional(stocks)
+	return maxi(int(room / price), 0)
+
+
 func get_portfolio_value(stocks: Dictionary) -> float:
-	return cash + get_holdings_value(stocks)
+	return cash + get_holdings_value(stocks) + get_fade_pl(stocks)
 
 
 func record_session_close(equity: float, alpha_pct: float) -> void:
@@ -245,6 +298,8 @@ func calculate_commission(trade_value: float) -> float:
 
 
 func buy(symbol: String, shares: int, ask_price: float) -> Dictionary:
+	if get_fade_shares(symbol) > 0:
+		return {"success": false, "message": "Cover the fade on %s before you buy it." % symbol}
 	if shares <= 0:
 		return {"success": false, "message": "Share amount must be positive."}
 
@@ -313,3 +368,53 @@ func sell(symbol: String, shares: int, bid_price: float) -> Dictionary:
 		"success": true,
 		"message": "Sold %d shares of %s at $%.2f (commission: $%.2f)" % [shares, symbol, bid_price, commission],
 	}
+
+
+func open_fade(symbol: String, shares: int, price: float, stocks: Dictionary) -> Dictionary:
+	if shares <= 0:
+		return {"success": false, "message": "Share amount must be positive."}
+	if get_shares(symbol) > 0:
+		return {"success": false, "message": "Flatten the long before you fade %s." % symbol}
+	if get_fade_shares(symbol) > 0:
+		return {"success": false, "message": "You already fade %s. Cover it first." % symbol}
+	var trade_value := float(shares) * price
+	var cap: float = (cash + get_holdings_value(stocks)) * FADE_BOOK_CAP
+	if fade_notional(stocks) + trade_value > cap + 0.01:
+		var room: int = max_fadable(price, stocks)
+		return {"success": false, "message": "Fade is capped at 20%% of the book. At most %d shares." % maxi(room, 0)}
+	var commission := calculate_commission(trade_value)
+	if commission > cash:
+		return {"success": false, "message": "Not enough cash to pay the fade commission."}
+	cash -= commission
+	total_commissions += commission
+	fades[symbol] = {"shares": shares, "entry": price}
+	trade_history.append({"type": "FADE", "symbol": symbol, "shares": shares, "price": price, "commission": commission})
+	return {
+		"success": true,
+		"message": "Fading %d of %s from $%.2f. Pays if this name prints lower. Covers at the close." % [shares, symbol, price],
+	}
+
+
+func cover_fade(symbol: String, price: float) -> Dictionary:
+	var shares: int = get_fade_shares(symbol)
+	if shares <= 0:
+		return {"success": false, "message": "No fade on %s." % symbol}
+	var entry: float = get_fade_entry(symbol)
+	var pl: float = (entry - price) * float(shares)
+	var commission := calculate_commission(float(shares) * price)
+	cash += pl - commission
+	total_commissions += commission
+	fades.erase(symbol)
+	trade_history.append({"type": "COVER", "symbol": symbol, "shares": shares, "price": price, "commission": commission})
+	return {
+		"success": true,
+		"message": "Covered fade on %s at $%.2f (%s$%.2f)" % [symbol, price, "+" if pl >= 0.0 else "−", absf(pl)],
+	}
+
+
+func cover_all_fades(stocks: Dictionary) -> void:
+	var symbols: Array = fades.keys()
+	for item in symbols:
+		var symbol: String = str(item)
+		if stocks.has(symbol):
+			cover_fade(symbol, stocks[symbol].price)

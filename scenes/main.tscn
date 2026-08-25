@@ -3,6 +3,22 @@
 [ext_resource type="Script" uid="uid://pnwsuaj0v3yq" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" uid="uid://clteyv1s1ynt7" path="res://scripts/price_chart.gd" id="2_chart"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close"]
+bg_color = Color(0.04, 0.05, 0.08, 0.86)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.16)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 28
+content_margin_top = 20
+content_margin_right = 28
+content_margin_bottom = 20
+
 [node name="Main" type="Control" unique_id=700527566]
 layout_mode = 3
 anchors_preset = 15
@@ -199,14 +215,72 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ClosedOverlayLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay" unique_id=2064278818]
+[node name="ClosePanel" type="PanelContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay" unique_id=1983052300]
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_close")
+
+[node name="CloseStack" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel" unique_id=1983052117]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CloseHeroLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052118]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.92)
+theme_override_font_sizes/font_size = 42
+text = "+0.0%"
+horizontal_alignment = 1
+
+[node name="CloseVerdictLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052119]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.8)
+theme_override_font_sizes/font_size = 22
+text = "MATCHED"
+horizontal_alignment = 1
+
+[node name="CloseStreakLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052120]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+
+[node name="CloseBookLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052121]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+size_flags_horizontal = 3
+
+[node name="CloseTomorrowLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052122]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 0.95)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+size_flags_horizontal = 3
+
+[node name="CloseListingLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052123]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.72)
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 18
 text = "Market closed"
 horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="StoryBoard" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=1983052200]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=1346972357]
 layout_mode = 2
@@ -257,6 +331,12 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SELL"
+
+[node name="FadeModeButton" type="Button" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn/ModeRow" unique_id=685185373]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "FADE"
 
 [node name="QtyHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/TradeColumn" unique_id=1322760474]
 layout_mode = 2
@@ -384,6 +464,75 @@ text = "New Day"
 [node name="TickTimer" type="Timer" parent="." unique_id=739598605]
 unique_name_in_owner = true
 
+[node name="PrintPauseOverlay" type="ColorRect" parent="." unique_id=847362996]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.04, 0.05, 0.07, 0.72)
+
+[node name="PrintPauseCenter" type="CenterContainer" parent="PrintPauseOverlay" unique_id=847362997]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PrintPauseStack" type="VBoxContainer" parent="PrintPauseOverlay/PrintPauseCenter" unique_id=847362998]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PrintPauseHeadline" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847362999]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+size_flags_horizontal = 3
+
+[node name="PrintPauseReaction" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363000]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.82, 0.88, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+size_flags_horizontal = 3
+
+[node name="PrintPauseTimer" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363001]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+
+[node name="PrintPauseButtons" type="HBoxContainer" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363002]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PrintPauseHoldButton" type="Button" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack/PrintPauseButtons" unique_id=847363003]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "Hold"
+
+[node name="PrintPauseTicketButton" type="Button" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack/PrintPauseButtons" unique_id=847363004]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "To ticket"
+
 [node name="OpenCountdownOverlay" type="CenterContainer" parent="." unique_id=847362995]
 unique_name_in_owner = true
 visible = false
@@ -408,7 +557,7 @@ vertical_alignment = 1
 unique_name_in_owner = true
 title = "Settings"
 ok_button_text = "Close"
-dialog_text = "Settings will land in a later pass. Speed control and layout options belong here."
+dialog_text = "Tape speed. Headline pauses stay 8–15 real seconds."
 
 [node name="MenuDialog" type="ConfirmationDialog" parent="." unique_id=1831903832]
 unique_name_in_owner = true

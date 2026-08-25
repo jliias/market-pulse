@@ -962,6 +962,25 @@ func hook_line() -> String:
 	return ""
 
 
+func board_entries() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for chain in active:
+		if chain.pending.is_empty():
+			continue
+		var polar: String = "+" if chain.polarity >= 0.0 else "−"
+		if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
+			polar = "BIN"
+		out.append({
+			"subject": chain.subject,
+			"scope": chain.scope,
+			"industry": chain.industry,
+			"stage": EventChain.display_stage(chain.pending),
+			"polar": polar,
+			"hook": hook_text(chain),
+		})
+	return out
+
+
 func hook_text(chain: EventChain) -> String:
 	if chain.pending.is_empty():
 		return ""

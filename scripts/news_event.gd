@@ -18,6 +18,9 @@ var chain_id: String = ""
 var chain_stage: String = ""
 var reaction: String = ""
 var existential: bool = false
+var skip_act_pause: bool = false
+var drama_kind: String = ""
+var weather_flip: bool = false
 
 
 func _init(
@@ -53,6 +56,8 @@ func _init(
 
 
 func feed_tag() -> String:
+	if not drama_kind.is_empty():
+		return "YOUR TAPE"
 	match scope:
 		"market":
 			return "MARKET"
@@ -91,7 +96,29 @@ func attach_chain(p_chain_id: String, p_stage: String) -> void:
 	chain_stage = p_stage
 
 
+func should_act_pause() -> bool:
+	if skip_act_pause or is_premarket:
+		return false
+	if scope == "system" and chain_id.is_empty() and drama_kind.is_empty() and not weather_flip and not existential:
+		return false
+	if not chain_id.is_empty():
+		return true
+	if existential or weather_flip:
+		return true
+	if not drama_kind.is_empty():
+		return true
+	return is_major or strength == "major"
+
+
+func act_pause_seconds() -> float:
+	if existential:
+		return 14.0
+	return 10.0
+
+
 func effect_label() -> String:
+	if not drama_kind.is_empty():
+		return drama_kind
 	if existential:
 		return "resolution · existential"
 	if not chain_stage.is_empty():

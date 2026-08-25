@@ -14,13 +14,26 @@ const SELL_ACCENT := Color(0.98, 0.42, 0.42)
 const SELECTED_ACCENT := Color(0.9, 0.75, 0.25)
 const INACTIVE_ACCENT := Color(0.48, 0.5, 0.55)
 const PREOPEN_SECONDS := 10.0
+const FADE_ACCENT := Color(0.78, 0.62, 0.98)
 
 var market := MarketSimulator.new()
 var portfolio := Portfolio.new()
 var session_active := true
 var selected_symbol: String = "ALPH"
 var buy_mode := true
+var fade_mode := false
 var quantity: int = 20
+var tape_speed: int = 1
+var print_pause_active := false
+var print_pause_left := 0.0
+var print_pause_symbol: String = ""
+var close_alpha_pct := 0.0
+var close_verdict: String = ""
+var close_book_line: String = ""
+var close_tomorrow: String = ""
+var close_streak: String = ""
+var speed_buttons: Array[Button] = []
+var story_board_sig: String = ""
 var timeframe: String = "5M"
 var watchlist_cards: Dictionary = {}
 var awaiting_open := false
@@ -70,6 +83,7 @@ var cash_out_button: Button
 @onready var trade_price_label: Label = %TradePriceLabel
 @onready var buy_mode_button: Button = %BuyModeButton
 @onready var sell_mode_button: Button = %SellModeButton
+@onready var fade_mode_button: Button = %FadeModeButton
 @onready var qty_label: Label = %QtyLabel
 @onready var est_price_label: Label = %EstPriceLabel
 @onready var est_total_label: Label = %EstTotalLabel
@@ -89,7 +103,19 @@ var cash_out_button: Button
 @onready var open_countdown_overlay: CenterContainer = %OpenCountdownOverlay
 @onready var open_countdown_label: Label = %OpenCountdownLabel
 @onready var closed_overlay: CenterContainer = %ClosedOverlay
-@onready var closed_overlay_label: Label = %ClosedOverlayLabel
+@onready var close_hero_label: Label = %CloseHeroLabel
+@onready var close_verdict_label: Label = %CloseVerdictLabel
+@onready var close_streak_label: Label = %CloseStreakLabel
+@onready var close_book_label: Label = %CloseBookLabel
+@onready var close_tomorrow_label: Label = %CloseTomorrowLabel
+@onready var close_listing_label: Label = %CloseListingLabel
+@onready var story_board: HBoxContainer = %StoryBoard
+@onready var print_pause_overlay: ColorRect = %PrintPauseOverlay
+@onready var print_pause_headline: Label = %PrintPauseHeadline
+@onready var print_pause_reaction: Label = %PrintPauseReaction
+@onready var print_pause_timer: Label = %PrintPauseTimer
+@onready var print_pause_hold_button: Button = %PrintPauseHoldButton
+@onready var print_pause_ticket_button: Button = %PrintPauseTicketButton
 
 
 func _notification(what: int) -> void:
@@ -104,10 +130,12 @@ func _ready() -> void:
 	_build_timeframe_buttons()
 	_apply_hud_tooltips()
 	_apply_launch_mode()
+	tape_speed = SaveManager.tape_speed
+	_build_settings()
 	_build_watchlist()
 	_build_chapter_overlay()
 	market.player_portfolio = portfolio
-	tick_timer.wait_time = TICK_INTERVAL
+	_apply_tape_speed()
 	tick_timer.timeout.connect(_on_market_tick)
 	_apply_responsive_layout()
 	if portfolio.pending_chapter:
@@ -120,6 +148,12 @@ func _process(_delta: float) -> void:
 	if menu_confirm_open:
 		return
 	if chapter_overlay != null and chapter_overlay.visible:
+		return
+	if print_pause_active:
+		print_pause_left = maxf(print_pause_left - _delta, 0.0)
+		_refresh_print_pause_timer()
+		if print_pause_left <= 0.0:
+			_end_print_pause()
 		return
 	if awaiting_open:
 		preopen_remaining = maxf(preopen_remaining - _delta, 0.0)
@@ -137,8 +171,9 @@ func _connect_controls() -> void:
 	%Qty50Button.pressed.connect(func() -> void: _set_quantity(50))
 	%Qty100Button.pressed.connect(func() -> void: _set_quantity(100))
 	%QtyMaxButton.pressed.connect(_set_max_quantity)
-	buy_mode_button.pressed.connect(func() -> void: _set_buy_mode(true))
-	sell_mode_button.pressed.connect(func() -> void: _set_buy_mode(false))
+	sell_mode_button.pressed.connect(func() -> void: _set_trade_mode("sell"))
+	fade_mode_button.pressed.connect(func() -> void: _set_trade_mode("fade"))
+	buy_mode_button.pressed.connect(func() -> void: _set_trade_mode("buy"))
 	place_order_button.pressed.connect(_place_order)
 	end_session_button.pressed.connect(_confirm_end_session)
 	new_day_button.pressed.connect(_restart_session)
@@ -151,6 +186,8 @@ func _connect_controls() -> void:
 	cash_out_button = menu_dialog.add_button("Cash out and leave", true, "cash_out")
 	menu_dialog.custom_action.connect(_on_leave_custom_action)
 	end_session_dialog.confirmed.connect(_end_session)
+	print_pause_hold_button.pressed.connect(_end_print_pause)
+	print_pause_ticket_button.pressed.connect(_print_pause_to_ticket)
 	end_session_dialog.canceled.connect(_cancel_confirm_dialog)
 	end_session_dialog.get_cancel_button().text = "Stay"
 	_style_ui_buttons()
@@ -214,6 +251,7 @@ func _apply_hud_tooltips() -> void:
 	CopyHints.hover(est_price_label, CopyHints.HUD_BID_ASK)
 	CopyHints.hover(trade_price_label, CopyHints.HUD_BID_ASK)
 	CopyHints.hover(market_status_label, market.regime.status_tooltip())
+	CopyHints.hover(fade_mode_button, CopyHints.HUD_FADE)
 
 
 func _displayed_day_number() -> int:
@@ -232,7 +270,7 @@ func _begin_session() -> void:
 	portfolio.mark_day_start(market.stocks)
 	news_feed.clear()
 	selected_symbol = market.watchlist[0]
-	_set_buy_mode(true)
+	_set_trade_mode("buy")
 	_set_quantity(20)
 	trade_message_label.text = "Premarket is out. Read the headlines — the open is in 10 seconds."
 	if market.away_applied:
@@ -246,6 +284,8 @@ func _begin_session() -> void:
 	tick_timer.stop()
 	open_countdown_overlay.visible = true
 	closed_overlay.visible = false
+	story_board_sig = ""
+	_clear_print_pause()
 	_refresh_open_countdown()
 	_update_ui()
 
@@ -266,6 +306,7 @@ func _open_market() -> void:
 		trade_message_label.text = "Market is open. Try to beat the market."
 	tick_timer.start()
 	_update_ui()
+	_consider_act_pauses(reopened)
 
 
 func _refresh_open_countdown() -> void:
@@ -282,6 +323,8 @@ func _on_market_tick() -> void:
 	_update_ui()
 	if market.is_closed:
 		_end_session()
+		return
+	_consider_act_pauses(new_events)
 
 
 func _select_stock(symbol: String) -> void:
@@ -291,13 +334,17 @@ func _select_stock(symbol: String) -> void:
 	_update_ui()
 
 
-func _set_buy_mode(is_buy: bool) -> void:
+func _set_trade_mode(mode: String) -> void:
 	var stock: Stock = market.get_stock(selected_symbol)
-	if is_buy and stock != null and not stock.can_buy():
-		buy_mode = false
-		_refresh_trade_panel()
-		return
-	buy_mode = is_buy
+	if mode == "buy" and stock != null and not stock.can_buy():
+		mode = "sell"
+	if mode == "fade" and stock != null and (not stock.is_listed() or portfolio.get_shares(selected_symbol) > 0):
+		if portfolio.get_fade_shares(selected_symbol) > 0:
+			mode = "fade"
+		else:
+			mode = "sell"
+	fade_mode = mode == "fade"
+	buy_mode = mode == "buy"
 	_refresh_trade_panel()
 
 
@@ -310,13 +357,21 @@ func _set_max_quantity() -> void:
 	var stock: Stock = market.get_stock(selected_symbol)
 	if stock == null:
 		return
-	if buy_mode:
+	if fade_mode:
+		if portfolio.get_fade_shares(selected_symbol) > 0:
+			_set_quantity(maxi(portfolio.get_fade_shares(selected_symbol), 1))
+		else:
+			_set_quantity(maxi(portfolio.max_fadable(stock.price, market.stocks), 1))
+	elif buy_mode:
 		_set_quantity(maxi(portfolio.max_buyable(stock.ask), 1))
 	else:
 		_set_quantity(maxi(portfolio.get_shares(selected_symbol), 1))
 
 
 func _place_order() -> void:
+	if print_pause_active:
+		trade_message_label.text = "Act on the print, or Hold."
+		return
 	if awaiting_open:
 		trade_message_label.text = "Market is not open yet."
 		return
@@ -325,6 +380,18 @@ func _place_order() -> void:
 		return
 	var stock: Stock = market.get_stock(selected_symbol)
 	if stock == null:
+		return
+	if fade_mode:
+		var fade_result: Dictionary
+		if portfolio.get_fade_shares(selected_symbol) > 0:
+			fade_result = portfolio.cover_fade(selected_symbol, stock.price)
+		else:
+			if not stock.is_listed():
+				trade_message_label.text = "You can only fade a live name."
+				return
+			fade_result = portfolio.open_fade(selected_symbol, quantity, stock.price, market.stocks)
+		trade_message_label.text = str(fade_result["message"])
+		_update_ui()
 		return
 	if buy_mode and not stock.can_buy():
 		trade_message_label.text = "This name is %s. You cannot buy it." % stock.listing_label().to_lower()
@@ -367,12 +434,15 @@ func _place_order() -> void:
 func _end_session() -> void:
 	if not session_active:
 		return
+	_clear_print_pause()
 	menu_confirm_open = false
 	var left_before_close: bool = not market.is_closed
 	_run_tape_to_close()
 	session_active = false
 	awaiting_open = false
 	open_countdown_overlay.visible = false
+	print_pause_overlay.visible = false
+	portfolio.cover_all_fades(market.stocks)
 	closed_overlay.visible = true
 	market.stop()
 	tick_timer.stop()
@@ -383,13 +453,17 @@ func _end_session() -> void:
 	var player_pct := portfolio.get_profit_loss_pct(market.stocks)
 	var market_pct := market.get_market_return_pct()
 	var alpha_pct := market.get_alpha_pct(player_pct)
+	close_alpha_pct = alpha_pct
 	var result_text: String
 	if alpha_pct > 0.05:
-		result_text = "Closed. You beat the market by %+.1f%%." % alpha_pct
+		close_verdict = "BEAT"
+		result_text = "You beat the market by %+.1f%%." % alpha_pct
 	elif alpha_pct < -0.05:
-		result_text = "Closed. The market beat you by %.1f%%." % absf(alpha_pct)
+		close_verdict = "LOST"
+		result_text = "The market beat you by %.1f%%." % absf(alpha_pct)
 	else:
-		result_text = "Closed. You matched the market."
+		close_verdict = "MATCHED"
+		result_text = "You matched the market."
 	if left_before_close:
 		result_text = "Marked to the close. " + result_text
 	var wrecked: Array[String] = market.distressed_symbols()
@@ -407,9 +481,13 @@ func _end_session() -> void:
 		new_day_button.text = "New Day"
 	var hook: String = market.chain_director.hook_line()
 	if hook.is_empty():
-		hook = "No open story on the board."
+		close_tomorrow = "No open story on the board."
+		hook = close_tomorrow
 	else:
-		hook = "Tomorrow: " + hook
+		close_tomorrow = "Tomorrow: " + hook
+		hook = close_tomorrow
+	close_streak = portfolio.streak_line()
+	close_book_line = _session_story_line()
 	trade_message_label.text = "%s\n%s\n%s" % [result_text, portfolio.career_close_line(), hook]
 	SaveManager.save_game(portfolio, market)
 	_update_ui()
@@ -493,6 +571,8 @@ func _pause_for_confirm() -> void:
 
 func _cancel_confirm_dialog() -> void:
 	menu_confirm_open = false
+	if print_pause_active:
+		return
 	if session_active and not awaiting_open and not market.is_closed:
 		tick_timer.start()
 
@@ -522,6 +602,7 @@ func _leave_desk(cash_out: bool) -> void:
 
 
 func _cash_out_all() -> void:
+	portfolio.cover_all_fades(market.stocks)
 	var symbols: Array = portfolio.holdings.keys()
 	for item in symbols:
 		_flatten_symbol(str(item))
@@ -583,11 +664,17 @@ func _update_ui() -> void:
 
 	for symbol in watchlist_cards:
 		var card: WatchlistCard = watchlist_cards[symbol]
-		card.refresh(market.stocks[symbol], portfolio.get_shares(symbol))
+		card.refresh(
+			market.stocks[symbol],
+			portfolio.get_shares(symbol),
+			portfolio.get_fade_shares(symbol),
+			portfolio.get_fade_entry(symbol)
+		)
 		card.set_selected(symbol == selected_symbol)
 
 	_refresh_selected_stock()
 	_refresh_chart()
+	_refresh_story_board()
 	_refresh_portfolio()
 	_refresh_trade_panel()
 
@@ -647,22 +734,23 @@ func _refresh_chart() -> void:
 
 func _refresh_closed_overlay(stock: Stock) -> void:
 	if not closed_overlay.visible:
-		closed_overlay_label.text = "Market closed"
-		closed_overlay_label.add_theme_font_size_override("font_size", 42)
-		closed_overlay_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
 		return
+	close_hero_label.text = "%+.1f%% vs Market" % close_alpha_pct
+	close_hero_label.add_theme_color_override("font_color", _pl_color(close_alpha_pct))
+	close_verdict_label.text = close_verdict
+	close_verdict_label.add_theme_color_override("font_color", _pl_color(close_alpha_pct))
+	close_streak_label.text = close_streak
+	close_book_label.text = close_book_line
+	close_tomorrow_label.text = close_tomorrow
 	if stock.is_distressed():
-		closed_overlay_label.text = "Market closed\nDISTRESSED · sell-only residual"
-		closed_overlay_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.52, 0.95))
-		closed_overlay_label.add_theme_font_size_override("font_size", 32)
+		close_listing_label.text = "DISTRESSED · sell-only residual"
+		close_listing_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.52, 0.95))
 	elif stock.is_halted():
-		closed_overlay_label.text = "Market closed\nHALTED"
-		closed_overlay_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 0.95))
-		closed_overlay_label.add_theme_font_size_override("font_size", 32)
+		close_listing_label.text = "HALTED"
+		close_listing_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 0.95))
 	else:
-		closed_overlay_label.text = "Market closed"
-		closed_overlay_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
-		closed_overlay_label.add_theme_font_size_override("font_size", 42)
+		close_listing_label.text = "Market closed"
+		close_listing_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
 
 
 func _refresh_portfolio() -> void:
@@ -671,26 +759,40 @@ func _refresh_portfolio() -> void:
 		child.free()
 
 	var total_pl := 0.0
-	if portfolio.holdings.is_empty():
+	var has_rows := false
+	for symbol in market.watchlist:
+		if not portfolio.holdings.has(symbol):
+			continue
+		has_rows = true
+		var stock: Stock = market.stocks[symbol]
+		var shares: int = portfolio.get_shares(symbol)
+		var avg: float = portfolio.get_avg_cost(symbol)
+		var pos_pl: float = portfolio.get_position_pl(symbol, stock.price)
+		total_pl += pos_pl
+		var row := Label.new()
+		row.text = "%s — %d shares — $%.2f — %s$%.2f" % [
+			symbol, shares, avg, _sign(pos_pl), absf(pos_pl)
+		]
+		row.add_theme_color_override("font_color", _pl_color(pos_pl))
+		portfolio_list.add_child(row)
+	for symbol in market.watchlist:
+		if portfolio.get_fade_shares(symbol) <= 0:
+			continue
+		has_rows = true
+		var fade_stock: Stock = market.stocks[symbol]
+		var fade_pl: float = (portfolio.get_fade_entry(symbol) - fade_stock.price) * float(portfolio.get_fade_shares(symbol))
+		total_pl += fade_pl
+		var fade_row := Label.new()
+		fade_row.text = "FADE %s — %d — $%.2f — %s$%.2f" % [
+			symbol, portfolio.get_fade_shares(symbol), portfolio.get_fade_entry(symbol), _sign(fade_pl), absf(fade_pl)
+		]
+		fade_row.add_theme_color_override("font_color", _pl_color(fade_pl))
+		portfolio_list.add_child(fade_row)
+	if not has_rows:
 		var empty := Label.new()
 		empty.text = "No positions yet."
 		empty.add_theme_color_override("font_color", Color(0.6, 0.62, 0.68))
 		portfolio_list.add_child(empty)
-	else:
-		for symbol in market.watchlist:
-			if not portfolio.holdings.has(symbol):
-				continue
-			var stock: Stock = market.stocks[symbol]
-			var shares: int = portfolio.get_shares(symbol)
-			var avg: float = portfolio.get_avg_cost(symbol)
-			var pos_pl: float = portfolio.get_position_pl(symbol, stock.price)
-			total_pl += pos_pl
-			var row := Label.new()
-			row.text = "%s — %d shares — $%.2f — %s$%.2f" % [
-				symbol, shares, avg, _sign(pos_pl), absf(pos_pl)
-			]
-			row.add_theme_color_override("font_color", _pl_color(pos_pl))
-			portfolio_list.add_child(row)
 
 	portfolio_total_label.text = "Open P/L: %s$%.2f" % [_sign(total_pl), absf(total_pl)]
 	portfolio_total_label.add_theme_color_override("font_color", _pl_color(total_pl))
@@ -703,19 +805,51 @@ func _refresh_trade_panel() -> void:
 	trade_symbol_label.text = "TRADE  %s" % stock.symbol
 	if stock.is_distressed() and buy_mode:
 		buy_mode = false
-	var px: float = stock.ask if buy_mode else stock.bid
+		fade_mode = false
+	if fade_mode and not stock.is_listed() and portfolio.get_fade_shares(selected_symbol) <= 0:
+		fade_mode = false
+		buy_mode = false
+	var covering: bool = fade_mode and portfolio.get_fade_shares(selected_symbol) > 0
+	var px: float = stock.price if fade_mode else (stock.ask if buy_mode else stock.bid)
 	trade_price_label.text = "$%.2f" % px
 	qty_label.text = str(quantity)
-	place_order_button.text = "PLACE BUY ORDER" if buy_mode else "PLACE SELL ORDER"
-	var can_order: bool = session_active and not awaiting_open and not market.is_closed
-	if stock.is_halted() or (buy_mode and not stock.can_buy()) or (not buy_mode and not stock.can_sell()):
+	if covering:
+		place_order_button.text = "COVER FADE"
+	elif fade_mode:
+		place_order_button.text = "OPEN FADE"
+	elif buy_mode:
+		place_order_button.text = "PLACE BUY ORDER"
+	else:
+		place_order_button.text = "PLACE SELL ORDER"
+	var can_order: bool = session_active and not awaiting_open and not market.is_closed and not print_pause_active
+	if fade_mode:
+		if covering:
+			can_order = can_order and true
+		else:
+			can_order = can_order and stock.is_listed() and portfolio.get_shares(selected_symbol) <= 0
+	elif stock.is_halted() or (buy_mode and not stock.can_buy()) or (not buy_mode and not stock.can_sell()):
 		can_order = false
-	if not buy_mode and portfolio.get_shares(selected_symbol) <= 0:
+	if not fade_mode and not buy_mode and portfolio.get_shares(selected_symbol) <= 0:
 		can_order = false
 	place_order_button.disabled = not can_order
-	buy_mode_button.disabled = not stock.can_buy()
+	buy_mode_button.disabled = not stock.can_buy() or portfolio.get_fade_shares(selected_symbol) > 0
+	fade_mode_button.disabled = (not stock.is_listed() and not covering) or (portfolio.get_shares(selected_symbol) > 0 and not covering)
 	_style_trade_buttons()
 
+	if fade_mode:
+		est_price_label.text = "Last print: $%.2f" % stock.price
+		if covering:
+			var pl: float = (portfolio.get_fade_entry(selected_symbol) - stock.price) * float(portfolio.get_fade_shares(selected_symbol))
+			est_total_label.text = "Open fade: %d @ $%.2f" % [portfolio.get_fade_shares(selected_symbol), portfolio.get_fade_entry(selected_symbol)]
+			commission_label.text = "Marked P/L: %s$%.2f" % [_sign(pl), absf(pl)]
+			final_total_label.text = "Pays if this name printed lower."
+		else:
+			var estimate: Dictionary = portfolio.estimate(quantity, stock.price)
+			est_total_label.text = "Notional: $%.2f" % float(estimate["trade_value"])
+			commission_label.text = "Commission: $%.2f" % float(estimate["commission"])
+			final_total_label.text = "Pays if this name prints lower. Covers at the close."
+		trade_price_label.tooltip_text = CopyHints.HUD_FADE
+		return
 	var estimate: Dictionary = portfolio.estimate(quantity, px)
 	est_price_label.text = "Estimated price: $%.2f" % px
 	est_total_label.text = "Estimated total: $%.2f" % float(estimate["trade_value"])
@@ -733,6 +867,8 @@ func _style_ui_buttons() -> void:
 	_apply_button_style(%MenuButton, UI_ACCENT, UI_BORDER)
 	_apply_button_style(end_session_button, UI_ACCENT, UI_BORDER)
 	_apply_button_style(new_day_button, SELECTED_ACCENT, UI_BORDER)
+	_apply_button_style(print_pause_hold_button, UI_ACCENT, UI_BORDER)
+	_apply_button_style(print_pause_ticket_button, SELECTED_ACCENT, UI_BORDER)
 
 
 func _style_timeframe_buttons() -> void:
@@ -744,10 +880,14 @@ func _style_timeframe_buttons() -> void:
 
 
 func _style_trade_buttons() -> void:
-	var buy_accent: Color = BUY_ACCENT if buy_mode else INACTIVE_ACCENT
-	var sell_accent: Color = SELL_ACCENT if not buy_mode else INACTIVE_ACCENT
-	_apply_button_style(buy_mode_button, buy_accent, TRADE_BORDER, buy_mode, buy_mode)
-	_apply_button_style(sell_mode_button, sell_accent, TRADE_BORDER, not buy_mode, not buy_mode)
+	var buy_on: bool = buy_mode and not fade_mode
+	var sell_on: bool = (not buy_mode) and not fade_mode
+	var buy_accent: Color = BUY_ACCENT if buy_on else INACTIVE_ACCENT
+	var sell_accent: Color = SELL_ACCENT if sell_on else INACTIVE_ACCENT
+	var fade_accent: Color = FADE_ACCENT if fade_mode else INACTIVE_ACCENT
+	_apply_button_style(buy_mode_button, buy_accent, TRADE_BORDER, buy_on, buy_on)
+	_apply_button_style(sell_mode_button, sell_accent, TRADE_BORDER, sell_on, sell_on)
+	_apply_button_style(fade_mode_button, fade_accent, TRADE_BORDER, fade_mode, fade_mode)
 	_apply_button_style(%QtyMinusButton, TRADE_ACCENT, TRADE_BORDER)
 	_apply_button_style(%QtyPlusButton, TRADE_ACCENT, TRADE_BORDER)
 	_apply_button_style(%Qty10Button, TRADE_ACCENT, TRADE_BORDER, quantity == 10)
@@ -755,7 +895,7 @@ func _style_trade_buttons() -> void:
 	_apply_button_style(%Qty50Button, TRADE_ACCENT, TRADE_BORDER, quantity == 50)
 	_apply_button_style(%Qty100Button, TRADE_ACCENT, TRADE_BORDER, quantity == 100)
 	_apply_button_style(%QtyMaxButton, TRADE_ACCENT, TRADE_BORDER)
-	var order_accent: Color = BUY_ACCENT if buy_mode else SELL_ACCENT
+	var order_accent: Color = FADE_ACCENT if fade_mode else (BUY_ACCENT if buy_mode else SELL_ACCENT)
 	_apply_button_style(place_order_button, order_accent, TRADE_BORDER, true)
 	place_order_button.add_theme_font_size_override("font_size", 18)
 
@@ -816,6 +956,186 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		news_feed.append_text("[color=#888888]    %s[/color]\n" % CopyHints.annotate(event.reaction))
 	if event.existential or event.headline.begins_with("HALTED") or event.headline.begins_with("REOPEN") or event.headline.begins_with("PREMARKET: HALTED") or event.headline.begins_with("PREMARKET: REOPEN"):
 		trade_message_label.text = "%s\n%s" % [event.headline, event.reaction]
+
+
+func _build_settings() -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	settings_dialog.add_child(row)
+	speed_buttons.clear()
+	for n in [1, 2, 3]:
+		var button := Button.new()
+		button.text = "%d×" % n
+		button.pressed.connect(_set_tape_speed.bind(n))
+		row.add_child(button)
+		speed_buttons.append(button)
+		_apply_button_style(button, SELECTED_ACCENT if n == tape_speed else UI_ACCENT, UI_BORDER, n == tape_speed)
+
+
+func _set_tape_speed(mult: int) -> void:
+	tape_speed = clampi(mult, 1, 3)
+	SaveManager.tape_speed = tape_speed
+	_apply_tape_speed()
+	for button in speed_buttons:
+		var n: int = int(str(button.text).replace("×", ""))
+		_apply_button_style(button, SELECTED_ACCENT if n == tape_speed else UI_ACCENT, UI_BORDER, n == tape_speed)
+
+
+func _apply_tape_speed() -> void:
+	tick_timer.wait_time = TICK_INTERVAL / float(maxi(tape_speed, 1))
+
+
+func _consider_act_pauses(events: Array[NewsEvent]) -> void:
+	if print_pause_active or awaiting_open or not session_active or market.is_closed:
+		return
+	if market.drama.spectator:
+		return
+	for event in events:
+		if event.should_act_pause():
+			_begin_print_pause(event)
+			return
+
+
+func _begin_print_pause(event: NewsEvent) -> void:
+	print_pause_active = true
+	print_pause_left = event.act_pause_seconds()
+	print_pause_symbol = ""
+	if event.affected_symbols.size() > 0:
+		var symbol: String = event.affected_symbols[0]
+		if market.watchlist.has(symbol):
+			print_pause_symbol = symbol
+	print_pause_headline.text = event.headline
+	print_pause_reaction.text = event.reaction if not event.reaction.is_empty() else "The tape is waiting on your call."
+	print_pause_ticket_button.visible = not print_pause_symbol.is_empty()
+	print_pause_overlay.visible = true
+	tick_timer.stop()
+	_refresh_print_pause_timer()
+	_refresh_trade_panel()
+
+
+func _refresh_print_pause_timer() -> void:
+	print_pause_timer.text = "Hold in %ds" % maxi(ceili(print_pause_left), 0)
+
+
+func _clear_print_pause() -> void:
+	print_pause_active = false
+	print_pause_overlay.visible = false
+	print_pause_left = 0.0
+
+
+func _end_print_pause() -> void:
+	var was_paused: bool = print_pause_active
+	_clear_print_pause()
+	if was_paused and session_active and not awaiting_open and not market.is_closed and not menu_confirm_open:
+		tick_timer.start()
+	_refresh_trade_panel()
+
+
+func _print_pause_to_ticket() -> void:
+	if not print_pause_symbol.is_empty():
+		_select_stock(print_pause_symbol)
+	_end_print_pause()
+
+
+func _refresh_story_board() -> void:
+	var entries: Array[Dictionary] = market.chain_director.board_entries()
+	var sig: String = _story_board_signature(entries)
+	if sig == story_board_sig:
+		return
+	story_board_sig = sig
+	for child in story_board.get_children():
+		story_board.remove_child(child)
+		child.queue_free()
+	if entries.is_empty():
+		var empty := Label.new()
+		empty.text = "No open story."
+		empty.add_theme_color_override("font_color", Color(0.55, 0.58, 0.64))
+		story_board.add_child(empty)
+		return
+	for entry in entries:
+		story_board.add_child(_make_story_card(entry))
+
+
+func _story_board_signature(entries: Array[Dictionary]) -> String:
+	var bits: PackedStringArray = []
+	for entry in entries:
+		var subject: String = str(entry.get("subject", ""))
+		var listing: String = ""
+		if market.stocks.has(subject):
+			listing = market.stocks[subject].listing_label()
+		bits.append("%s|%s|%s|%s|%s" % [
+			subject,
+			str(entry.get("stage", "")),
+			str(entry.get("polar", "")),
+			str(entry.get("hook", "")),
+			listing,
+		])
+	return "|".join(bits)
+
+
+func _make_story_card(entry: Dictionary) -> Button:
+	var subject: String = str(entry.get("subject", ""))
+	var scope: String = str(entry.get("scope", "company"))
+	var title: String = subject
+	match scope:
+		"company":
+			title = subject
+		"industry":
+			var industry_name: String = str(entry.get("industry", "SECTOR"))
+			title = industry_name if not industry_name.is_empty() else "SECTOR"
+		_:
+			title = "TAPE"
+	var listing: String = ""
+	if market.stocks.has(subject):
+		var stock: Stock = market.stocks[subject]
+		if stock.is_halted():
+			listing = " · HALTED"
+		elif stock.is_distressed():
+			listing = " · DISTRESSED"
+	var button := Button.new()
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.text = "%s  %s  %s%s\n%s" % [
+		title,
+		str(entry.get("polar", "")),
+		str(entry.get("stage", "")),
+		listing,
+		str(entry.get("hook", "")),
+	]
+	button.clip_text = true
+	if scope == "company" and market.watchlist.has(subject):
+		button.pressed.connect(_select_stock.bind(subject), CONNECT_DEFERRED)
+	_apply_button_style(button, UI_ACCENT, UI_BORDER)
+	button.add_theme_font_size_override("font_size", 12)
+	button.custom_minimum_size = Vector2(0, 52)
+	return button
+
+
+func _session_story_line() -> String:
+	var wrecked: Array[String] = market.distressed_symbols()
+	if not wrecked.is_empty():
+		var held: PackedStringArray = []
+		var flat: PackedStringArray = []
+		for symbol in wrecked:
+			if portfolio.get_shares(symbol) > 0:
+				held.append(symbol)
+			else:
+				flat.append(symbol)
+		if not held.is_empty():
+			return "You held %s through the wipe." % ", ".join(held)
+		return "You flattened before the wipe on %s." % ", ".join(flat)
+	for chain in market.chain_director.active:
+		if chain.pending != "resolution":
+			continue
+		if chain.polarity >= 0.0 or not EventChainDirector.arc_is_existential(chain.arc_id):
+			continue
+		if chain.scope == "company":
+			if portfolio.get_shares(chain.subject) > 0:
+				return "You are still long into tomorrow's binary on %s." % chain.subject
+			return "You are flat into tomorrow's binary on %s." % chain.subject
+		return "You are heading into a binary print."
+	return "No wipe on the book today."
 
 
 func _sign(value: float) -> String:
@@ -1109,11 +1429,13 @@ func _confirm_chapter_rebalance() -> void:
 
 
 func _flatten_symbol(symbol: String) -> void:
-	var shares: int = portfolio.get_shares(symbol)
-	if shares <= 0:
-		return
 	var stock: Stock = market.get_stock(symbol)
 	if stock == null:
+		return
+	if portfolio.get_fade_shares(symbol) > 0:
+		portfolio.cover_fade(symbol, stock.price)
+	var shares: int = portfolio.get_shares(symbol)
+	if shares <= 0:
 		return
 	if stock.is_halted():
 		stock.reopen()

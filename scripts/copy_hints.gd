@@ -12,6 +12,7 @@ const HUD_HALTED_RESUME := "Volatility pause. No trading for a few minutes, then
 const HUD_HALTED_DISTRESS := "Trading is stopped. This name will reopen distressed: sell-only residual, replaced at week recap."
 const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Replaced at week recap."
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
+const HUD_FADE := "Fade this name: you profit if the last print falls. Caps at 20% of the book. Covers at the close. You cannot fade a name you hold."
 const HUD_MENU := "Book is cash plus holdings. ATH is this book's peak. vs Market is how you did against your three names."
 
 const CHART := {

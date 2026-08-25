@@ -5,6 +5,7 @@ signal selected(symbol: String)
 
 var symbol: String = ""
 var _selected: bool = false
+var _fading: bool = false
 
 @onready var ticker_label: Label = %TickerLabel
 @onready var risk_label: Label = %RiskLabel
@@ -29,7 +30,7 @@ func set_selected(on: bool) -> void:
 	_apply_style()
 
 
-func refresh(stock: Stock, owned_shares: int = 0) -> void:
+func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_entry: float = 0.0) -> void:
 	symbol = stock.symbol
 	ticker_label.text = stock.symbol
 	risk_label.text = stock.listing_label()
@@ -50,15 +51,25 @@ func refresh(stock: Stock, owned_shares: int = 0) -> void:
 	change_label.text = "%s$%.2f (%s%.2f%%)" % [sign, absf(change), sign, absf(pct)]
 	change_label.add_theme_color_override("font_color", Color(0.35, 0.85, 0.45) if change >= 0.0 else Color(0.95, 0.38, 0.38))
 	volume_label.text = "Volume: %s" % _format_volume(stock.volume)
-	if owned_shares > 0:
+	_fading = fade_shares > 0
+	if _fading:
+		var fade_pl: float = (fade_entry - stock.price) * float(fade_shares)
+		var fade_sign := "+" if fade_pl >= 0.0 else "-"
+		owned_label.text = "FADE %d  %s$%.2f" % [fade_shares, fade_sign, absf(fade_pl)]
+		owned_label.add_theme_color_override("font_color", Color(0.78, 0.62, 0.98))
+		CopyHints.hover(owned_label, CopyHints.HUD_FADE)
+	elif owned_shares > 0:
 		owned_label.text = "Owned: %d" % owned_shares
 		owned_label.add_theme_color_override("font_color", Color(0.9, 0.75, 0.25, 1))
+		owned_label.tooltip_text = ""
 	else:
 		owned_label.text = "Owned: 0"
 		owned_label.add_theme_color_override("font_color", Color(0.65, 0.68, 0.74, 1))
+		owned_label.tooltip_text = ""
 	var slice: Dictionary = stock.get_chart_slice(24, 1)
 	mini_chart.compact = true
 	mini_chart.set_series(slice["prices"], slice["volumes"])
+	_apply_style()
 
 
 func _on_gui_input(event: InputEvent) -> void:
@@ -71,8 +82,13 @@ func _on_gui_input(event: InputEvent) -> void:
 func _apply_style() -> void:
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color(0.14, 0.16, 0.22, 1.0) if _selected else Color(0.11, 0.12, 0.16, 1.0)
-	box.border_color = Color(0.9, 0.75, 0.25, 0.95) if _selected else Color(0.78, 0.82, 0.9, 0.7)
-	box.set_border_width_all(2 if _selected else 1)
+	if _selected:
+		box.border_color = Color(0.9, 0.75, 0.25, 0.95)
+	elif _fading:
+		box.border_color = Color(0.78, 0.62, 0.98, 0.9)
+	else:
+		box.border_color = Color(0.78, 0.82, 0.9, 0.7)
+	box.set_border_width_all(2 if _selected or _fading else 1)
 	box.set_corner_radius_all(8)
 	box.content_margin_left = 10
 	box.content_margin_right = 10

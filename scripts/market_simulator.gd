@@ -508,6 +508,7 @@ func _halt_event(stock: Stock, premarket: bool) -> NewsEvent:
 		""
 	)
 	event.existential = stock.halt_outcome == Stock.OUTCOME_DISTRESS
+	event.skip_act_pause = stock.halt_reason == Stock.HALT_VOLATILITY
 	event.reaction = reaction
 	return event
 
@@ -546,6 +547,7 @@ func _reopen_event(stock: Stock, premarket: bool) -> NewsEvent:
 		""
 	)
 	event.existential = wipe
+	event.skip_act_pause = not wipe
 	event.reaction = reaction
 	return event
 
@@ -671,10 +673,12 @@ func _maybe_shift_regime(event: NewsEvent, premarket: bool) -> NewsEvent:
 		premarket,
 		"macro",
 		"system",
-		"moderate",
+		"major",
 		false,
 		""
 	)
+	note.is_major = true
+	note.weather_flip = true
 	news_feed.append(note)
 	return note
 

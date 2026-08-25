@@ -6,6 +6,7 @@ static var launch_mode: String = "new"
 static var pending_watchlist: Array[String] = []
 static var left_at: float = 0.0
 static var pending_away_hours: float = 0.0
+static var tape_speed: int = 1
 const AWAY_GAP_HOURS := 8.0
 
 
@@ -36,7 +37,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 8,
+		"version": 9,
 		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
@@ -60,6 +61,8 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 		"chapter_beats": portfolio.chapter_beats,
 		"chapter_days": portfolio.chapter_days,
 		"pending_chapter": portfolio.pending_chapter,
+		"fades": _fades_from_portfolio(portfolio),
+		"tape_speed": tape_speed,
 		"left_at": left_at,
 	}
 
@@ -106,6 +109,7 @@ static func apply_to(portfolio: Portfolio, market: MarketSimulator, data: Dictio
 	if pending_away_hours < AWAY_GAP_HOURS:
 		pending_away_hours = 0.0
 		left_at = 0.0
+	tape_speed = clampi(int(data.get("tape_speed", 1)), 1, 3)
 
 
 static func stamp_left_desk() -> void:
@@ -130,6 +134,16 @@ static func is_away_due(data: Dictionary = {}) -> bool:
 	if stamp <= 0.0:
 		return false
 	return (Time.get_unix_time_from_system() - stamp) / 3600.0 >= AWAY_GAP_HOURS
+
+
+static func _fades_from_portfolio(portfolio: Portfolio) -> Dictionary:
+	var out: Dictionary = {}
+	for symbol in portfolio.fades:
+		out[str(symbol)] = {
+			"shares": portfolio.get_fade_shares(str(symbol)),
+			"entry": portfolio.get_fade_entry(str(symbol)),
+		}
+	return out
 
 
 static func _listings_from_market(market: MarketSimulator) -> Dictionary:
