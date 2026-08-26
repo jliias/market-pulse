@@ -33,6 +33,7 @@ var close_book_line: String = ""
 var close_tomorrow: String = ""
 var close_streak: String = ""
 var speed_buttons: Array[Button] = []
+var settings_overlay: ColorRect
 var story_board_sig: String = ""
 var timeframe: String = "5M"
 var watchlist_cards: Dictionary = {}
@@ -180,7 +181,7 @@ func _connect_controls() -> void:
 	place_order_button.pressed.connect(_place_order)
 	end_session_button.pressed.connect(_confirm_end_session)
 	new_day_button.pressed.connect(_restart_session)
-	%SettingsButton.pressed.connect(func() -> void: settings_dialog.popup_centered())
+	%SettingsButton.pressed.connect(_open_settings)
 	%MenuButton.pressed.connect(func() -> void: _confirm_leave_desk("menu"))
 	menu_dialog.confirmed.connect(_on_leave_hold)
 	menu_dialog.canceled.connect(_cancel_confirm_dialog)
@@ -1046,18 +1047,92 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 
 
 func _build_settings() -> void:
+	if settings_dialog != null:
+		settings_dialog.hide()
+	settings_overlay = ColorRect.new()
+	settings_overlay.visible = false
+	settings_overlay.color = Color(0.04, 0.05, 0.07, 0.72)
+	settings_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	settings_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	settings_overlay.gui_input.connect(_on_settings_dim_input)
+	add_child(settings_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	settings_overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(420, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0.1, 0.11, 0.14, 1)
+	box.border_color = Color(0.78, 0.82, 0.9, 0.55)
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(10)
+	box.content_margin_left = 22
+	box.content_margin_right = 22
+	box.content_margin_top = 18
+	box.content_margin_bottom = 18
+	panel.add_theme_stylebox_override("panel", box)
+	center.add_child(panel)
+
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 14)
+	panel.add_child(stack)
+
+	var title := Label.new()
+	title.text = "Settings"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", SELECTED_ACCENT)
+	stack.add_child(title)
+
+	var hint := Label.new()
+	hint.text = "Tape speed. Headline pauses stay 8–15 real seconds."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", Color(0.78, 0.82, 0.88))
+	stack.add_child(hint)
+
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 8)
-	settings_dialog.add_child(row)
+	stack.add_child(row)
 	speed_buttons.clear()
 	for n in [1, 2, 3]:
 		var button := Button.new()
 		button.text = "%d×" % n
+		button.custom_minimum_size = Vector2(64, 36)
 		button.pressed.connect(_set_tape_speed.bind(n))
 		row.add_child(button)
 		speed_buttons.append(button)
 		_apply_button_style(button, SELECTED_ACCENT if n == tape_speed else UI_ACCENT, UI_BORDER, n == tape_speed)
+
+	var close_button := Button.new()
+	close_button.text = "Close"
+	close_button.custom_minimum_size = Vector2(0, 36)
+	close_button.pressed.connect(_close_settings)
+	stack.add_child(close_button)
+	_apply_button_style(close_button, UI_ACCENT, UI_BORDER)
+
+
+func _on_settings_dim_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT:
+			_close_settings()
+
+
+func _open_settings() -> void:
+	if settings_overlay != null:
+		settings_overlay.visible = true
+		settings_overlay.move_to_front()
+
+
+func _close_settings() -> void:
+	if settings_overlay != null:
+		settings_overlay.visible = false
 
 
 func _set_tape_speed(mult: int) -> void:

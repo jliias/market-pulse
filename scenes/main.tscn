@@ -596,9 +596,10 @@ vertical_alignment = 1
 
 [node name="SettingsDialog" type="AcceptDialog" parent="." unique_id=1237482330]
 unique_name_in_owner = true
+visible = false
 title = "Settings"
 ok_button_text = "Close"
-dialog_text = "Tape speed. Headline pauses stay 8–15 real seconds."
+dialog_text = ""
 
 [node name="MenuDialog" type="ConfirmationDialog" parent="." unique_id=1831903832]
 unique_name_in_owner = true
