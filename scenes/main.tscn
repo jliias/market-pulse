@@ -120,83 +120,85 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="WatchlistColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=1827180769]
+[node name="DeskRows" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=737906703]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.7
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="BoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows" unique_id=737906704]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.6
+theme_override_constants/separation = 8
+
+[node name="WatchlistColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow" unique_id=1827180769]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 size_flags_stretch_ratio = 0.9
 theme_override_constants/separation = 8
 
-[node name="WatchlistHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1989078665]
+[node name="WatchlistHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/WatchlistColumn" unique_id=1989078665]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "WATCHLIST"
 
-[node name="WatchlistList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1967248601]
+[node name="WatchlistList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/WatchlistColumn" unique_id=1967248601]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="PortfolioHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=529352896]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
-text = "PORTFOLIO"
-
-[node name="PortfolioList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1877519657]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="PortfolioTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1342024128]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Open P/L: +$0.00"
-
-[node name="ChartColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=276356270]
+[node name="ChartColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow" unique_id=276356270]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 size_flags_stretch_ratio = 1.8
 theme_override_constants/separation = 8
 
-[node name="SelectedHeader" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=376605065]
+[node name="SelectedHeader" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn" unique_id=376605065]
 layout_mode = 2
 
-[node name="SelectedNameLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader" unique_id=441211770]
+[node name="SelectedNameLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/SelectedHeader" unique_id=441211770]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ALPH — Alpha Technologies"
 
-[node name="SelectedPriceRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader" unique_id=1576983348]
+[node name="SelectedPriceRow" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/SelectedHeader" unique_id=1576983348]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="SelectedPriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader/SelectedPriceRow" unique_id=1096577191]
+[node name="SelectedPriceLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/SelectedHeader/SelectedPriceRow" unique_id=1096577191]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "$0.00"
 
-[node name="SelectedChangeLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader/SelectedPriceRow" unique_id=2055806795]
+[node name="SelectedChangeLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/SelectedHeader/SelectedPriceRow" unique_id=2055806795]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "+$0.00 (+0.00%)"
 
-[node name="SelectedMetaLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/SelectedHeader" unique_id=1079512714]
+[node name="SelectedMetaLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/SelectedHeader" unique_id=1079512714]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.72, 0.78, 1)
 text = "Technology · Large Cap"
 
-[node name="TimeframeButtons" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=800011717]
+[node name="TimeframeButtons" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn" unique_id=800011717]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="MainChart" type="Control" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=98253840]
+[node name="MainChart" type="Control" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn" unique_id=98253840]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
@@ -204,7 +206,7 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 1.6
 script = ExtResource("2_chart")
 
-[node name="ClosedOverlay" type="CenterContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart" unique_id=1983052116]
+[node name="ClosedOverlay" type="CenterContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart" unique_id=1983052116]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -215,17 +217,17 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ClosePanel" type="PanelContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay" unique_id=1983052300]
+[node name="ClosePanel" type="PanelContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay" unique_id=1983052300]
 custom_minimum_size = Vector2(460, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_close")
 
-[node name="CloseStack" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel" unique_id=1983052117]
+[node name="CloseStack" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel" unique_id=1983052117]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="CloseHeroLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052118]
+[node name="CloseHeroLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052118]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.92)
@@ -233,7 +235,7 @@ theme_override_font_sizes/font_size = 42
 text = "+0.0%"
 horizontal_alignment = 1
 
-[node name="CloseVerdictLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052119]
+[node name="CloseVerdictLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052119]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.8)
@@ -241,7 +243,7 @@ theme_override_font_sizes/font_size = 22
 text = "MATCHED"
 horizontal_alignment = 1
 
-[node name="CloseStreakLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052120]
+[node name="CloseStreakLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052120]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
@@ -249,7 +251,7 @@ theme_override_font_sizes/font_size = 16
 text = ""
 horizontal_alignment = 1
 
-[node name="CloseBookLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052121]
+[node name="CloseBookLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052121]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
@@ -259,7 +261,7 @@ horizontal_alignment = 1
 autowrap_mode = 3
 size_flags_horizontal = 3
 
-[node name="CloseTomorrowLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052122]
+[node name="CloseTomorrowLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052122]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 0.95)
@@ -269,7 +271,7 @@ horizontal_alignment = 1
 autowrap_mode = 3
 size_flags_horizontal = 3
 
-[node name="CloseListingLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052123]
+[node name="CloseListingLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn/MainChart/ClosedOverlay/ClosePanel/CloseStack" unique_id=1983052123]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.72)
@@ -277,17 +279,56 @@ theme_override_font_sizes/font_size = 18
 text = "Market closed"
 horizontal_alignment = 1
 
-[node name="StoryBoard" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=1983052200]
+[node name="StoryBoard" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/ChartColumn" unique_id=1983052200]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=1346972357]
+[node name="BottomRow" type="BoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows" unique_id=737906705]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.0
+theme_override_constants/separation = 8
+
+[node name="PortfolioColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow" unique_id=737906706]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.9
+theme_override_constants/separation = 4
+
+[node name="PortfolioHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/PortfolioColumn" unique_id=529352896]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
+text = "PORTFOLIO"
+
+[node name="PortfolioList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/PortfolioColumn" unique_id=1877519657]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="PortfolioTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/PortfolioColumn" unique_id=1342024128]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Open P/L: +$0.00"
+
+[node name="NewsColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow" unique_id=737906707]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.8
+theme_override_constants/separation = 8
+
+[node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/NewsColumn" unique_id=1346972357]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "NEWS FEED"
 
-[node name="NewsFeed" type="RichTextLabel" parent="MarginContainer/RootVBox/BodyColumns/ChartColumn" unique_id=2007835809]
+[node name="NewsFeed" type="RichTextLabel" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/NewsColumn" unique_id=2007835809]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2

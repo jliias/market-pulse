@@ -59,7 +59,10 @@ var leave_intent: String = "menu"
 var cash_out_button: Button
 
 @onready var body_columns: BoxContainer = %BodyColumns
+@onready var top_row: BoxContainer = %TopRow
+@onready var bottom_row: BoxContainer = %BottomRow
 @onready var watchlist_column: Control = %WatchlistColumn
+@onready var portfolio_column: Control = %PortfolioColumn
 @onready var trade_column: Control = %TradeColumn
 @onready var watchlist_list: VBoxContainer = %WatchlistList
 @onready var portfolio_list: VBoxContainer = %PortfolioList
@@ -382,8 +385,10 @@ func _place_order() -> void:
 	if stock == null:
 		return
 	if fade_mode:
+		var covering: bool = portfolio.get_fade_shares(selected_symbol) > 0
+		var fill_shares: int = portfolio.get_fade_shares(selected_symbol) if covering else quantity
 		var fade_result: Dictionary
-		if portfolio.get_fade_shares(selected_symbol) > 0:
+		if covering:
 			fade_result = portfolio.cover_fade(selected_symbol, stock.price)
 		else:
 			if not stock.is_listed():
@@ -392,6 +397,8 @@ func _place_order() -> void:
 			fade_result = portfolio.open_fade(selected_symbol, quantity, stock.price, market.stocks)
 		trade_message_label.text = str(fade_result["message"])
 		_update_ui()
+		if bool(fade_result.get("success", false)):
+			call_deferred("_play_fill_feedback", "cover" if covering else "fade", selected_symbol, fill_shares)
 		return
 	if buy_mode and not stock.can_buy():
 		trade_message_label.text = "This name is %s. You cannot buy it." % stock.listing_label().to_lower()
@@ -429,6 +436,8 @@ func _place_order() -> void:
 			)
 	trade_message_label.text = str(result["message"])
 	_update_ui()
+	if bool(result.get("success", false)):
+		call_deferred("_play_fill_feedback", "buy" if buy_mode else "sell", selected_symbol, quantity)
 
 
 func _end_session() -> void:
@@ -632,9 +641,12 @@ func _start_next_trading_day() -> void:
 func _apply_responsive_layout() -> void:
 	var narrow: bool = size.x < NARROW_WIDTH
 	body_columns.vertical = narrow
+	top_row.vertical = narrow
+	bottom_row.vertical = narrow
 	watchlist_column.custom_minimum_size.x = 0.0 if narrow else 280.0
+	portfolio_column.custom_minimum_size.x = 0.0 if narrow else 280.0
 	trade_column.custom_minimum_size.x = 0.0 if narrow else 300.0
-	watchlist_column.size_flags_vertical = SIZE_EXPAND_FILL if narrow else SIZE_FILL
+	watchlist_column.size_flags_vertical = SIZE_EXPAND_FILL
 	trade_column.size_flags_vertical = SIZE_EXPAND_FILL if narrow else SIZE_FILL
 
 
@@ -773,6 +785,7 @@ func _refresh_portfolio() -> void:
 		row.text = "%s — %d shares — $%.2f — %s$%.2f" % [
 			symbol, shares, avg, _sign(pos_pl), absf(pos_pl)
 		]
+		row.set_meta("fill_key", symbol)
 		row.add_theme_color_override("font_color", _pl_color(pos_pl))
 		portfolio_list.add_child(row)
 	for symbol in market.watchlist:
@@ -786,6 +799,7 @@ func _refresh_portfolio() -> void:
 		fade_row.text = "FADE %s — %d — $%.2f — %s$%.2f" % [
 			symbol, portfolio.get_fade_shares(symbol), portfolio.get_fade_entry(symbol), _sign(fade_pl), absf(fade_pl)
 		]
+		fade_row.set_meta("fill_key", "fade:%s" % symbol)
 		fade_row.add_theme_color_override("font_color", _pl_color(fade_pl))
 		portfolio_list.add_child(fade_row)
 	if not has_rows:
@@ -796,6 +810,79 @@ func _refresh_portfolio() -> void:
 
 	portfolio_total_label.text = "Open P/L: %s$%.2f" % [_sign(total_pl), absf(total_pl)]
 	portfolio_total_label.add_theme_color_override("font_color", _pl_color(total_pl))
+
+
+func _play_fill_feedback(kind: String, symbol: String, shares: int) -> void:
+	var accent: Color = BUY_ACCENT
+	var chip: String = "+%d %s" % [shares, symbol]
+	var from_book: bool = false
+	match kind:
+		"sell":
+			accent = SELL_ACCENT
+			chip = "−%d %s" % [shares, symbol]
+			from_book = true
+		"fade":
+			accent = FADE_ACCENT
+			chip = "FADE %d %s" % [shares, symbol]
+		"cover":
+			accent = FADE_ACCENT
+			chip = "COVER %d %s" % [shares, symbol]
+			from_book = true
+	var card: WatchlistCard = watchlist_cards.get(symbol) as WatchlistCard
+	if card != null:
+		card.pulse_fill(accent)
+	_pulse_control(portfolio_column, accent)
+	_pulse_control(portfolio_total_label, accent)
+	var row_key: String = "fade:%s" % symbol if kind == "fade" or kind == "cover" else symbol
+	_pulse_portfolio_row(row_key, accent)
+	var from_node: Control = portfolio_column if from_book else card
+	var to_node: Control = card if from_book else portfolio_column
+	if from_node != null and to_node != null:
+		_spawn_fill_chip(chip, accent, from_node, to_node)
+
+
+func _pulse_control(node: Control, accent: Color) -> void:
+	if node == null:
+		return
+	node.modulate = Color(
+		clampf(accent.r + 0.35, 0.0, 1.0),
+		clampf(accent.g + 0.35, 0.0, 1.0),
+		clampf(accent.b + 0.35, 0.0, 1.0)
+	)
+	var tw := create_tween()
+	tw.tween_property(node, "modulate", Color.WHITE, 0.5)
+
+
+func _pulse_portfolio_row(fill_key: String, accent: Color) -> void:
+	for child in portfolio_list.get_children():
+		if child.has_meta("fill_key") and str(child.get_meta("fill_key")) == fill_key:
+			_pulse_control(child as Control, accent)
+			return
+
+
+func _spawn_fill_chip(text: String, accent: Color, from_node: Control, to_node: Control) -> void:
+	var label := Label.new()
+	label.text = text
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.top_level = true
+	label.z_index = 40
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", accent)
+	label.add_theme_color_override("font_shadow_color", Color(0.04, 0.05, 0.07, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	add_child(label)
+	label.reset_size()
+	var start: Vector2 = from_node.get_global_rect().get_center() - label.size * 0.5
+	var finish: Vector2 = to_node.get_global_rect().get_center() - label.size * 0.5
+	label.global_position = start
+	var tw := create_tween()
+	tw.set_trans(Tween.TRANS_CUBIC)
+	tw.set_ease(Tween.EASE_OUT)
+	tw.set_parallel(true)
+	tw.tween_property(label, "global_position", finish, 0.48)
+	tw.tween_property(label, "modulate:a", 0.0, 0.32).set_delay(0.18)
+	tw.chain().tween_callback(label.queue_free)
 
 
 func _refresh_trade_panel() -> void:

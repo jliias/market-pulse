@@ -6,6 +6,7 @@ signal selected(symbol: String)
 var symbol: String = ""
 var _selected: bool = false
 var _fading: bool = false
+var _pulse_tween: Tween
 
 @onready var ticker_label: Label = %TickerLabel
 @onready var risk_label: Label = %RiskLabel
@@ -70,6 +71,18 @@ func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_ent
 	mini_chart.compact = true
 	mini_chart.set_series(slice["prices"], slice["volumes"])
 	_apply_style()
+
+
+func pulse_fill(accent: Color) -> void:
+	if _pulse_tween != null:
+		_pulse_tween.kill()
+	modulate = Color(
+		clampf(accent.r + 0.25, 0.0, 1.0),
+		clampf(accent.g + 0.25, 0.0, 1.0),
+		clampf(accent.b + 0.25, 0.0, 1.0)
+	)
+	_pulse_tween = create_tween()
+	_pulse_tween.tween_property(self, "modulate", Color.WHITE, 0.55)
 
 
 func _on_gui_input(event: InputEvent) -> void:
