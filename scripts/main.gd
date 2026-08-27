@@ -186,7 +186,7 @@ func _connect_controls() -> void:
 	menu_dialog.confirmed.connect(_on_leave_hold)
 	menu_dialog.canceled.connect(_cancel_confirm_dialog)
 	menu_dialog.get_cancel_button().text = "Stay"
-	menu_dialog.ok_button_text = "Hold and leave"
+	menu_dialog.ok_button_text = "Keep positions"
 	cash_out_button = menu_dialog.add_button("Cash out and leave", true, "cash_out")
 	menu_dialog.custom_action.connect(_on_leave_custom_action)
 	end_session_dialog.confirmed.connect(_end_session)
@@ -374,7 +374,7 @@ func _set_max_quantity() -> void:
 
 func _place_order() -> void:
 	if print_pause_active:
-		trade_message_label.text = "Act on this headline, or Hold."
+		trade_message_label.text = "Act on this headline, or Continue."
 		return
 	if awaiting_open:
 		trade_message_label.text = "Market is not open yet."
@@ -565,8 +565,8 @@ func _confirm_leave_desk(intent: String) -> void:
 		lines.append("If the market is still open, today will be marked to the close.")
 	if has_positions:
 		lines.append("A long real-world gap before you return can move prices overnight. Open positions may move while you are away.")
-		lines.append("Hold them overnight, or sell everything at the bid now.")
-		menu_dialog.ok_button_text = "Hold and leave"
+		lines.append("Keep them overnight, or sell everything at the bid now.")
+		menu_dialog.ok_button_text = "Keep positions"
 	else:
 		lines.append("Your book is cash. Nothing is left overnight in stocks.")
 		menu_dialog.ok_button_text = "Leave"
@@ -656,9 +656,9 @@ func _update_ui() -> void:
 	var cash: float = portfolio.cash
 	var pl: float = portfolio.get_profit_loss(market.stocks)
 	var pl_pct: float = portfolio.get_profit_loss_pct(market.stocks)
-	portfolio_value_label.text = "Portfolio: $%.2f" % value
+	portfolio_value_label.text = "Book: $%.2f" % value
 	cash_value_label.text = "Cash: $%.2f" % cash
-	daily_pl_label.text = "Daily P/L: %s$%.2f (%s%.2f%%)" % [
+	daily_pl_label.text = "Session P/L: %s$%.2f (%s%.2f%%)" % [
 		_sign(pl), absf(pl), _sign(pl), absf(pl_pct)
 	]
 	daily_pl_label.add_theme_color_override("font_color", _pl_color(pl))
@@ -907,9 +907,9 @@ func _refresh_trade_panel() -> void:
 	elif fade_mode:
 		place_order_button.text = "SHORT"
 	elif buy_mode:
-		place_order_button.text = "PLACE BUY ORDER"
+		place_order_button.text = "BUY"
 	else:
-		place_order_button.text = "PLACE SELL ORDER"
+		place_order_button.text = "SELL"
 	var can_order: bool = session_active and not awaiting_open and not market.is_closed and not print_pause_active
 	if fade_mode:
 		if covering:
@@ -1169,7 +1169,7 @@ func _begin_print_pause(event: NewsEvent) -> void:
 		if market.watchlist.has(symbol):
 			print_pause_symbol = symbol
 	print_pause_headline.text = event.headline
-	print_pause_reaction.text = event.reaction if not event.reaction.is_empty() else "Decide now, or hold."
+	print_pause_reaction.text = event.reaction if not event.reaction.is_empty() else "Decide now, or continue."
 	print_pause_ticket_button.visible = not print_pause_symbol.is_empty()
 	print_pause_overlay.visible = true
 	tick_timer.stop()
@@ -1178,7 +1178,7 @@ func _begin_print_pause(event: NewsEvent) -> void:
 
 
 func _refresh_print_pause_timer() -> void:
-	print_pause_timer.text = "Hold in %ds" % maxi(ceili(print_pause_left), 0)
+	print_pause_timer.text = "Continue in %ds" % maxi(ceili(print_pause_left), 0)
 
 
 func _clear_print_pause() -> void:
@@ -1230,8 +1230,8 @@ func _story_board_signature(entries: Array[Dictionary]) -> String:
 		bits.append("%s|%s|%s|%s|%s" % [
 			subject,
 			str(entry.get("stage", "")),
-			str(entry.get("polar", "")),
-			str(entry.get("hook", "")),
+			str(entry.get("wipe", false)),
+			str(entry.get("card_hook", "")),
 			listing,
 		])
 	return "|".join(bits)
@@ -1256,22 +1256,58 @@ func _make_story_card(entry: Dictionary) -> Button:
 			listing = " · HALTED"
 		elif stock.is_distressed():
 			listing = " · DISTRESSED"
+	var line1: String = "%s  ·  %s%s" % [title, str(entry.get("stage", "")), listing]
+	var line2: String = str(entry.get("card_hook", ""))
+	if line2.is_empty():
+		line2 = str(entry.get("hook", ""))
+	var wipe: bool = bool(entry.get("wipe", false))
 	var button := Button.new()
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.text = "%s  %s  %s%s\n%s" % [
-		title,
-		str(entry.get("polar", "")),
-		str(entry.get("stage", "")),
-		listing,
-		str(entry.get("hook", "")),
-	]
-	button.clip_text = true
+	button.clip_contents = true
+	button.custom_minimum_size = Vector2(0, 56)
 	if scope == "company" and market.watchlist.has(subject):
 		button.pressed.connect(_select_stock.bind(subject), CONNECT_DEFERRED)
 	_apply_button_style(button, UI_ACCENT, UI_BORDER)
-	button.add_theme_font_size_override("font_size", 12)
-	button.custom_minimum_size = Vector2(0, 52)
+
+	var pad := MarginContainer.new()
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 10)
+	pad.add_theme_constant_override("margin_right", 10)
+	pad.add_theme_constant_override("margin_top", 6)
+	pad.add_theme_constant_override("margin_bottom", 6)
+	button.add_child(pad)
+
+	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 2)
+	pad.add_child(stack)
+
+	var title_label := Label.new()
+	title_label.text = line1
+	title_label.clip_text = true
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_label.custom_minimum_size = Vector2(0, 20)
+	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_label.add_theme_font_size_override("font_size", 13)
+	title_label.add_theme_color_override("font_color", Color(0.92, 0.94, 0.98))
+	stack.add_child(title_label)
+
+	var hook_label := Label.new()
+	hook_label.text = line2
+	hook_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hook_label.max_lines_visible = 2
+	hook_label.custom_minimum_size = Vector2(0, 28)
+	hook_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hook_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hook_label.add_theme_font_size_override("font_size", 12)
+	hook_label.add_theme_color_override(
+		"font_color",
+		Color(0.98, 0.62, 0.42) if wipe else Color(0.72, 0.75, 0.82)
+	)
+	stack.add_child(hook_label)
 	return button
 
 
@@ -1286,8 +1322,8 @@ func _session_story_line() -> String:
 			else:
 				flat.append(symbol)
 		if not held.is_empty():
-			return "You held %s through the wipe." % ", ".join(held)
-		return "You flattened before the wipe on %s." % ", ".join(flat)
+			return "You were still long on %s through the wipe." % ", ".join(held)
+		return "You sold before the wipe on %s." % ", ".join(flat)
 	for chain in market.chain_director.active:
 		if chain.pending != "resolution":
 			continue
@@ -1296,7 +1332,7 @@ func _session_story_line() -> String:
 		if chain.scope == "company":
 			if portfolio.get_shares(chain.subject) > 0:
 				return "You are still long into tomorrow's make-or-break headline on %s." % chain.subject
-			return "You are flat into tomorrow's make-or-break headline on %s." % chain.subject
+			return "You sold before tomorrow's make-or-break headline on %s." % chain.subject
 		return "You are heading into a make-or-break headline."
 	return "No wipe on the book today."
 

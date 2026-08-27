@@ -132,15 +132,15 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 **Narrow** (window width **< 1100**): those rows stack vertically; the ticket still sits in the body column.
 
 1. **Watchlist** — ticker cards: risk, last, day change, volume, **LONG n ±$P/L** or **SHORT n ±$P/L** (purple border when short), mini chart. Click to select.
-2. **Chart** — selected name, timeframes, main line chart. **Story cards** (up to two open arcs) sit under the chart: company / sector / TAPE, polarity, stage, hook; **HALTED** / **DISTRESSED** if listed that way. Click a **company** story card to select that watchlist ticker.
+2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **HALTED** / **DISTRESSED** if listed that way. Wipe arcs say **Make-or-break tomorrow.** Click a **company** story card to select that watchlist ticker.
 3. **News feed** — timestamped headlines with a reaction line. Tags include ticker, **MARKET**, sector shorts, and **YOUR TAPE** (gift or trap). Desk terms are **underlined**; hover for a short definition.
-4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, Place Order (or Short / Cover), fills.
+4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, **Buy / Sell / Short / Cover**.
 5. **Book** — longs and short rows, open P/L.
 
 Top bar: book value, cash, session P/L, clock, **vs Market**.  
 Bottom bar: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, Settings, End Session / New Day, Leave desk.
 
-**Act on this headline:** chain beats, major headlines, existential halt **and** distressed reopen, weather flips, and YOUR TAPE pause the tape **10 real seconds** (major / chain / weather / YOUR TAPE) or **14** (existential wipe). Hold (or timeout) resumes. To ticket selects the named watchlist stock and resumes — you still size the order on the live tape. Circuit volatility halt/reopen does **not** open this overlay. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Hold. Fast-forward to close does not pause.
+**Act on this headline:** chain beats, major headlines, existential halt **and** distressed reopen, weather flips, and YOUR TAPE pause the tape **10 real seconds** (major / chain / weather / YOUR TAPE) or **14** (existential wipe). **Continue** (or timeout) resumes. To ticket selects the named watchlist stock and resumes — you still size the order on the live tape. Circuit volatility halt/reopen does **not** open this overlay. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Continue. Fast-forward to close does not pause.
 
 Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prices**, not calendar months and not OHLC candles. Tooltips say so. While the session is **closed**, HALTED / DISTRESSED is **not** drawn as a chart banner — it is folded into the close overlay stamp.
 
@@ -192,13 +192,13 @@ A **negative resolution** on a tagged company arc can **wipe the equity stub**, 
 
 Sequence:
 
-1. Close hook may read **“resolution tomorrow. Binary.”** if polarity is already negative.
+1. Close hook may read **“resolution tomorrow. Make-or-break.”** if polarity is already negative.
 2. The print **halts** the name (no buys or sells). Premarket/overnight: halt until the 9:30 bell. Intraday: halt 3–8 market minutes.
 3. **Reopen** gaps **−80% to −95%** (bypasses the usual 12% tick cap). Floor **$0.05**. Card shows **DISTRESSED**.
 4. **Sell-only**, fat spread. Still in the three-name average until week recap.
 5. **Week recap forces replacement.** Residual shares flatten at the bid. You cannot keep a distressed name.
 
-Flatten **before** the print (after the hook) and you keep the cash. Hold through it and that sleeve of the book can go near-zero.
+Sell **before** the print (after the hook) and you keep the cash. Stay long through it and that sleeve of the book can go near-zero.
 
 ### Random tape
 
@@ -237,7 +237,7 @@ Implemented arcs (company or tape-wide):
 
 If a **week recap** is pending, that overlay still comes first.
 
-Leave-desk choice: **hold** names overnight, or **cash out** (flatten all at the bid) then leave.
+Leave-desk choice: **keep positions** overnight, or **cash out** (sell all at the bid) then leave.
 
 ---
 

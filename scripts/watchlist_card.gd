@@ -66,7 +66,7 @@ func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_ent
 		owned_label.add_theme_color_override("font_color", Color(0.35, 0.85, 0.45) if pos_pl >= 0.0 else Color(0.95, 0.38, 0.38))
 		CopyHints.hover(owned_label, CopyHints.HUD_LONG)
 	else:
-		owned_label.text = "Owned: 0"
+		owned_label.text = "—"
 		owned_label.add_theme_color_override("font_color", Color(0.65, 0.68, 0.74, 1))
 		owned_label.tooltip_text = ""
 	var slice: Dictionary = stock.get_chart_slice(24, 1)

@@ -1061,18 +1061,25 @@ func board_entries() -> Array[Dictionary]:
 	for chain in active:
 		if chain.pending.is_empty():
 			continue
-		var polar: String = "+" if chain.polarity >= 0.0 else "−"
-		if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
-			polar = "BIN"
+		var wipe: bool = chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id)
 		out.append({
 			"subject": chain.subject,
 			"scope": chain.scope,
 			"industry": chain.industry,
 			"stage": EventChain.display_stage(chain.pending),
-			"polar": polar,
+			"wipe": wipe,
 			"hook": hook_text(chain),
+			"card_hook": card_hook(chain),
 		})
 	return out
+
+
+func card_hook(chain: EventChain) -> String:
+	if chain.pending.is_empty():
+		return ""
+	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
+		return "Make-or-break tomorrow."
+	return "Still unresolved."
 
 
 func hook_text(chain: EventChain) -> String:
@@ -1084,7 +1091,7 @@ func hook_text(chain: EventChain) -> String:
 			"company":
 				return "%s — resolution tomorrow. Make-or-break." % CompanyCatalog.display_name(chain.subject)
 			_:
-				return "Resolution tomorrow. Binary."
+				return "Resolution tomorrow. Make-or-break."
 	match chain.scope:
 		"company":
 			return "%s — %s still unresolved" % [CompanyCatalog.display_name(chain.subject), stage]
@@ -1105,7 +1112,7 @@ static func _hook_from_dict(item: Dictionary) -> String:
 	if pending == "resolution" and float(item.get("polarity", 1.0)) < 0.0 and arc_is_existential(arc_id):
 		if scope == "company":
 			return "%s — resolution tomorrow. Make-or-break." % CompanyCatalog.display_name(str(item.get("subject", "")))
-		return "Resolution tomorrow. Binary."
+		return "Resolution tomorrow. Make-or-break."
 	match scope:
 		"company":
 			return "%s — %s still unresolved" % [CompanyCatalog.display_name(str(item.get("subject", ""))), stage]

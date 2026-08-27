@@ -79,6 +79,7 @@ const _HINTS := {
 	"distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
 	"DISTRESSED": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
 	"Binary": "The next headline can make or break this stock — including a halt and a near-worthless reopen.",
+	"Make-or-break": "The next headline can make or break this stock — including a halt and a near-worthless reopen.",
 }
 
 static var _term_re: RegEx
