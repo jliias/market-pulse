@@ -167,7 +167,7 @@ const COMPANY_NEWS := {
 		"positive": [
 			{"text": "Harbor Foods reports steady volume across the grocery channel.", "category": "earnings", "strength": "moderate", "lasting": true},
 			{"text": "Harbor Foods extends a private-label supply deal.", "category": "product", "strength": "moderate", "lasting": true},
-			{"text": "Analysts flag Harbor Foods as a defensive consumer name.", "category": "analyst", "strength": "minor", "lasting": false},
+			{"text": "Analysts flag Harbor Foods as a defensive consumer stock.", "category": "analyst", "strength": "minor", "lasting": false},
 			{"text": "Intraday bid: Harbor Foods sees dip-buying after a soft open.", "category": "rumor", "strength": "minor", "lasting": false},
 			{"text": "Harbor Foods says grocery mix is running ahead of volume.", "category": "earnings", "strength": "moderate", "lasting": true},
 			{"text": "Input costs are said to be easing for Harbor Foods.", "category": "commodity", "strength": "minor", "lasting": true},
@@ -178,7 +178,7 @@ const COMPANY_NEWS := {
 			{"text": "Analyst trims Harbor Foods on promotional intensity.", "category": "analyst", "strength": "moderate", "lasting": false},
 			{"text": "Whispers of retailer destocking hitting Harbor Foods.", "category": "rumor", "strength": "minor", "lasting": false},
 			{"text": "Retailers are said to be pressing Harbor Foods on price.", "category": "product", "strength": "moderate", "lasting": true},
-			{"text": "Harbor Foods is offered as consumer names fade on traffic chatter.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Harbor Foods is offered as consumer stocks fade on traffic chatter.", "category": "industry", "strength": "minor", "lasting": false},
 		],
 	},
 	"QBIT": {
@@ -249,7 +249,7 @@ const COMPANY_NEWS_EXTRA := {
 		],
 		"negative": [
 			{"text": "A tax note is said to be hanging over an Alpha Technologies foreign unit.", "category": "regulatory", "strength": "minor", "lasting": false},
-			{"text": "Alpha Technologies option vol spikes as the name looks crowded again.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Alpha Technologies option vol spikes as the stock looks crowded again.", "category": "rumor", "strength": "minor", "lasting": false},
 			{"text": "Channel checks in Europe on Alpha Technologies come in mixed.", "category": "earnings", "strength": "minor", "lasting": false},
 			{"text": "A large holder is said to have trimmed Alpha Technologies into strength.", "category": "rumor", "strength": "moderate", "lasting": false},
 			{"text": "Capex skepticism hangs over Alpha Technologies after a peer cut.", "category": "industry", "strength": "minor", "lasting": true},
@@ -267,15 +267,15 @@ const COMPANY_NEWS_EXTRA := {
 		"negative": [
 			{"text": "Community opposition is said to be slowing a Green Energy Corp permit.", "category": "regulatory", "strength": "moderate", "lasting": true},
 			{"text": "Merchant power fades — Green Energy Corp is offered with the group.", "category": "commodity", "strength": "minor", "lasting": false},
-			{"text": "Tax-equity spreads are said to have widened on Green Energy Corp names.", "category": "regulatory", "strength": "minor", "lasting": false},
+			{"text": "Tax-equity spreads are said to have widened on Green Energy Corp stocks.", "category": "regulatory", "strength": "minor", "lasting": false},
 			{"text": "A weather miss knocks generation assumptions for Green Energy Corp.", "category": "commodity", "strength": "minor", "lasting": false},
-			{"text": "Green Energy Corp underperforms on a quiet tape with no fresh print.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Green Energy Corp underperforms on a quiet tape with no fresh headline.", "category": "rumor", "strength": "minor", "lasting": false},
 		],
 	},
 	"NMIN": {
 		"positive": [
 			{"text": "A freight print eases — North Mining Ltd catches a bid with bulk.", "category": "commodity", "strength": "minor", "lasting": false},
-			{"text": "North Mining Ltd is said to have a cleaner cost-per-tonne print internally.", "category": "earnings", "strength": "minor", "lasting": true},
+			{"text": "North Mining Ltd is said to have a cleaner cost-per-tonne number internally.", "category": "earnings", "strength": "minor", "lasting": true},
 			{"text": "China restocking chatter lifts North Mining Ltd with the miners.", "category": "commodity", "strength": "moderate", "lasting": false},
 			{"text": "A local permit is said to have cleared for North Mining Ltd without drama.", "category": "regulatory", "strength": "minor", "lasting": true},
 			{"text": "North Mining Ltd outperforms a soft materials tape on dip-buying.", "category": "rumor", "strength": "minor", "lasting": false},
@@ -329,10 +329,10 @@ const COMPANY_NEWS_EXTRA := {
 			{"text": "A channel partner is said to have added CyberNest Inc to a bundle.", "category": "product", "strength": "moderate", "lasting": true},
 		],
 		"negative": [
-			{"text": "Budget-freeze chatter hangs over CyberNest Inc government names.", "category": "regulatory", "strength": "minor", "lasting": false},
-			{"text": "CyberNest Inc is offered as security names fade with growth.", "category": "macro", "strength": "minor", "lasting": false},
+			{"text": "Budget-freeze chatter hangs over CyberNest Inc government stocks.", "category": "regulatory", "strength": "minor", "lasting": false},
+			{"text": "CyberNest Inc is offered as security stocks fade with growth.", "category": "macro", "strength": "minor", "lasting": false},
 			{"text": "A competitor is said to have undercut CyberNest Inc on a bake-off.", "category": "product", "strength": "moderate", "lasting": false},
-			{"text": "CyberNest Inc vol spikes on light tape with no award print.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "CyberNest Inc vol spikes on light tape with no award news.", "category": "rumor", "strength": "minor", "lasting": false},
 			{"text": "Collections chatter turns mixed at CyberNest Inc.", "category": "earnings", "strength": "minor", "lasting": false},
 		],
 	},
@@ -362,7 +362,7 @@ const COMPANY_NEWS_EXTRA := {
 		],
 		"negative": [
 			{"text": "Curve flattener chatter knocks Bastion Bank with the banks.", "category": "macro", "strength": "minor", "lasting": false},
-			{"text": "A CRE pocket is said to look mixed at Bastion Bank with no new print.", "category": "earnings", "strength": "moderate", "lasting": false},
+			{"text": "A CRE pocket is said to look mixed at Bastion Bank with no new company news.", "category": "earnings", "strength": "moderate", "lasting": false},
 			{"text": "Bastion Bank is offered as financials fade with rates.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "Regulatory-exam chatter hangs over Bastion Bank on light tape.", "category": "regulatory", "strength": "minor", "lasting": false},
 			{"text": "Bastion Bank underperforms a firm bank tape — no news, just flow.", "category": "rumor", "strength": "minor", "lasting": false},
@@ -386,17 +386,17 @@ const COMPANY_NEWS_EXTRA := {
 	},
 	"QBIT": {
 		"positive": [
-			{"text": "A grant window is said to have opened for Qubit Labs-style names.", "category": "regulatory", "strength": "minor", "lasting": false},
+			{"text": "A grant window is said to have opened for Qubit Labs-style stocks.", "category": "regulatory", "strength": "minor", "lasting": false},
 			{"text": "Qubit Labs is bid as speculative flow returns to the board.", "category": "macro", "strength": "minor", "lasting": false},
 			{"text": "A hiring note is said to look healthier at Qubit Labs than feared.", "category": "earnings", "strength": "minor", "lasting": false},
 			{"text": "Qubit Labs option flow turns bid after a two-day washout.", "category": "rumor", "strength": "minor", "lasting": false},
 			{"text": "A university paper is said to cite a Qubit Labs method in passing.", "category": "product", "strength": "minor", "lasting": false},
 		],
 		"negative": [
-			{"text": "A grant window is said to have slipped for Qubit Labs-style names.", "category": "regulatory", "strength": "minor", "lasting": false},
+			{"text": "A grant window is said to have slipped for Qubit Labs-style stocks.", "category": "regulatory", "strength": "minor", "lasting": false},
 			{"text": "Qubit Labs is offered as speculative flow leaves the board.", "category": "macro", "strength": "minor", "lasting": false},
-			{"text": "A lockup-expiry note hangs over Qubit Labs with no company print.", "category": "rumor", "strength": "moderate", "lasting": false},
-			{"text": "Qubit Labs vol spikes on light tape — still no demo print.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "A lockup-expiry note hangs over Qubit Labs with no company news.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Qubit Labs vol spikes on light tape — still no demo news.", "category": "rumor", "strength": "minor", "lasting": false},
 			{"text": "Cash-burn chatter turns mixed at Qubit Labs.", "category": "earnings", "strength": "minor", "lasting": true},
 		],
 	},
@@ -466,7 +466,7 @@ const PREMARKET_COMPANY := {
 		"negative": [
 			{"text": "PREMARKET: Alpha Technologies misses quarterly earnings and cuts outlook.", "category": "earnings", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: Alpha Technologies issues a profit warning before the open.", "category": "earnings", "strength": "major", "lasting": true},
-			{"text": "PREMARKET: Alpha Technologies flags softer enterprise demand into the print.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "PREMARKET: Alpha Technologies flags softer enterprise demand into earnings.", "category": "earnings", "strength": "moderate", "lasting": true},
 		],
 	},
 	"GRNE": {
@@ -500,7 +500,7 @@ const PREMARKET_COMPANY := {
 			{"text": "PREMARKET: Helix Biotech says a filing window still looks intact.", "category": "regulatory", "strength": "moderate", "lasting": true},
 		],
 		"negative": [
-			{"text": "PREMARKET: Helix Biotech misses as a trial delay hits the print.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Helix Biotech misses as a trial delay hits earnings.", "category": "earnings", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: Helix Biotech issues a cautionary note on a key study.", "category": "product", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: Helix Biotech flags extra data may be needed for the file.", "category": "regulatory", "strength": "moderate", "lasting": true},
 		],
@@ -514,7 +514,7 @@ const PREMARKET_COMPANY := {
 		"negative": [
 			{"text": "PREMARKET: Redline Retail misses as traffic turns softer.", "category": "earnings", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: Redline Retail cuts a near-term margin outlook.", "category": "earnings", "strength": "major", "lasting": true},
-			{"text": "PREMARKET: Redline Retail warns promotions may run hotter into the print.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "PREMARKET: Redline Retail warns promotions may run hotter into earnings.", "category": "earnings", "strength": "moderate", "lasting": true},
 		],
 	},
 	"CYBR": {
@@ -607,16 +607,16 @@ const INDUSTRY_NEWS := {
 	"Technology": {
 		"positive": [
 			{"text": "Tech sector: AI spending forecasts are raised across the group.", "category": "product", "strength": "moderate", "lasting": true},
-			{"text": "Chip demand firms — technology names catch a bid.", "category": "industry", "strength": "minor", "lasting": false},
-			{"text": "Cloud spend chatter turns constructive across technology names.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "A CIO budget thaw rumor bids technology names.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Chip demand firms — technology stocks catch a bid.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Cloud spend chatter turns constructive across technology stocks.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "A CIO budget thaw rumor bids technology stocks.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "Semiconductor foundry chatter turns constructive across the tech group.", "category": "industry", "strength": "minor", "lasting": false},
 		],
 		"negative": [
 			{"text": "Tech sector: enterprise software demand looks softer.", "category": "industry", "strength": "moderate", "lasting": true},
 			{"text": "Growth-tech selling hits the tape after a crowded rally.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "Hardware supply notes weigh on the technology group.", "category": "industry", "strength": "minor", "lasting": false},
-			{"text": "A CIO budget freeze rumor knocks technology names.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "A CIO budget freeze rumor knocks technology stocks.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "Semiconductor foundry chatter turns mixed across the tech group.", "category": "industry", "strength": "minor", "lasting": false},
 		],
 	},
@@ -628,7 +628,7 @@ const INDUSTRY_NEWS := {
 		],
 		"negative": [
 			{"text": "Energy complex: subsidy reviews weigh on the group.", "category": "regulatory", "strength": "major", "lasting": true},
-			{"text": "Power-price softness knocks energy names.", "category": "commodity", "strength": "minor", "lasting": false},
+			{"text": "Power-price softness knocks energy stocks.", "category": "commodity", "strength": "minor", "lasting": false},
 			{"text": "Interconnection delays weigh on the energy complex.", "category": "regulatory", "strength": "moderate", "lasting": true},
 		],
 	},
@@ -640,7 +640,7 @@ const INDUSTRY_NEWS := {
 		],
 		"negative": [
 			{"text": "Materials: industrial demand worries hit the miners.", "category": "commodity", "strength": "moderate", "lasting": true},
-			{"text": "Mining names slip as inventory data disappoints.", "category": "commodity", "strength": "minor", "lasting": false},
+			{"text": "Mining stocks slip as inventory data disappoints.", "category": "commodity", "strength": "minor", "lasting": false},
 			{"text": "A pit-disruption note weighs on the materials group.", "category": "industry", "strength": "minor", "lasting": false},
 		],
 	},
@@ -658,8 +658,8 @@ const INDUSTRY_NEWS := {
 	},
 	"Growth": {
 		"positive": [
-			{"text": "Growth rotation: high-duration names catch a bid.", "category": "macro", "strength": "moderate", "lasting": true},
-			{"text": "Risk appetite returns to growth and speculative names.", "category": "macro", "strength": "minor", "lasting": false},
+			{"text": "Growth rotation: high-duration stocks catch a bid.", "category": "macro", "strength": "moderate", "lasting": true},
+			{"text": "Risk appetite returns to growth and speculative stocks.", "category": "macro", "strength": "minor", "lasting": false},
 			{"text": "A cool data leak supercharges the growth bid.", "category": "macro", "strength": "moderate", "lasting": true},
 		],
 		"negative": [
@@ -671,7 +671,7 @@ const INDUSTRY_NEWS := {
 	"Healthcare": {
 		"positive": [
 			{"text": "Healthcare: biotech desks bid the group after a clean data tape.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "Pipeline chatter turns constructive across healthcare names.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Pipeline chatter turns constructive across healthcare stocks.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "Filing-window chatter bids the healthcare group.", "category": "regulatory", "strength": "moderate", "lasting": true},
 		],
 		"negative": [
@@ -683,24 +683,24 @@ const INDUSTRY_NEWS := {
 	"Consumer": {
 		"positive": [
 			{"text": "Consumer: traffic and mix look firmer across the group.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "Defensive consumer names catch a bid as the tape turns cautious.", "category": "industry", "strength": "minor", "lasting": false},
-			{"text": "Holiday traffic chatter turns constructive across consumer names.", "category": "industry", "strength": "moderate", "lasting": true},
+			{"text": "Defensive consumer stocks catch a bid as the tape turns cautious.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Holiday traffic chatter turns constructive across consumer stocks.", "category": "industry", "strength": "moderate", "lasting": true},
 		],
 		"negative": [
 			{"text": "Consumer: promotional intensity hits margins across the group.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "Traffic worries knock consumer names.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Traffic worries knock consumer stocks.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "A cold retail print weighs on the consumer group.", "category": "macro", "strength": "moderate", "lasting": true},
 		],
 	},
 	"Industrials": {
 		"positive": [
 			{"text": "Industrials: backlog commentary turns constructive across the group.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "Defense and aerospace names catch a bid on contract flow.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Defense and aerospace stocks catch a bid on contract flow.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "Rate-production chatter lifts the industrials group.", "category": "industry", "strength": "moderate", "lasting": true},
 		],
 		"negative": [
 			{"text": "Industrials: supply-chain slips weigh on the group.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "Order-book worries knock industrial names.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Order-book worries knock industrial stocks.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "A quality-hold note weighs on industrials.", "category": "industry", "strength": "moderate", "lasting": true},
 		],
 	},
@@ -712,7 +712,7 @@ const INDUSTRY_NEWS := {
 		],
 		"negative": [
 			{"text": "Financials: provision chatter weighs on the bank group.", "category": "industry", "strength": "moderate", "lasting": true},
-			{"text": "Deposit-cost worries knock financial names.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Deposit-cost worries knock financial stocks.", "category": "industry", "strength": "minor", "lasting": false},
 			{"text": "A hotter credit pocket weighs on the banks.", "category": "industry", "strength": "moderate", "lasting": true},
 		],
 	},
@@ -729,20 +729,20 @@ const MARKET_NEWS := {
 		{"text": "A modest payroll leak lifts risk appetite without a full rotation.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "Desk note: cash on the sidelines is said to be leaking back into the tape.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "Intraday: the dollar eases and the whole board catches a bid.", "category": "macro", "strength": "minor", "lasting": false},
-		{"text": "Breadth improves — more names participate in the bounce.", "category": "macro", "strength": "minor", "lasting": false},
+		{"text": "Breadth improves — more stocks participate in the bounce.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "A quiet Fed window lets dip-buyers work the tape.", "category": "macro", "strength": "minor", "lasting": false},
 	],
 	"negative": [
 		{"text": "Intraday: risk-off tone spreads across the market.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "Desk note: traders reduce exposure into the close.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "Hawkish shock knocks the whole market lower.", "category": "macro", "strength": "major", "lasting": true},
-		{"text": "Liquidity thins — selling pressure hits every name.", "category": "macro", "strength": "moderate", "lasting": false},
+		{"text": "Liquidity thins — selling pressure hits every stock.", "category": "macro", "strength": "moderate", "lasting": false},
 		{"text": "A hotter inflation leak knocks the whole tape.", "category": "macro", "strength": "major", "lasting": true},
 		{"text": "Intraday: duration is cut after a noisy data window.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "A modest payroll leak knocks risk without a full unwind.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "Desk note: cash is said to be leaving the tape into the close.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "Intraday: the dollar firms and the whole board is offered.", "category": "macro", "strength": "minor", "lasting": false},
-		{"text": "Breadth deteriorates — fewer names hold the bounce.", "category": "macro", "strength": "minor", "lasting": false},
+		{"text": "Breadth deteriorates — fewer stocks hold the bounce.", "category": "macro", "strength": "minor", "lasting": false},
 		{"text": "A noisy Fed window keeps dip-buyers on the sidelines.", "category": "macro", "strength": "minor", "lasting": false},
 	],
 }
@@ -861,7 +861,7 @@ func _generate_surprise(stock: Stock, session_time: String) -> NewsEvent:
 			"BREAKING: a surprise contract leak hits %s mid-session." % stock.company_name,
 			"BREAKING: a buy-side note lifts %s mid-session." % stock.company_name,
 			"BREAKING: unusual call buying hits %s mid-session." % stock.company_name,
-			"BREAKING: a peer print sends a relative bid into %s." % stock.company_name,
+			"BREAKING: peer results send a relative bid into %s." % stock.company_name,
 		])
 	else:
 		headlines = PackedStringArray([
@@ -869,7 +869,7 @@ func _generate_surprise(stock: Stock, session_time: String) -> NewsEvent:
 			"BREAKING: a surprise cut hits %s mid-session." % stock.company_name,
 			"BREAKING: a sell-side note knocks %s mid-session." % stock.company_name,
 			"BREAKING: unusual put buying hits %s mid-session." % stock.company_name,
-			"BREAKING: a peer print sends a relative offer into %s." % stock.company_name,
+			"BREAKING: peer results send a relative offer into %s." % stock.company_name,
 		])
 	var headline: String = _pick_fresh_text(headlines)
 	var item := {

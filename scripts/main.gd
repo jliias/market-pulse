@@ -121,8 +121,8 @@ var cash_out_button: Button
 @onready var close_listing_label: Label = %CloseListingLabel
 @onready var story_board: HBoxContainer = %StoryBoard
 @onready var print_pause_overlay: ColorRect = %PrintPauseOverlay
-@onready var print_pause_headline: Label = %PrintPauseHeadline
-@onready var print_pause_reaction: Label = %PrintPauseReaction
+@onready var print_pause_headline: RichTextLabel = %PrintPauseHeadline
+@onready var print_pause_reaction: RichTextLabel = %PrintPauseReaction
 @onready var print_pause_timer: Label = %PrintPauseTimer
 @onready var print_pause_hold_button: Button = %PrintPauseHoldButton
 @onready var print_pause_ticket_button: Button = %PrintPauseTicketButton
@@ -137,6 +137,8 @@ func _ready() -> void:
 	get_tree().set_auto_accept_quit(false)
 	resized.connect(_apply_responsive_layout)
 	news_feed.tooltip_text = ""
+	print_pause_headline.tooltip_text = ""
+	print_pause_reaction.tooltip_text = ""
 	_connect_controls()
 	_build_timeframe_buttons()
 	_apply_hud_tooltips()
@@ -1170,9 +1172,12 @@ func _begin_print_pause(event: NewsEvent) -> void:
 		var symbol: String = event.affected_symbols[0]
 		if market.watchlist.has(symbol):
 			print_pause_symbol = symbol
-	print_pause_headline.text = event.headline
-	print_pause_reaction.text = event.reaction if not event.reaction.is_empty() else "Decide now, or continue."
+	print_pause_headline.text = CopyHints.annotate(event.headline, "#e8ecf2")
+	var reaction: String = event.reaction if not event.reaction.is_empty() else "Decide now, or continue."
+	print_pause_reaction.text = CopyHints.annotate(reaction, "#c7d1e0")
 	print_pause_ticket_button.visible = not print_pause_symbol.is_empty()
+	if not print_pause_symbol.is_empty():
+		print_pause_ticket_button.text = "Select %s" % print_pause_symbol
 	print_pause_overlay.visible = true
 	tick_timer.stop()
 	_refresh_print_pause_timer()

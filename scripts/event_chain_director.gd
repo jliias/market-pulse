@@ -160,10 +160,10 @@ const ARCS := {
 		"stages": {
 			"announcement": {
 				"positive": [
-					{"text": "Desks call a growth rotation: duration and speculative names are back in favor.", "category": "macro", "strength": "moderate", "lasting": true},
+					{"text": "Desks call a growth rotation: duration and speculative stocks are back in favor.", "category": "macro", "strength": "moderate", "lasting": true},
 				],
 				"negative": [
-					{"text": "Desks warn a growth unwind is starting across high-duration names.", "category": "macro", "strength": "moderate", "lasting": true},
+					{"text": "Desks warn a growth unwind is starting across high-duration stocks.", "category": "macro", "strength": "moderate", "lasting": true},
 				],
 			},
 			"follow_up": {
@@ -176,10 +176,10 @@ const ARCS := {
 			},
 			"reaction": {
 				"positive": [
-					{"text": "Market reaction: growth names on the board catch the bid.", "category": "macro", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: growth stocks on the board catch the bid.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 				"negative": [
-					{"text": "Market reaction: growth names on the board are offered as duration gets cut.", "category": "macro", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: growth stocks on the board are offered as duration gets cut.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 			},
 			"twist": {
@@ -461,7 +461,7 @@ const ARCS := {
 					{"text": "Market reaction: risk appetite returns across the tape.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 				"negative": [
-					{"text": "Market reaction: risk-off hits every name after the policy leak.", "category": "macro", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: risk-off hits every stock after the policy leak.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 			},
 			"twist": {
@@ -821,7 +821,7 @@ const ARCS := {
 					{"text": "Harbor Foods says input costs are easing faster than the street billed.", "category": "earnings", "strength": "moderate", "lasting": true},
 				],
 				"negative": [
-					{"text": "Harbor Foods warns input costs may stay hot into the next print.", "category": "earnings", "strength": "moderate", "lasting": true},
+					{"text": "Harbor Foods warns input costs may stay hot into the next earnings.", "category": "earnings", "strength": "moderate", "lasting": true},
 				],
 			},
 			"follow_up": {
@@ -876,15 +876,15 @@ const ARCS := {
 					{"text": "Follow-up: consumer-factor flows stay bid into the session.", "category": "industry", "strength": "minor", "lasting": true},
 				],
 				"negative": [
-					{"text": "Follow-up: consumer names stay offered as traffic chatter stays soft.", "category": "industry", "strength": "minor", "lasting": true},
+					{"text": "Follow-up: consumer stocks stay offered as traffic chatter stays soft.", "category": "industry", "strength": "minor", "lasting": true},
 				],
 			},
 			"reaction": {
 				"positive": [
-					{"text": "Market reaction: consumer names on the board catch the bid.", "category": "industry", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: consumer stocks on the board catch the bid.", "category": "industry", "strength": "moderate", "lasting": false},
 				],
 				"negative": [
-					{"text": "Market reaction: consumer names on the board are offered as traffic fades.", "category": "industry", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: consumer stocks on the board are offered as traffic fades.", "category": "industry", "strength": "moderate", "lasting": false},
 				],
 			},
 			"twist": {
@@ -897,7 +897,7 @@ const ARCS := {
 			},
 			"resolution": {
 				"positive": [
-					{"text": "Resolution: the consumer bounce holds — desks stay in the defensive names.", "category": "industry", "strength": "moderate", "lasting": true},
+					{"text": "Resolution: the consumer bounce holds — desks stay in the defensive stocks.", "category": "industry", "strength": "moderate", "lasting": true},
 				],
 				"negative": [
 					{"text": "Resolution: the consumer squeeze is done — desks call the traffic reset complete.", "category": "industry", "strength": "moderate", "lasting": true},
@@ -928,10 +928,10 @@ const ARCS := {
 			},
 			"reaction": {
 				"positive": [
-					{"text": "Market reaction: commodity names on the board catch the bid.", "category": "commodity", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: commodity stocks on the board catch the bid.", "category": "commodity", "strength": "moderate", "lasting": false},
 				],
 				"negative": [
-					{"text": "Market reaction: commodity names on the board are offered with the complex.", "category": "commodity", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: commodity stocks on the board are offered with the complex.", "category": "commodity", "strength": "moderate", "lasting": false},
 				],
 			},
 			"twist": {
@@ -978,7 +978,7 @@ const ARCS := {
 					{"text": "Market reaction: risk appetite returns as duration catches a bid.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 				"negative": [
-					{"text": "Market reaction: risk-off hits every name as duration is cut.", "category": "macro", "strength": "moderate", "lasting": false},
+					{"text": "Market reaction: risk-off hits every stock as duration is cut.", "category": "macro", "strength": "moderate", "lasting": false},
 				],
 			},
 			"twist": {

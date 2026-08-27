@@ -14,7 +14,7 @@ You are a day trader at a desk. Each sitting is one market session. You pick **t
 
 Fantasy: read the tape, sit through weather and stories, size trades through a real spread and commission, and leave a book that still looks good when the week is scored.
 
-Tone: **HUD, ticket, pause, close, pick screen, and tooltips** use plain words — stock, price, headline. The **news feed** may still say *name* or *print*; those stay underlined with hover. Not a glossary screen.
+Tone: **HUD, ticket, pause, close, pick screen, feed, and tooltips** use **stock** (not *name*). **Print** in the feed means an official number (earnings, inflation, traffic). “No news” lines say **headline** / **news**, not print. Desk terms stay underlined with hover. Not a glossary screen.
 
 ---
 
@@ -140,7 +140,7 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 Top bar: book value, cash, session P/L, clock, **vs Market**.  
 Bottom bar: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, Settings, End Session / New Day, Leave desk.
 
-**Act on this headline:** chain beats, major headlines, existential halt **and** distressed reopen, weather flips, and YOUR TAPE pause the tape **10 real seconds** (major / chain / weather / YOUR TAPE) or **14** (existential wipe). **Continue** (or timeout) resumes. To ticket selects the named watchlist stock and resumes — you still size the order on the live tape. Circuit volatility halt/reopen does **not** open this overlay. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Continue. Fast-forward to close does not pause.
+**Act on this headline:** chain beats, major headlines, existential halt **and** distressed reopen, weather flips, and YOUR TAPE pause the tape **10 real seconds** (major / chain / weather / YOUR TAPE) or **14** (existential wipe). **Continue** (or timeout) resumes. **Select TICKER** selects that watchlist stock and resumes — you still size the order on the live tape. Pause headline and reaction use the same underlined hover terms as the feed. Circuit volatility halt/reopen does **not** open this overlay. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Continue. Fast-forward to close does not pause.
 
 Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prices**, not calendar months and not OHLC candles. Tooltips say so. While the session is **closed**, HALTED / DISTRESSED is **not** drawn as a chart banner — it is folded into the close overlay stamp.
 

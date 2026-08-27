@@ -525,22 +525,29 @@ custom_minimum_size = Vector2(520, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="PrintPauseHeadline" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847362999]
+[node name="PrintPauseHeadline" type="RichTextLabel" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847362999]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 20
-horizontal_alignment = 1
+theme_override_colors/default_color = Color(0.91, 0.93, 0.96, 1)
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 3
+horizontal_alignment = 1
 
-[node name="PrintPauseReaction" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363000]
+[node name="PrintPauseReaction" type="RichTextLabel" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363000]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.78, 0.82, 0.88, 1)
-theme_override_font_sizes/font_size = 15
-horizontal_alignment = 1
+theme_override_colors/default_color = Color(0.78, 0.82, 0.88, 1)
+theme_override_font_sizes/normal_font_size = 15
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 3
+horizontal_alignment = 1
 
 [node name="PrintPauseTimer" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363001]
 unique_name_in_owner = true
@@ -562,9 +569,9 @@ text = "Continue"
 
 [node name="PrintPauseTicketButton" type="Button" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack/PrintPauseButtons" unique_id=847363004]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 40)
+custom_minimum_size = Vector2(168, 40)
 layout_mode = 2
-text = "To ticket"
+text = "Select ALPH"
 
 [node name="OpenCountdownOverlay" type="CenterContainer" parent="." unique_id=847362995]
 unique_name_in_owner = true
