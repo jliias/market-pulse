@@ -34,6 +34,13 @@ var close_tomorrow: String = ""
 var close_streak: String = ""
 var speed_buttons: Array[Button] = []
 var settings_overlay: ColorRect
+var story_overlay: ColorRect
+var story_title_label: Label
+var story_beats: VBoxContainer
+var story_now_label: Label
+var story_select_button: Button
+var story_select_symbol: String = ""
+var story_dossier_open := false
 var story_board_sig: String = ""
 var timeframe: String = "5M"
 var watchlist_cards: Dictionary = {}
@@ -145,6 +152,7 @@ func _ready() -> void:
 	_apply_launch_mode()
 	tape_speed = SaveManager.tape_speed
 	_build_settings()
+	_build_story_overlay()
 	_build_watchlist()
 	_build_chapter_overlay()
 	market.player_portfolio = portfolio
@@ -281,6 +289,7 @@ func _begin_session() -> void:
 	_consume_away_step()
 	market.prepare()
 	portfolio.mark_day_start(market.stocks)
+	_close_story_dossier()
 	news_feed.clear()
 	selected_symbol = market.watchlist[0]
 	_set_trade_mode("buy")
@@ -587,7 +596,7 @@ func _pause_for_confirm() -> void:
 
 func _cancel_confirm_dialog() -> void:
 	menu_confirm_open = false
-	if print_pause_active:
+	if print_pause_active or story_dossier_open:
 		return
 	if session_active and not awaiting_open and not market.is_closed:
 		tick_timer.start()
@@ -1046,6 +1055,7 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 		])
 	if not event.reaction.is_empty():
 		news_feed.append_text("    %s\n" % CopyHints.annotate(event.reaction, "#888888"))
+	market.chain_director.note_related_news(event, market.stocks)
 
 
 func _build_settings() -> void:
@@ -1137,6 +1147,223 @@ func _close_settings() -> void:
 		settings_overlay.visible = false
 
 
+func _build_story_overlay() -> void:
+	story_overlay = ColorRect.new()
+	story_overlay.visible = false
+	story_overlay.color = Color(0.04, 0.05, 0.07, 0.72)
+	story_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	story_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	story_overlay.gui_input.connect(_on_story_dim_input)
+	add_child(story_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	story_overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(480, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0.1, 0.11, 0.14, 1)
+	box.border_color = Color(0.78, 0.82, 0.9, 0.55)
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(10)
+	box.content_margin_left = 20
+	box.content_margin_right = 20
+	box.content_margin_top = 16
+	box.content_margin_bottom = 16
+	panel.add_theme_stylebox_override("panel", box)
+	center.add_child(panel)
+
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 10)
+	panel.add_child(stack)
+
+	story_title_label = Label.new()
+	story_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story_title_label.add_theme_font_size_override("font_size", 18)
+	story_title_label.add_theme_color_override("font_color", SELECTED_ACCENT)
+	stack.add_child(story_title_label)
+
+	var beat_scroll := ScrollContainer.new()
+	beat_scroll.custom_minimum_size = Vector2(0, 240)
+	beat_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	beat_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	stack.add_child(beat_scroll)
+
+	story_beats = VBoxContainer.new()
+	story_beats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	story_beats.add_theme_constant_override("separation", 8)
+	beat_scroll.add_child(story_beats)
+
+	story_now_label = Label.new()
+	story_now_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story_now_label.add_theme_font_size_override("font_size", 14)
+	story_now_label.add_theme_color_override("font_color", Color(0.86, 0.88, 0.92))
+	stack.add_child(story_now_label)
+
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 10)
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_child(buttons)
+
+	story_select_button = Button.new()
+	story_select_button.text = "Select"
+	story_select_button.custom_minimum_size = Vector2(140, 36)
+	story_select_button.pressed.connect(_select_from_story_dossier)
+	buttons.add_child(story_select_button)
+
+	var close_button := Button.new()
+	close_button.text = "Close"
+	close_button.custom_minimum_size = Vector2(140, 36)
+	close_button.pressed.connect(_close_story_dossier)
+	buttons.add_child(close_button)
+	_apply_button_style(close_button, UI_ACCENT, UI_BORDER)
+
+
+func _on_story_dim_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT:
+			_close_story_dossier()
+
+
+func _story_beat_line(row: Dictionary) -> String:
+	var day: int = int(row.get("day", 0))
+	var time: String = str(row.get("time", ""))
+	var prefix := ""
+	if day > 0:
+		prefix = "Day %d" % day
+		if not time.is_empty():
+			prefix += " · %s" % time
+		prefix += " — "
+	var kind: String = str(row.get("kind", ""))
+	var stage_name: String = EventChain.display_stage(str(row.get("stage", "")))
+	if kind == "skipped":
+		if stage_name.is_empty():
+			return "%sskipped" % prefix
+		return "%s%s skipped" % [prefix, stage_name.capitalize()]
+	var headline: String = str(row.get("headline", ""))
+	if kind == "tape" or stage_name.is_empty():
+		return "%s%s" % [prefix, headline]
+	return "%s%s — %s" % [prefix, stage_name.capitalize(), headline]
+
+
+func _open_story_dossier(arc_id: String) -> void:
+	if story_overlay == null:
+		return
+	var chain: EventChain = market.chain_director.chain_by_arc_id(arc_id)
+	if chain == null:
+		return
+	var entry: Dictionary = {}
+	for item in market.chain_director.board_entries():
+		if str(item.get("arc_id", "")) == arc_id:
+			entry = item
+			break
+	if entry.is_empty():
+		return
+	entry["beats"] = chain.beat_log.duplicate(true)
+	var subject: String = str(entry.get("subject", ""))
+	var scope: String = str(entry.get("scope", "company"))
+	var title: String = subject
+	match scope:
+		"company":
+			title = subject
+		"industry":
+			var industry_name: String = str(entry.get("industry", "SECTOR"))
+			title = industry_name if not industry_name.is_empty() else "SECTOR"
+		_:
+			title = "TAPE"
+	var stage: String = str(entry.get("stage", ""))
+	if bool(entry.get("wipe", false)):
+		story_title_label.text = "%s  ·  %s  ·  make-or-break" % [title, stage]
+	else:
+		story_title_label.text = "%s  ·  %s" % [title, stage]
+
+	for child in story_beats.get_children():
+		story_beats.remove_child(child)
+		child.queue_free()
+	var beats: Variant = entry.get("beats", [])
+	if typeof(beats) != TYPE_ARRAY or (beats as Array).is_empty():
+		var empty := Label.new()
+		empty.text = "No headlines saved yet. The next one on this story will appear here."
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.add_theme_color_override("font_color", Color(0.62, 0.65, 0.72))
+		empty.add_theme_font_size_override("font_size", 13)
+		story_beats.add_child(empty)
+	else:
+		for item in beats:
+			if typeof(item) != TYPE_DICTIONARY:
+				continue
+			var row: Dictionary = item
+			var line := Label.new()
+			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			line.add_theme_font_size_override("font_size", 13)
+			line.text = _story_beat_line(row)
+			if str(row.get("kind", "")) == "skipped":
+				line.add_theme_color_override("font_color", Color(0.55, 0.58, 0.64))
+			else:
+				line.add_theme_color_override("font_color", Color(0.86, 0.88, 0.92))
+			story_beats.add_child(line)
+
+	var now_bits: PackedStringArray = []
+	if float(entry.get("polarity", 1.0)) >= 0.0:
+		match scope:
+			"company":
+				now_bits.append("News on this story is good for this stock.")
+			"industry":
+				now_bits.append("News on this story is good for this sector.")
+			_:
+				now_bits.append("News on this story is good for the market.")
+	else:
+		match scope:
+			"company":
+				now_bits.append("News on this story is bad for this stock.")
+			"industry":
+				now_bits.append("News on this story is bad for this sector.")
+			_:
+				now_bits.append("News on this story is bad for the market.")
+	var hook: String = str(entry.get("card_hook", ""))
+	if hook.is_empty():
+		hook = str(entry.get("hook", ""))
+	if not hook.is_empty():
+		now_bits.append(hook)
+	story_now_label.text = "\n".join(now_bits)
+
+	story_select_symbol = ""
+	if scope == "company" and market.watchlist.has(subject):
+		story_select_symbol = subject
+		story_select_button.visible = true
+		story_select_button.text = "Select %s" % subject
+		_apply_button_style(story_select_button, SELECTED_ACCENT, UI_BORDER, true)
+	else:
+		story_select_button.visible = false
+
+	story_dossier_open = true
+	story_overlay.visible = true
+	story_overlay.move_to_front()
+	if session_active and not awaiting_open and not market.is_closed:
+		tick_timer.stop()
+
+
+func _select_from_story_dossier() -> void:
+	if not story_select_symbol.is_empty():
+		_select_stock(story_select_symbol)
+	_close_story_dossier()
+
+
+func _close_story_dossier() -> void:
+	if story_overlay != null:
+		story_overlay.visible = false
+	story_dossier_open = false
+	story_select_symbol = ""
+	if print_pause_active or menu_confirm_open:
+		return
+	if session_active and not awaiting_open and not market.is_closed:
+		tick_timer.start()
+
+
 func _set_tape_speed(mult: int) -> void:
 	tape_speed = clampi(mult, 1, 3)
 	SaveManager.tape_speed = tape_speed
@@ -1194,7 +1421,7 @@ func _clear_print_pause() -> void:
 func _end_print_pause() -> void:
 	var was_paused: bool = print_pause_active
 	_clear_print_pause()
-	if was_paused and session_active and not awaiting_open and not market.is_closed and not menu_confirm_open:
+	if was_paused and session_active and not awaiting_open and not market.is_closed and not menu_confirm_open and not story_dossier_open:
 		tick_timer.start()
 	_refresh_trade_panel()
 
@@ -1231,12 +1458,15 @@ func _story_board_signature(entries: Array[Dictionary]) -> String:
 		var listing: String = ""
 		if market.stocks.has(subject):
 			listing = market.stocks[subject].listing_label()
-		bits.append("%s|%s|%s|%s|%s" % [
+		var beats: Variant = entry.get("beats", [])
+		var beat_n: int = beats.size() if typeof(beats) == TYPE_ARRAY else 0
+		bits.append("%s|%s|%s|%s|%s|%d" % [
 			subject,
 			str(entry.get("stage", "")),
 			str(entry.get("wipe", false)),
 			str(entry.get("card_hook", "")),
 			listing,
+			beat_n,
 		])
 	return "|".join(bits)
 
@@ -1272,8 +1502,7 @@ func _make_story_card(entry: Dictionary) -> Button:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.clip_contents = true
 	button.custom_minimum_size = Vector2(0, 56)
-	if scope == "company" and market.watchlist.has(subject):
-		button.pressed.connect(_select_stock.bind(subject), CONNECT_DEFERRED)
+	button.pressed.connect(_open_story_dossier.bind(str(entry.get("arc_id", ""))))
 	_apply_button_style(button, UI_ACCENT, UI_BORDER)
 
 	var pad := MarginContainer.new()

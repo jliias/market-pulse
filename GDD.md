@@ -132,7 +132,7 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 **Narrow** (window width **< 1100**): those rows stack vertically; the ticket still sits in the body column.
 
 1. **Watchlist** — ticker cards: risk, last, day change, volume, **LONG n ±$P/L** or **SHORT n ±$P/L** (purple border when short), mini chart. Click to select.
-2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **HALTED** / **DISTRESSED** if listed that way. Wipe arcs say **Make-or-break tomorrow.** Click a **company** story card to select that watchlist ticker.
+2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **PAUSE** / **MAKE-OR-BREAK** / **DISTRESSED** if listed that way. Wipe arcs say **Make-or-break tomorrow.** Click a card for a short overlay of that arc’s **topic log** — authored beats plus related tape on the same name/sector/market, kept across days (the session feed still clears at New Day). **Select TICKER** if it is on the watchlist.
 3. **News feed** — timestamped headlines with a reaction line. Tags include ticker, **MARKET**, sector shorts, and **YOUR TAPE** (gift or trap). Desk terms are **underlined**; hover for a short definition.
 4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, **Buy / Sell / Short / Cover**. Message line is fills and blocks only (halted, closed, pause). Headlines stay in the feed / pause overlay; the day result stays on the close panel.
 5. **Book** — longs and short rows, open P/L.
@@ -208,7 +208,7 @@ Feed is capped (~50). Premarket pack is a few items so the open is not a wall of
 
 ### Authored arcs (event chains)
 
-Up to **two** stories active. Stages: announcement → follow-up → reaction → twist → resolution. Stages can **skip**. Beats can prefer premarket. Close screen (and menu) surface a **hook** for tomorrow.
+Up to **two** stories active. Stages: announcement → follow-up → reaction → twist → resolution. Stages can **skip**. Beats can prefer premarket. Close screen (and menu) surface a **hook** for tomorrow. Each open card keeps a **topic log** (day · time · headline) for the life of the arc, including related tape that is not a named stage.
 
 Implemented arcs (company or tape-wide):
 

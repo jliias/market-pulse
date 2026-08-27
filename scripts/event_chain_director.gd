@@ -1048,6 +1048,52 @@ static func hook_from_save(data: Variant) -> String:
 	return ""
 
 
+func chain_by_arc_id(arc_id: String) -> EventChain:
+	for chain in active:
+		if chain.arc_id == arc_id:
+			return chain
+	return null
+
+
+func note_related_news(event: NewsEvent, stocks: Dictionary) -> void:
+	if event == null:
+		return
+	if event.scope == "system" and event.chain_id.is_empty() and event.drama_kind.is_empty() and not event.existential:
+		return
+	for chain in active:
+		if not event.chain_id.is_empty() and event.chain_id == chain.arc_id:
+			continue
+		if _event_matches_chain(event, chain, stocks):
+			chain.log_tape(event.headline, _topic_day(), event.timestamp)
+
+
+func _topic_day() -> int:
+	return maxi(calendar_day, 0) + 1
+
+
+func _event_matches_chain(event: NewsEvent, chain: EventChain, stocks: Dictionary) -> bool:
+	if not event.chain_id.is_empty():
+		return event.chain_id == chain.arc_id
+	match chain.scope:
+		"company":
+			if event.affected_symbols.has(chain.subject):
+				return true
+			var name: String = CompanyCatalog.display_name(chain.subject)
+			return event.headline.contains(chain.subject) or (not name.is_empty() and event.headline.contains(name))
+		"industry":
+			if not chain.industry.is_empty() and event.industry == chain.industry:
+				return true
+			for symbol in event.affected_symbols:
+				if not stocks.has(symbol):
+					continue
+				var stock: Stock = stocks[symbol]
+				if stock.in_industry(chain.industry):
+					return true
+			return false
+		_:
+			return event.scope == "market"
+
+
 func hook_line() -> String:
 	for chain in active:
 		var line: String = hook_text(chain)
@@ -1063,13 +1109,17 @@ func board_entries() -> Array[Dictionary]:
 			continue
 		var wipe: bool = chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id)
 		out.append({
+			"arc_id": chain.arc_id,
 			"subject": chain.subject,
 			"scope": chain.scope,
 			"industry": chain.industry,
 			"stage": EventChain.display_stage(chain.pending),
+			"pending": chain.pending,
 			"wipe": wipe,
 			"hook": hook_text(chain),
 			"card_hook": card_hook(chain),
+			"beats": chain.beat_log.duplicate(true),
+			"polarity": chain.polarity,
 		})
 	return out
 
@@ -1079,7 +1129,7 @@ func card_hook(chain: EventChain) -> String:
 		return ""
 	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
 		return "Make-or-break tomorrow."
-	return "Still unresolved."
+	return "Not finished yet."
 
 
 func hook_text(chain: EventChain) -> String:
@@ -1287,6 +1337,7 @@ func _fire(chain: EventChain, stocks: Array[Stock], session_time: String, premar
 	event.headline = headline
 	event.attach_chain(chain.arc_id, stage)
 	event.existential = bool(item.get("existential", false))
+	chain.log_beat(stage, headline, _topic_day(), session_time)
 	_advance(chain, stage)
 	return event
 
@@ -1315,6 +1366,7 @@ func _choose_next(from_stage: String, chain: EventChain) -> String:
 		if randf() < chance:
 			if not chain.skipped.has(stage):
 				chain.skipped.append(stage)
+				chain.log_skip(stage, _topic_day())
 			continue
 		chosen = stage
 		break

@@ -16,6 +16,7 @@ var industry: String = ""
 var polarity: float = 1.0
 var fired: Array[String] = []
 var skipped: Array[String] = []
+var beat_log: Array = []
 var pending: String = "announcement"
 var due_day: int = 0
 var due_tick: int = 0
@@ -32,6 +33,7 @@ func to_dict() -> Dictionary:
 		"polarity": polarity,
 		"fired": fired.duplicate(),
 		"skipped": skipped.duplicate(),
+		"beat_log": beat_log.duplicate(true),
 		"pending": pending,
 		"due_day": due_day,
 		"due_tick": due_tick,
@@ -54,7 +56,57 @@ static func from_dict(data: Dictionary) -> EventChain:
 	chain.started_day = int(data.get("started_day", 0))
 	chain.fired = _string_array(data.get("fired", []))
 	chain.skipped = _string_array(data.get("skipped", []))
+	chain.beat_log = _beat_array(data.get("beat_log", []))
 	return chain
+
+
+func log_beat(stage: String, headline: String, day: int, time: String) -> void:
+	_append_log("fired", stage, headline, day, time)
+
+
+func log_skip(stage: String, day: int) -> void:
+	_append_log("skipped", stage, "", day, "")
+
+
+func log_tape(headline: String, day: int, time: String) -> void:
+	_append_log("tape", "", headline, day, time)
+
+
+func _append_log(kind: String, stage: String, headline: String, day: int, time: String) -> void:
+	if not headline.is_empty():
+		for item in beat_log:
+			if typeof(item) != TYPE_DICTIONARY:
+				continue
+			var row: Dictionary = item
+			if str(row.get("headline", "")) == headline and int(row.get("day", 0)) == day:
+				return
+	beat_log.append({
+		"kind": kind,
+		"stage": stage,
+		"headline": headline,
+		"day": day,
+		"time": time,
+	})
+	if beat_log.size() > 40:
+		beat_log.remove_at(0)
+
+
+static func _beat_array(value: Variant) -> Array:
+	var out: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return out
+	for item in value:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = item
+		out.append({
+			"kind": str(row.get("kind", "fired")),
+			"stage": str(row.get("stage", "")),
+			"headline": str(row.get("headline", "")),
+			"day": int(row.get("day", 0)),
+			"time": str(row.get("time", "")),
+		})
+	return out
 
 
 static func _string_array(value: Variant) -> Array[String]:
