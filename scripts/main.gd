@@ -715,10 +715,7 @@ func _refresh_selected_stock() -> void:
 	selected_change_label.add_theme_color_override("font_color", _pl_color(change))
 	var typical: String = str(CompanyCatalog.risk_profile(stock.symbol).get("typical", ""))
 	if stock.is_halted():
-		if stock.halt_outcome == Stock.OUTCOME_RESUME:
-			selected_meta_label.text = "HALTED · volatility pause · reopens listed"
-		else:
-			selected_meta_label.text = "HALTED · no trading until distressed reopen"
+		selected_meta_label.text = stock.halt_stamp()
 		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.28))
 		CopyHints.hover(selected_meta_label, stock.halt_tooltip())
 	elif stock.is_distressed():
@@ -743,7 +740,7 @@ func _refresh_chart() -> void:
 	if session_over:
 		main_chart.set_status_banner("")
 	elif stock.is_halted():
-		var sub: String = "No trading · reopens listed" if stock.halt_outcome == Stock.OUTCOME_RESUME else "No trading · reopens distressed"
+		var sub: String = "Volatility pause · reopens listed" if stock.halt_outcome == Stock.OUTCOME_RESUME else "Make-or-break · reopens distressed"
 		main_chart.set_status_banner("HALTED", sub, Color(0.95, 0.78, 0.28))
 	elif stock.is_distressed():
 		main_chart.set_status_banner("DISTRESSED", "Sell-only residual", Color(0.95, 0.38, 0.38))
@@ -766,7 +763,7 @@ func _refresh_closed_overlay(stock: Stock) -> void:
 		close_listing_label.text = "DISTRESSED · sell-only residual"
 		close_listing_label.add_theme_color_override("font_color", Color(0.95, 0.55, 0.52, 0.95))
 	elif stock.is_halted():
-		close_listing_label.text = "HALTED"
+		close_listing_label.text = stock.halt_stamp()
 		close_listing_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 0.95))
 	else:
 		close_listing_label.text = "Market closed"
@@ -1159,7 +1156,7 @@ func _consider_act_pauses(events: Array[NewsEvent]) -> void:
 	if market.drama.spectator:
 		return
 	for event in events:
-		if event.should_act_pause():
+		if event.should_act_pause(market.watchlist):
 			_begin_print_pause(event)
 			return
 
@@ -1260,7 +1257,10 @@ func _make_story_card(entry: Dictionary) -> Button:
 	if market.stocks.has(subject):
 		var stock: Stock = market.stocks[subject]
 		if stock.is_halted():
-			listing = " · HALTED"
+			if stock.halt_outcome == Stock.OUTCOME_RESUME:
+				listing = " · PAUSE"
+			else:
+				listing = " · MAKE-OR-BREAK"
 		elif stock.is_distressed():
 			listing = " · DISTRESSED"
 	var line1: String = "%s  ·  %s%s" % [title, str(entry.get("stage", "")), listing]

@@ -96,18 +96,27 @@ func attach_chain(p_chain_id: String, p_stage: String) -> void:
 	chain_stage = p_stage
 
 
-func should_act_pause() -> bool:
+func should_act_pause(watchlist: Array[String] = []) -> bool:
 	if skip_act_pause or is_premarket:
 		return false
-	if scope == "system" and chain_id.is_empty() and drama_kind.is_empty() and not weather_flip and not existential:
-		return false
+	if existential or weather_flip or not drama_kind.is_empty():
+		return true
+	if chain_stage == "resolution" and _hits_watchlist(watchlist):
+		return true
 	if not chain_id.is_empty():
+		return false
+	if scope != "company":
+		return false
+	if (is_major or strength == "major") and _hits_watchlist(watchlist):
 		return true
-	if existential or weather_flip:
-		return true
-	if not drama_kind.is_empty():
-		return true
-	return is_major or strength == "major"
+	return false
+
+
+func _hits_watchlist(watchlist: Array[String]) -> bool:
+	for symbol in affected_symbols:
+		if watchlist.has(str(symbol)):
+			return true
+	return false
 
 
 func act_pause_seconds() -> float:

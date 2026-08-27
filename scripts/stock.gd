@@ -191,11 +191,19 @@ func floor_price() -> float:
 func listing_label() -> String:
 	match listing:
 		LISTING_HALTED:
-			return "HALTED"
+			if halt_outcome == OUTCOME_RESUME:
+				return "HALTED · listed"
+			return "HALTED · make-or-break"
 		LISTING_DISTRESSED:
 			return "DISTRESSED"
 		_:
 			return personality_label.to_upper()
+
+
+func halt_stamp() -> String:
+	if halt_outcome == OUTCOME_RESUME:
+		return "HALTED · volatility pause · reopens listed"
+	return "HALTED · make-or-break · reopens distressed"
 
 
 func halt_tooltip() -> String:

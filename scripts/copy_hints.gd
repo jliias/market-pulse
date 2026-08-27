@@ -10,7 +10,7 @@ const HUD_BID_ASK := "Buy at the ask (sellers' price). Sell at the bid (buyers' 
 const HUD_BID := "Bid: what buyers will pay. You sell at this price."
 const HUD_ASK := "Ask: what sellers want. You buy at this price."
 const HUD_HALTED_RESUME := "Volatility pause. No trading for a few minutes, then this stock reopens listed — you can buy and sell again."
-const HUD_HALTED_DISTRESS := "Trading is stopped. This stock will reopen distressed: sell-only residual, replaced at week recap."
+const HUD_HALTED_DISTRESS := "Make-or-break halt. This stock will reopen distressed: sell-only residual, replaced at week recap. Not a short volatility pause."
 const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Replaced at week recap."
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
 const HUD_SHORT := "You profit if the last price falls. Caps at 20% of the book. Covers at the close. You cannot short a stock you hold, or one that is halted or distressed. An open short can still be covered during a halt."
@@ -74,7 +74,7 @@ const _HINTS := {
 	"guidance": "What the company says it will earn or ship from here.",
 	"Overweight": "Analyst speak for buy — they want more of this stock than the typical basket.",
 	"Underweight": "Analyst speak for sell — they want less of this stock than the typical basket.",
-	"HALTED": "Trading stopped for a few minutes. It may reopen live, or distressed after a wipe.",
+	"HALTED": "Trading is stopped. A volatility pause reopens listed. A make-or-break halt reopens distressed.",
 	"Distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
 	"distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
 	"DISTRESSED": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",

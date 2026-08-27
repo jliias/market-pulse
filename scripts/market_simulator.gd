@@ -477,7 +477,7 @@ func _apply_existential(event: NewsEvent, premarket: bool) -> void:
 		names.append(stock.company_name)
 	if names.is_empty():
 		return
-	event.reaction = "HALTED: %s — no trading until the stock reopens distressed. Sell-only after the gap." % ", ".join(names)
+	event.reaction = "HALTED: %s — make-or-break. Reopens distressed. Sell-only after the gap." % ", ".join(names)
 	_nudge_market_mood(event, -0.35)
 
 
@@ -485,11 +485,11 @@ func _halt_event(stock: Stock, premarket: bool) -> NewsEvent:
 	var headline: String
 	var reaction: String
 	if stock.halt_reason == Stock.HALT_VOLATILITY:
-		headline = "HALTED: %s — volatility pause after a fast move." % stock.company_name
-		reaction = "No trading for a few minutes. It should reopen listed."
+		headline = "HALTED: %s — volatility pause. Reopens listed." % stock.company_name
+		reaction = "No trading for a few minutes. This is a circuit, not a wipe."
 	else:
-		headline = "HALTED: %s — trading stopped pending the next move." % stock.company_name
-		reaction = "No buys or sells until reopen. This one is set to come back distressed."
+		headline = "HALTED: %s — make-or-break. Reopens distressed." % stock.company_name
+		reaction = "No buys or sells until reopen. This is the wipe halt, not a volatility pause."
 	if premarket and not headline.begins_with("PREMARKET"):
 		headline = "PREMARKET: " + headline
 	var event := NewsEvent.new(

@@ -140,7 +140,7 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 Top bar: book value, cash, session P/L, clock, **vs Market**.  
 Bottom bar: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, Settings, End Session / New Day, Leave desk.
 
-**Act on this headline:** chain beats, major headlines, existential halt **and** distressed reopen, weather flips, and YOUR TAPE pause the tape **10 real seconds** (major / chain / weather / YOUR TAPE) or **14** (existential wipe). **Continue** (or timeout) resumes. **Select TICKER** selects that watchlist stock and resumes — you still size the order on the live tape. Pause headline and reaction use the same underlined hover terms as the feed. Circuit volatility halt/reopen does **not** open this overlay. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Continue. Fast-forward to close does not pause.
+**Act on this headline:** pause the tape **10 real seconds** (YOUR TAPE, weather flip, story **resolution** on a watchlist stock, or a **major** company headline on a watchlist stock) or **14** (existential halt / distressed reopen). Follow-ups, twists, sector tape, and market-wide filler stay in the feed only. Circuit volatility halt/reopen does **not** open this overlay. **Continue** (or timeout) resumes. **Select TICKER** selects that watchlist stock and resumes. Pause headline and reaction use the same underlined hover terms as the feed. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Continue. Fast-forward to close does not pause.
 
 Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prices**, not calendar months and not OHLC candles. Tooltips say so. While the session is **closed**, HALTED / DISTRESSED is **not** drawn as a chart banner — it is folded into the close overlay stamp.
 
@@ -176,10 +176,10 @@ Two layers:
 
 ### Halts
 
-Two outcomes share the same **HALTED** card:
+Two outcomes share the same **HALTED** listing, but the stamp differs:
 
-- **Resume (circuit):** growth and volatile names only, **once per name per day**. If price moves about **5% (growth)** or **8% (volatile)** in five market minutes, trading pauses 2–5 minutes, then the name **reopens listed** near the last print. Safe names never circuit. Fast-forward to close does not fire new circuits.
-- **Distress (existential print):** tagged negative resolutions still halt, then reopen **−80% to −95%**, sell-only, forced off the board at week recap (see below).
+- **Resume (circuit):** growth and volatile stocks only, **once per stock per day**. Card / chart / close: **HALTED · listed** (full line: volatility pause · reopens listed). Pause overlay does **not** open. Fast-forward to close does not fire new circuits.
+- **Distress (existential):** tagged negative resolutions. Stamp: **HALTED · make-or-break** (reopens distressed). Pause overlay **does** open.
 
 A name already halted or distressed cannot take a second halt.
 
