@@ -134,7 +134,7 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 1. **Watchlist** — ticker cards: risk, last, day change, volume, **LONG n ±$P/L** or **SHORT n ±$P/L** (purple border when short), mini chart. Click to select.
 2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **HALTED** / **DISTRESSED** if listed that way. Wipe arcs say **Make-or-break tomorrow.** Click a **company** story card to select that watchlist ticker.
 3. **News feed** — timestamped headlines with a reaction line. Tags include ticker, **MARKET**, sector shorts, and **YOUR TAPE** (gift or trap). Desk terms are **underlined**; hover for a short definition.
-4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, **Buy / Sell / Short / Cover**.
+4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, **Buy / Sell / Short / Cover**. Message line is fills and blocks only (halted, closed, pause). Headlines stay in the feed / pause overlay; the day result stays on the close panel.
 5. **Book** — longs and short rows, open P/L.
 
 Top bar: book value, cash, session P/L, clock, **vs Market**.  
@@ -245,9 +245,9 @@ Leave-desk choice: **keep positions** overnight, or **cash out** (sell all at th
 
 Every **5** closed sessions: **Week Recap**.
 
-Copy: week number, Monday–Friday span, book $ start → end, days ahead of the market, average vs Market, climate, streak, watchlist.
+Copy: week heading, book $ start → end, days ahead of the market, climate, streak as separate lines (same rhythm as close). Watchlist as three ticker chips. Distressed is its own line.
 
-Then **rebalance**: keep the three, or drop one (sold at the bid) and add a name that is not on the board. Next week starts with that book.
+Then **rebalance**: compact pick-style cards (ticker, then name · risk · DISTRESSED if needed). Keep the three, or drop one (sold at the bid) and add a stock that is not on the board. Lists scroll if the bench is long. Next week starts with that book.
 
 Player-facing word is **week**. Save keys still say `chapter`.
 

@@ -232,30 +232,43 @@ func begin_next_chapter() -> void:
 	chapter_days = 0
 
 
-func recap_text(climate_line: String, watchlist: Array[String]) -> String:
+func recap_summary(climate_line: String) -> Dictionary:
 	var week_n: int = maxi(days_played / CHAPTER_LENGTH, 1)
 	var counted: int = maxi(chapter_days, 1)
 	var avg_alpha: float = chapter_alpha_sum / float(counted)
 	var book_pct: float = 0.0
 	if chapter_open_equity > 0.01:
 		book_pct = ((last_equity - chapter_open_equity) / chapter_open_equity) * 100.0
+	var start_day: int = days_played - counted + 1
+	return {
+		"week": "Week %d complete  ·  %s–%s  ·  days %d–%d" % [
+			week_n,
+			weekday_name(start_day),
+			weekday_name(days_played),
+			start_day,
+			days_played,
+		],
+		"book": "Book $%.0f → $%.0f  (%+.1f%%)" % [chapter_open_equity, last_equity, book_pct],
+		"vs": "Ahead of the market %d of %d days  ·  avg vs Market %+.1f%%" % [chapter_beats, counted, avg_alpha],
+		"climate": climate_line,
+		"streak": streak_line(),
+	}
+
+
+func recap_text(climate_line: String, watchlist: Array[String]) -> String:
+	var bits: Dictionary = recap_summary(climate_line)
 	var names: PackedStringArray = []
 	for symbol in watchlist:
 		names.append(str(symbol))
-	var lines: PackedStringArray = []
-	var start_day: int = days_played - counted + 1
-	lines.append("Week %d complete  ·  %s–%s  ·  days %d–%d" % [
-		week_n,
-		weekday_name(start_day),
-		weekday_name(days_played),
-		start_day,
-		days_played,
-	])
-	lines.append("Book $%.0f → $%.0f  (%+.1f%%)" % [chapter_open_equity, last_equity, book_pct])
-	lines.append("Ahead of the market %d of %d days  ·  avg vs Market %+.1f%%" % [chapter_beats, counted, avg_alpha])
-	if not climate_line.is_empty():
-		lines.append(climate_line)
-	lines.append(streak_line())
+	var lines: PackedStringArray = [
+		str(bits.get("week", "")),
+		str(bits.get("book", "")),
+		str(bits.get("vs", "")),
+	]
+	var climate: String = str(bits.get("climate", ""))
+	if not climate.is_empty():
+		lines.append(climate)
+	lines.append(str(bits.get("streak", "")))
 	lines.append("Watchlist  %s" % ", ".join(names))
 	return "\n".join(lines)
 

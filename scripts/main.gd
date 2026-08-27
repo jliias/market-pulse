@@ -42,7 +42,13 @@ var preopen_remaining := 0.0
 var menu_confirm_open := false
 var chapter_overlay: ColorRect
 var recap_page: VBoxContainer
-var recap_label: Label
+var recap_week_label: Label
+var recap_book_label: Label
+var recap_vs_label: Label
+var recap_climate_label: Label
+var recap_streak_label: Label
+var recap_distress_label: Label
+var recap_watch_row: HBoxContainer
 var rebalance_page: VBoxContainer
 var rebalance_hint: Label
 var rebalance_title: Label
@@ -130,6 +136,7 @@ func _notification(what: int) -> void:
 func _ready() -> void:
 	get_tree().set_auto_accept_quit(false)
 	resized.connect(_apply_responsive_layout)
+	news_feed.tooltip_text = ""
 	_connect_controls()
 	_build_timeframe_buttons()
 	_apply_hud_tooltips()
@@ -306,8 +313,7 @@ func _open_market() -> void:
 	var open_bell: NewsEvent = market.open()
 	_add_news_to_feed(open_bell)
 	place_order_button.disabled = false
-	if reopened.is_empty():
-		trade_message_label.text = "Market is open. Try to beat the market."
+	trade_message_label.text = "Market is open. Try to beat the market."
 	tick_timer.start()
 	_update_ui()
 	_consider_act_pauses(reopened)
@@ -492,13 +498,11 @@ func _end_session() -> void:
 	var hook: String = market.chain_director.hook_line()
 	if hook.is_empty():
 		close_tomorrow = "No open story on the board."
-		hook = close_tomorrow
 	else:
 		close_tomorrow = "Tomorrow: " + hook
-		hook = close_tomorrow
 	close_streak = portfolio.streak_line()
 	close_book_line = _session_story_line()
-	trade_message_label.text = "%s\n%s\n%s" % [result_text, portfolio.career_close_line(), hook]
+	trade_message_label.text = "Market is closed."
 	SaveManager.save_game(portfolio, market)
 	_update_ui()
 
@@ -1034,17 +1038,15 @@ func _add_news_to_feed(event: NewsEvent) -> void:
 	var tag: String = event.feed_tag()
 	var effect: String = event.effect_label()
 	if effect.is_empty():
-		news_feed.append_text("[color=%s]%s  [b]%s[/b] — %s[/color]\n" % [
-			color, event.timestamp, tag, CopyHints.annotate(event.headline)
+		news_feed.append_text("[color=%s]%s  [b]%s[/b] — [/color]%s\n" % [
+			color, event.timestamp, tag, CopyHints.annotate(event.headline, color)
 		])
 	else:
-		news_feed.append_text("[color=%s]%s  [b]%s[/b] · %s — %s[/color]\n" % [
-			color, event.timestamp, tag, effect, CopyHints.annotate(event.headline)
+		news_feed.append_text("[color=%s]%s  [b]%s[/b] · %s — [/color]%s\n" % [
+			color, event.timestamp, tag, effect, CopyHints.annotate(event.headline, color)
 		])
 	if not event.reaction.is_empty():
-		news_feed.append_text("[color=#888888]    %s[/color]\n" % CopyHints.annotate(event.reaction))
-	if event.existential or event.headline.begins_with("HALTED") or event.headline.begins_with("REOPEN") or event.headline.begins_with("PREMARKET: HALTED") or event.headline.begins_with("PREMARKET: REOPEN"):
-		trade_message_label.text = "%s\n%s" % [event.headline, event.reaction]
+		news_feed.append_text("    %s\n" % CopyHints.annotate(event.reaction, "#888888"))
 
 
 func _build_settings() -> void:
@@ -1360,7 +1362,7 @@ func _build_chapter_overlay() -> void:
 	chapter_overlay.add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(560, 0)
+	panel.custom_minimum_size = Vector2(640, 0)
 	center.add_child(panel)
 	var panel_box := StyleBoxFlat.new()
 	panel_box.bg_color = Color(0.1, 0.11, 0.14, 1)
@@ -1378,7 +1380,7 @@ func _build_chapter_overlay() -> void:
 	panel.add_child(stack)
 
 	recap_page = VBoxContainer.new()
-	recap_page.add_theme_constant_override("separation", 12)
+	recap_page.add_theme_constant_override("separation", 8)
 	stack.add_child(recap_page)
 	var recap_title := Label.new()
 	recap_title.text = "WEEK RECAP"
@@ -1386,12 +1388,24 @@ func _build_chapter_overlay() -> void:
 	recap_title.add_theme_color_override("font_color", SELECTED_ACCENT)
 	recap_title.add_theme_font_size_override("font_size", 22)
 	recap_page.add_child(recap_title)
-	recap_label = Label.new()
-	recap_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	recap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	recap_label.add_theme_font_size_override("font_size", 15)
-	recap_page.add_child(recap_label)
-	CopyHints.hover(recap_label, "%s\n%s\n%s" % [CopyHints.HUD_BOOK, CopyHints.HUD_ATH, CopyHints.HUD_VS])
+	recap_week_label = _overlay_line(18, SELECTED_ACCENT)
+	recap_page.add_child(recap_week_label)
+	recap_book_label = _overlay_line(16, Color(0.9, 0.92, 0.96))
+	CopyHints.hover(recap_book_label, "%s\n%s" % [CopyHints.HUD_BOOK, CopyHints.HUD_ATH])
+	recap_page.add_child(recap_book_label)
+	recap_vs_label = _overlay_line(16, Color(0.9, 0.92, 0.96))
+	CopyHints.hover(recap_vs_label, CopyHints.HUD_VS)
+	recap_page.add_child(recap_vs_label)
+	recap_climate_label = _overlay_line(14, Color(0.78, 0.8, 0.86))
+	recap_page.add_child(recap_climate_label)
+	recap_streak_label = _overlay_line(14, Color(0.78, 0.8, 0.86))
+	recap_page.add_child(recap_streak_label)
+	recap_distress_label = _overlay_line(15, Color(0.95, 0.38, 0.38))
+	recap_page.add_child(recap_distress_label)
+	recap_watch_row = HBoxContainer.new()
+	recap_watch_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	recap_watch_row.add_theme_constant_override("separation", 8)
+	recap_page.add_child(recap_watch_row)
 	var recap_next := Button.new()
 	recap_next.text = "Rebalance Watchlist"
 	recap_next.custom_minimum_size = Vector2(0, 44)
@@ -1401,7 +1415,7 @@ func _build_chapter_overlay() -> void:
 
 	rebalance_page = VBoxContainer.new()
 	rebalance_page.visible = false
-	rebalance_page.add_theme_constant_override("separation", 10)
+	rebalance_page.add_theme_constant_override("separation", 8)
 	stack.add_child(rebalance_page)
 	rebalance_title = Label.new()
 	rebalance_title.text = "ONE SWAP"
@@ -1412,10 +1426,8 @@ func _build_chapter_overlay() -> void:
 	rebalance_hint = Label.new()
 	rebalance_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rebalance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rebalance_hint.add_theme_font_size_override("font_size", 14)
+	rebalance_hint.add_theme_font_size_override("font_size", 13)
 	rebalance_hint.text = "Keep these three, or drop one stock and pick a replacement. A dropped stock is sold at the bid."
-	if not forced_drops.is_empty():
-		rebalance_hint.text = "Distressed stocks must leave the board. Pick a replacement for each. Residual shares sell at the bid."
 	CopyHints.hover(rebalance_hint, CopyHints.HUD_BID)
 	rebalance_page.add_child(rebalance_hint)
 	keep_book_button = Button.new()
@@ -1424,25 +1436,44 @@ func _build_chapter_overlay() -> void:
 	CopyHints.hover(keep_book_button, CopyHints.HUD_BOOK)
 	keep_book_button.pressed.connect(_on_keep_book)
 	rebalance_page.add_child(keep_book_button)
+	var lists_scroll := ScrollContainer.new()
+	lists_scroll.custom_minimum_size = Vector2(0, 360)
+	lists_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lists_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lists_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rebalance_page.add_child(lists_scroll)
+	var lists := VBoxContainer.new()
+	lists.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lists.add_theme_constant_override("separation", 6)
+	lists_scroll.add_child(lists)
 	drop_header = Label.new()
 	drop_header.text = "Drop (optional)"
 	drop_header.add_theme_font_size_override("font_size", 13)
-	rebalance_page.add_child(drop_header)
+	lists.add_child(drop_header)
 	drop_list = VBoxContainer.new()
 	drop_list.add_theme_constant_override("separation", 6)
-	rebalance_page.add_child(drop_list)
+	lists.add_child(drop_list)
 	var add_header := Label.new()
 	add_header.text = "Add"
 	add_header.add_theme_font_size_override("font_size", 13)
-	rebalance_page.add_child(add_header)
+	lists.add_child(add_header)
 	add_list = VBoxContainer.new()
 	add_list.add_theme_constant_override("separation", 6)
-	rebalance_page.add_child(add_list)
+	lists.add_child(add_list)
 	confirm_swap_button = Button.new()
 	confirm_swap_button.text = "Continue"
 	confirm_swap_button.custom_minimum_size = Vector2(0, 44)
 	confirm_swap_button.pressed.connect(_confirm_chapter_rebalance)
 	rebalance_page.add_child(confirm_swap_button)
+
+
+func _overlay_line(font_size: int, color: Color) -> Label:
+	var line := Label.new()
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line.add_theme_font_size_override("font_size", font_size)
+	line.add_theme_color_override("font_color", color)
+	return line
 
 
 func _show_chapter_recap() -> void:
@@ -1455,10 +1486,32 @@ func _show_chapter_recap() -> void:
 	end_session_button.visible = false
 	recap_page.visible = true
 	rebalance_page.visible = false
-	recap_label.text = portfolio.recap_text(market.regime.status_text(), market.watchlist)
+	var bits: Dictionary = portfolio.recap_summary(market.regime.status_text())
+	recap_week_label.text = str(bits.get("week", ""))
+	recap_book_label.text = str(bits.get("book", ""))
+	recap_vs_label.text = str(bits.get("vs", ""))
+	var climate: String = str(bits.get("climate", ""))
+	recap_climate_label.text = climate
+	recap_climate_label.visible = not climate.is_empty()
+	recap_streak_label.text = str(bits.get("streak", ""))
 	var wrecked: Array[String] = market.distressed_symbols()
-	if not wrecked.is_empty():
-		recap_label.text += "\n%s distressed — must replace. Residual shares sell at the bid." % ", ".join(wrecked)
+	if wrecked.is_empty():
+		recap_distress_label.visible = false
+		recap_distress_label.text = ""
+	else:
+		recap_distress_label.visible = true
+		recap_distress_label.text = "%s distressed — must replace. Residual shares sell at the bid." % ", ".join(wrecked)
+	for child in recap_watch_row.get_children():
+		recap_watch_row.remove_child(child)
+		child.queue_free()
+	for symbol in market.watchlist:
+		var chip := Label.new()
+		chip.text = str(symbol)
+		chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		chip.custom_minimum_size = Vector2(72, 28)
+		chip.add_theme_font_size_override("font_size", 14)
+		chip.add_theme_color_override("font_color", CompanyCatalog.risk_color(CompanyCatalog.risk_key(symbol)))
+		recap_watch_row.add_child(chip)
 	chapter_overlay.visible = true
 
 
@@ -1482,27 +1535,62 @@ func _rebuild_rebalance_lists() -> void:
 		add_list.remove_child(child)
 		child.free()
 	for symbol in market.watchlist:
-		var button := Button.new()
-		button.toggle_mode = true
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.text = _rebalance_row_text(symbol)
-		button.pressed.connect(_on_drop_pressed.bind(symbol))
-		drop_list.add_child(button)
+		drop_list.add_child(_make_rebalance_card(symbol, _on_drop_pressed.bind(symbol)))
 	for symbol in CompanyCatalog.bench_symbols(market.watchlist):
-		var button := Button.new()
-		button.toggle_mode = true
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.text = _rebalance_row_text(symbol)
-		button.pressed.connect(_on_add_pressed.bind(symbol))
-		add_list.add_child(button)
+		add_list.add_child(_make_rebalance_card(symbol, _on_add_pressed.bind(symbol)))
 
 
-func _rebalance_row_text(symbol: String) -> String:
+func _make_rebalance_card(symbol: String, on_pressed: Callable) -> Button:
 	var data: Dictionary = CompanyCatalog.spec(symbol)
-	var line: String = "%s  %s  ·  %s" % [symbol, str(data.get("name", symbol)), str(data.get("label", ""))]
-	if market.stocks.has(symbol) and market.stocks[symbol].is_distressed():
-		line += "  ·  DISTRESSED"
-	return line
+	var distressed: bool = market.stocks.has(symbol) and market.stocks[symbol].is_distressed()
+	var button := Button.new()
+	button.toggle_mode = true
+	button.clip_contents = true
+	button.custom_minimum_size = Vector2(0, 56)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.pressed.connect(on_pressed)
+
+	var pad := MarginContainer.new()
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 10)
+	pad.add_theme_constant_override("margin_right", 10)
+	pad.add_theme_constant_override("margin_top", 6)
+	pad.add_theme_constant_override("margin_bottom", 6)
+	button.add_child(pad)
+
+	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 2)
+	pad.add_child(stack)
+
+	var ticker := Label.new()
+	ticker.text = symbol
+	ticker.clip_text = true
+	ticker.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	ticker.custom_minimum_size = Vector2(0, 20)
+	ticker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ticker.add_theme_font_size_override("font_size", 14)
+	ticker.add_theme_color_override("font_color", Color(0.92, 0.94, 0.98))
+	stack.add_child(ticker)
+
+	var meta_bits: PackedStringArray = [str(data.get("name", symbol)), str(data.get("label", ""))]
+	if distressed:
+		meta_bits.append("DISTRESSED")
+	var meta := Label.new()
+	meta.text = " · ".join(meta_bits)
+	meta.clip_text = true
+	meta.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	meta.custom_minimum_size = Vector2(0, 18)
+	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	meta.add_theme_font_size_override("font_size", 12)
+	meta.add_theme_color_override(
+		"font_color",
+		Color(0.95, 0.38, 0.38) if distressed else Color(0.72, 0.75, 0.82)
+	)
+	stack.add_child(meta)
+	return button
 
 
 func _on_keep_book() -> void:

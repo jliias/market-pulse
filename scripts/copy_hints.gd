@@ -94,7 +94,7 @@ static func chart_tooltip(timeframe: String) -> String:
 	return str(CHART.get(timeframe, "Chart window on this stock."))
 
 
-static func annotate(text: String) -> String:
+static func annotate(text: String, color: String = "") -> String:
 	if text.is_empty():
 		return text
 	var re: RegEx = _compiled()
@@ -102,13 +102,24 @@ static func annotate(text: String) -> String:
 	var pos := 0
 	var found: RegExMatch = re.search(text, pos)
 	while found != null:
-		out += text.substr(pos, found.get_start() - pos)
+		out += _colored(text.substr(pos, found.get_start() - pos), color)
 		var form: String = found.get_string()
-		out += "[hint=%s][u]%s[/u][/hint]" % [str(_HINTS.get(form, "")), form]
+		var def: String = _escape_hint(str(_HINTS.get(form, "")))
+		out += "[hint=\"%s\"][u]%s[/u][/hint]" % [def, _colored(form, color)]
 		pos = found.get_end()
 		found = re.search(text, pos)
-	out += text.substr(pos)
+	out += _colored(text.substr(pos), color)
 	return out
+
+
+static func _colored(text: String, color: String) -> String:
+	if text.is_empty() or color.is_empty():
+		return text
+	return "[color=%s]%s[/color]" % [color, text]
+
+
+static func _escape_hint(text: String) -> String:
+	return text.replace("\\", "/").replace("\"", "'").replace("[", "(").replace("]", ")")
 
 
 static func _compiled() -> RegEx:
