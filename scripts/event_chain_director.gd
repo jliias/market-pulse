@@ -1071,25 +1071,19 @@ func _topic_day() -> int:
 	return maxi(calendar_day, 0) + 1
 
 
-func _event_matches_chain(event: NewsEvent, chain: EventChain, stocks: Dictionary) -> bool:
+func _event_matches_chain(event: NewsEvent, chain: EventChain, _stocks: Dictionary) -> bool:
 	if not event.chain_id.is_empty():
 		return event.chain_id == chain.arc_id
 	match chain.scope:
 		"company":
+			if event.scope == "industry" or event.scope == "market":
+				return false
 			if event.affected_symbols.has(chain.subject):
 				return true
 			var name: String = CompanyCatalog.display_name(chain.subject)
 			return event.headline.contains(chain.subject) or (not name.is_empty() and event.headline.contains(name))
 		"industry":
-			if not chain.industry.is_empty() and event.industry == chain.industry:
-				return true
-			for symbol in event.affected_symbols:
-				if not stocks.has(symbol):
-					continue
-				var stock: Stock = stocks[symbol]
-				if stock.in_industry(chain.industry):
-					return true
-			return false
+			return event.scope == "industry" and not chain.industry.is_empty() and event.industry == chain.industry
 		_:
 			return event.scope == "market"
 
@@ -1426,7 +1420,22 @@ func _pick_available_arc(stocks: Array[Stock]) -> String:
 		options.append(str(arc_id))
 	if options.is_empty():
 		return ""
+	if _has_tape_wide_story():
+		var company_only: Array[String] = []
+		for arc_id in options:
+			if str(ARCS[arc_id].get("scope", "")) == "company":
+				company_only.append(arc_id)
+		if company_only.is_empty():
+			return ""
+		return company_only[randi() % company_only.size()]
 	return options[randi() % options.size()]
+
+
+func _has_tape_wide_story() -> bool:
+	for chain in active:
+		if chain.scope != "company":
+			return true
+	return false
 
 
 func _arc_allowed(spec: Dictionary, watchlist: Array[String], stocks: Array[Stock]) -> bool:

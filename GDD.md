@@ -208,7 +208,7 @@ Feed is capped (~50). Premarket pack is a few items so the open is not a wall of
 
 ### Authored arcs (event chains)
 
-Up to **two** stories active. Stages: announcement → follow-up → reaction → twist → resolution. Stages can **skip**. Beats can prefer premarket. Close screen (and menu) surface a **hook** for tomorrow. Each open card keeps a **topic log** (day · time · headline) for the life of the arc, including related tape that is not a named stage.
+Up to **two** stories active. At most **one** tape-wide (sector / market) story; the other slot prefers a **company** arc when one is available. Stages: announcement → follow-up → reaction → twist → resolution. Stages can **skip**. Beats can prefer premarket. Close screen (and menu) surface a **hook** for tomorrow. Each open card keeps a **topic log** (day · time · headline) for the life of the arc. Company cards log that name’s tape; sector cards log that sector’s tape only (not every company headline on a name in the group); market cards log MARKET prints.
 
 Implemented arcs (company or tape-wide):
 
