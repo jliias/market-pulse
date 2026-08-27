@@ -2,8 +2,9 @@ class_name CopyHints
 extends RefCounted
 
 const HUD_PL := "Profit and loss vs the start of this session. Green is up, red is down."
+const HUD_OPEN_PL := "Open P/L on longs and shorts vs the price you got in. Not the same as session P/L in the header."
 const HUD_VS := "Your session return minus the average of your three stocks. That is the score: beat the market."
-const HUD_BOOK := "Your book: cash plus the current value of everything you hold."
+const HUD_BOOK := "Your book: cash, plus longs at the last price, plus open short P/L."
 const HUD_ATH := "All-time high for this book — the peak value you have marked."
 const HUD_BID_ASK := "Buy at the ask (sellers' price). Sell at the bid (buyers' price). The last price sits in between."
 const HUD_BID := "Bid: what buyers will pay. You sell at this price."
@@ -12,9 +13,9 @@ const HUD_HALTED_RESUME := "Volatility pause. No trading for a few minutes, then
 const HUD_HALTED_DISTRESS := "Trading is stopped. This stock will reopen distressed: sell-only residual, replaced at week recap."
 const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Replaced at week recap."
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
-const HUD_SHORT := "Short this stock: you profit if the last price falls. Caps at 20% of the book. Covers at the close. You cannot short a stock you hold."
+const HUD_SHORT := "You profit if the last price falls. Caps at 20% of the book. Covers at the close. You cannot short a stock you hold, or one that is halted or distressed. An open short can still be covered during a halt."
 const HUD_LONG := "Shares you hold and profit vs your average cost."
-const HUD_MENU := "Book is cash plus holdings. ATH is this book's peak. vs Market is how you did against your three stocks."
+const HUD_MENU := "Book is cash, longs, and open short P/L. ATH is this book's peak. vs Market is how you did against your three stocks."
 
 const CHART := {
 	"1M": "Last 20 market minutes. One price per minute — not one month.",

@@ -248,7 +248,7 @@ func _build_watchlist() -> void:
 
 func _apply_hud_tooltips() -> void:
 	CopyHints.hover(daily_pl_label, CopyHints.HUD_PL)
-	CopyHints.hover(portfolio_total_label, CopyHints.HUD_PL)
+	CopyHints.hover(portfolio_total_label, CopyHints.HUD_OPEN_PL)
 	CopyHints.hover(vs_market_label, CopyHints.HUD_VS)
 	CopyHints.hover(portfolio_value_label, CopyHints.HUD_BOOK)
 	CopyHints.hover(commission_label, CopyHints.HUD_COMMISSION)
