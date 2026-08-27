@@ -299,7 +299,7 @@ func calculate_commission(trade_value: float) -> float:
 
 func buy(symbol: String, shares: int, ask_price: float) -> Dictionary:
 	if get_fade_shares(symbol) > 0:
-		return {"success": false, "message": "Cover the fade on %s before you buy it." % symbol}
+		return {"success": false, "message": "Cover the short on %s before you buy it." % symbol}
 	if shares <= 0:
 		return {"success": false, "message": "Share amount must be positive."}
 
@@ -374,31 +374,31 @@ func open_fade(symbol: String, shares: int, price: float, stocks: Dictionary) ->
 	if shares <= 0:
 		return {"success": false, "message": "Share amount must be positive."}
 	if get_shares(symbol) > 0:
-		return {"success": false, "message": "Flatten the long before you fade %s." % symbol}
+		return {"success": false, "message": "Sell the long before you short %s." % symbol}
 	if get_fade_shares(symbol) > 0:
-		return {"success": false, "message": "You already fade %s. Cover it first." % symbol}
+		return {"success": false, "message": "You already short %s. Cover it first." % symbol}
 	var trade_value := float(shares) * price
 	var cap: float = (cash + get_holdings_value(stocks)) * FADE_BOOK_CAP
 	if fade_notional(stocks) + trade_value > cap + 0.01:
 		var room: int = max_fadable(price, stocks)
-		return {"success": false, "message": "Fade is capped at 20%% of the book. At most %d shares." % maxi(room, 0)}
+		return {"success": false, "message": "Short is capped at 20%% of the book. At most %d shares." % maxi(room, 0)}
 	var commission := calculate_commission(trade_value)
 	if commission > cash:
-		return {"success": false, "message": "Not enough cash to pay the fade commission."}
+		return {"success": false, "message": "Not enough cash to pay the short commission."}
 	cash -= commission
 	total_commissions += commission
 	fades[symbol] = {"shares": shares, "entry": price}
 	trade_history.append({"type": "FADE", "symbol": symbol, "shares": shares, "price": price, "commission": commission})
 	return {
 		"success": true,
-		"message": "Fading %d of %s from $%.2f. Pays if this name prints lower. Covers at the close." % [shares, symbol, price],
+		"message": "Shorting %d of %s from $%.2f. Pays if the price falls. Covers at the close." % [shares, symbol, price],
 	}
 
 
 func cover_fade(symbol: String, price: float) -> Dictionary:
 	var shares: int = get_fade_shares(symbol)
 	if shares <= 0:
-		return {"success": false, "message": "No fade on %s." % symbol}
+		return {"success": false, "message": "No short on %s." % symbol}
 	var entry: float = get_fade_entry(symbol)
 	var pl: float = (entry - price) * float(shares)
 	var commission := calculate_commission(float(shares) * price)
@@ -408,7 +408,7 @@ func cover_fade(symbol: String, price: float) -> Dictionary:
 	trade_history.append({"type": "COVER", "symbol": symbol, "shares": shares, "price": price, "commission": commission})
 	return {
 		"success": true,
-		"message": "Covered fade on %s at $%.2f (%s$%.2f)" % [symbol, price, "+" if pl >= 0.0 else "−", absf(pl)],
+		"message": "Covered short on %s at $%.2f (%s$%.2f)" % [symbol, price, "+" if pl >= 0.0 else "−", absf(pl)],
 	}
 
 

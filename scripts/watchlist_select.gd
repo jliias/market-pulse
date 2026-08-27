@@ -6,9 +6,9 @@ const SELECTED_ACCENT := Color(0.82, 0.9, 1.0)
 const BUY_ACCENT := Color(0.32, 0.92, 0.48)
 
 const SECTION_COPY := {
-	"safe": "SAFE — smaller potential gains",
-	"growth": "GROWTH — moderate risk and reward",
-	"volatile": "VOLATILE — larger gains and losses",
+	"safe": "SAFE",
+	"growth": "GROWTH",
+	"volatile": "VOLATILE",
 }
 
 var selected: Array[String] = []
@@ -25,46 +25,108 @@ func _ready() -> void:
 
 
 func _build_list() -> void:
-	for child in %CompanyList.get_children():
-		%CompanyList.remove_child(child)
+	for child in %Board.get_children():
+		%Board.remove_child(child)
 		child.free()
 	row_buttons.clear()
 	for key in CompanyCatalog.RISK_SECTIONS:
+		var column := VBoxContainer.new()
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		column.add_theme_constant_override("separation", 6)
+		%Board.add_child(column)
+
 		var header := Label.new()
 		header.text = str(SECTION_COPY.get(key, key.to_upper()))
+		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		header.custom_minimum_size = Vector2(0, 22)
 		header.add_theme_color_override("font_color", CompanyCatalog.risk_color(key))
-		header.add_theme_font_size_override("font_size", 15)
-		%CompanyList.add_child(header)
-		var blurb := Label.new()
+		header.add_theme_font_size_override("font_size", 16)
+		column.add_child(header)
+
 		var profile: Dictionary = CompanyCatalog.RISK_PROFILES[key]
-		blurb.text = "%s  Typical day %s" % [str(profile["blurb"]), str(profile["typical"])]
-		blurb.add_theme_color_override("font_color", Color(0.62, 0.65, 0.72))
-		blurb.add_theme_font_size_override("font_size", 13)
+		var blurb := Label.new()
+		blurb.text = "%s  Typical %s" % [str(profile["blurb"]), str(profile["typical"])]
+		blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		%CompanyList.add_child(blurb)
+		blurb.max_lines_visible = 2
+		blurb.custom_minimum_size = Vector2(0, 36)
+		blurb.add_theme_color_override("font_color", Color(0.62, 0.65, 0.72))
+		blurb.add_theme_font_size_override("font_size", 12)
+		column.add_child(blurb)
+
 		for symbol in CompanyCatalog.symbols_for_risk(key):
-			_add_row(symbol, key)
+			_add_card(column, symbol, key)
 
 
-func _add_row(symbol: String, key: String) -> void:
+func _add_card(column: VBoxContainer, symbol: String, key: String) -> void:
 	var data: Dictionary = CompanyCatalog.spec(symbol)
 	var profile: Dictionary = CompanyCatalog.risk_profile(symbol)
 	var button := Button.new()
 	button.toggle_mode = true
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.custom_minimum_size = Vector2(0, 58)
-	button.text = "%s    %s\n%s  ·  %s  ·  Typical day %s" % [
-		symbol,
-		str(data.get("name", symbol)),
-		str(data.get("label", "")),
-		"%s · %s" % [str(data.get("sector", "")), str(data.get("cap", ""))],
-		str(profile.get("typical", "")),
-	]
+	button.clip_text = true
+	button.clip_contents = true
+	button.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	button.pressed.connect(_on_row_pressed.bind(symbol))
-	%CompanyList.add_child(button)
+
+	var pad := MarginContainer.new()
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	button.add_child(pad)
+
+	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_theme_constant_override("separation", 2)
+	pad.add_child(stack)
+
+	var ticker := _card_line(symbol, 16, Color(0.92, 0.94, 0.98), 20)
+	stack.add_child(ticker)
+
+	var name_line := _card_line(str(data.get("name", symbol)), 14, Color(0.86, 0.88, 0.92), 20)
+	stack.add_child(name_line)
+
+	var meta := _card_line(
+		"%s · %s · %s" % [str(data.get("sector", "")), str(data.get("cap", "")), str(profile.get("typical", ""))],
+		11,
+		Color(0.62, 0.65, 0.72),
+		18
+	)
+	stack.add_child(meta)
+
+	var story := Label.new()
+	story.text = str(data.get("story", ""))
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story.max_lines_visible = 3
+	story.custom_minimum_size = Vector2(0, 48)
+	story.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	story.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	story.add_theme_font_size_override("font_size", 11)
+	story.add_theme_color_override("font_color", Color(0.72, 0.75, 0.82))
+	story.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	stack.add_child(story)
+
+	column.add_child(button)
 	row_buttons[symbol] = button
 	_style_row(button, key, false)
+
+
+func _card_line(text: String, font_size: int, color: Color, height: int) -> Label:
+	var line := Label.new()
+	line.text = text
+	line.clip_text = true
+	line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	line.custom_minimum_size = Vector2(0, height)
+	line.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_theme_font_size_override("font_size", font_size)
+	line.add_theme_color_override("font_color", color)
+	return line
 
 
 func _on_row_pressed(symbol: String) -> void:
@@ -87,7 +149,7 @@ func _refresh_state() -> void:
 		button.button_pressed = on
 		_style_row(button, CompanyCatalog.risk_key(symbol), on)
 	var count: int = selected.size()
-	%HintLabel.text = "Choose exactly 3 names. Your mix is the risk for this whole run. %d of 3 selected." % count
+	%HintLabel.text = "Choose exactly 3 stocks. Your mix is the risk for this whole run. %d of 3 selected." % count
 	%PickedLabel.text = CompanyCatalog.mix_summary(selected)
 	%StartButton.disabled = count != 3
 	_style_button(%StartButton, BUY_ACCENT, count == 3)
@@ -110,7 +172,6 @@ func _on_back() -> void:
 func _style_row(button: Button, key: String, on: bool) -> void:
 	var accent: Color = SELECTED_ACCENT if on else CompanyCatalog.risk_color(key)
 	_style_button(button, accent, true, on)
-	button.add_theme_font_size_override("font_size", 15)
 
 
 func _style_button(button: Button, accent: Color, enabled: bool, selected_row: bool = false) -> void:
@@ -120,7 +181,7 @@ func _style_button(button: Button, accent: Color, enabled: bool, selected_row: b
 	button.add_theme_color_override("font_hover_color", accent.lightened(0.12))
 	button.add_theme_color_override("font_pressed_color", accent.darkened(0.08))
 	button.add_theme_color_override("font_disabled_color", Color(accent.r, accent.g, accent.b, 0.4))
-	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_font_size_override("font_size", 18)
 	var fill: float = 0.28 if selected_row else 0.12
 	var border: int = UI_BORDER + 2 if selected_row else UI_BORDER
 	for state in ["normal", "hover", "pressed", "disabled"]:
@@ -129,10 +190,10 @@ func _style_button(button: Button, accent: Color, enabled: bool, selected_row: b
 		box.border_color = accent
 		box.set_border_width_all(border)
 		box.set_corner_radius_all(8)
-		box.content_margin_left = 14
-		box.content_margin_right = 14
-		box.content_margin_top = 10
-		box.content_margin_bottom = 10
+		box.content_margin_left = 12
+		box.content_margin_right = 12
+		box.content_margin_top = 8
+		box.content_margin_bottom = 8
 		if state == "hover":
 			box.bg_color = Color(accent.r, accent.g, accent.b, fill + 0.1)
 			box.set_border_width_all(border + 1)

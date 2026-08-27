@@ -265,13 +265,13 @@ func status_tooltip() -> String:
 		WEATHER_EUPHORIA:
 			lines.append("Euphoria: short-lived buying weather. Fast, messy rips on top of the climate.")
 		WEATHER_HIGH_VOL:
-			lines.append("High vol: ranges are stretched. Both sides can print hard.")
+			lines.append("High vol: ranges are stretched. Both sides can move hard.")
 	if climate == CLIMATE_BEAR and weather == WEATHER_EUPHORIA:
 		lines.append("Together: a bounce inside a bear market. It can feel like a new uptrend and still roll over.")
 	elif climate == CLIMATE_BULL and weather == WEATHER_PANIC:
 		lines.append("Together: a dump inside a bull market. Ugly, but dips may still get bought.")
 	elif climate == CLIMATE_BEAR and weather == WEATHER_PANIC:
-		lines.append("Together: selling feeding on itself. Hard to fade until it cools.")
+		lines.append("Together: selling feeding on itself. Hard to buy the dip until it cools.")
 	elif climate == CLIMATE_BULL and weather == WEATHER_EUPHORIA:
 		lines.append("Together: a chase. Easy to overpay if you buy the rip.")
 	elif weather == WEATHER_HIGH_VOL and climate != CLIMATE_NORMAL:

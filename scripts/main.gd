@@ -255,7 +255,7 @@ func _apply_hud_tooltips() -> void:
 	CopyHints.hover(est_price_label, CopyHints.HUD_BID_ASK)
 	CopyHints.hover(trade_price_label, CopyHints.HUD_BID_ASK)
 	CopyHints.hover(market_status_label, market.regime.status_tooltip())
-	CopyHints.hover(fade_mode_button, CopyHints.HUD_FADE)
+	CopyHints.hover(fade_mode_button, CopyHints.HUD_SHORT)
 
 
 func _displayed_day_number() -> int:
@@ -374,7 +374,7 @@ func _set_max_quantity() -> void:
 
 func _place_order() -> void:
 	if print_pause_active:
-		trade_message_label.text = "Act on the print, or Hold."
+		trade_message_label.text = "Act on this headline, or Hold."
 		return
 	if awaiting_open:
 		trade_message_label.text = "Market is not open yet."
@@ -393,7 +393,7 @@ func _place_order() -> void:
 			fade_result = portfolio.cover_fade(selected_symbol, stock.price)
 		else:
 			if not stock.is_listed():
-				trade_message_label.text = "You can only fade a live name."
+				trade_message_label.text = "You can only short a live stock."
 				return
 			fade_result = portfolio.open_fade(selected_symbol, quantity, stock.price, market.stocks)
 		trade_message_label.text = str(fade_result["message"])
@@ -402,10 +402,10 @@ func _place_order() -> void:
 			call_deferred("_play_fill_feedback", "cover" if covering else "fade", selected_symbol, fill_shares)
 		return
 	if buy_mode and not stock.can_buy():
-		trade_message_label.text = "This name is %s. You cannot buy it." % stock.listing_label().to_lower()
+		trade_message_label.text = "This stock is %s. You cannot buy it." % stock.listing_label().to_lower()
 		return
 	if not buy_mode and not stock.can_sell():
-		trade_message_label.text = "This name is halted. Wait for the reopen."
+		trade_message_label.text = "This stock is halted. Wait for the reopen."
 		return
 	var result: Dictionary
 	if buy_mode:
@@ -564,11 +564,11 @@ func _confirm_leave_desk(intent: String) -> void:
 	if session_active and not market.is_closed:
 		lines.append("If the market is still open, today will be marked to the close.")
 	if has_positions:
-		lines.append("A long real-world gap before you return can gap names overnight. Open positions may move while you are away.")
+		lines.append("A long real-world gap before you return can move prices overnight. Open positions may move while you are away.")
 		lines.append("Hold them overnight, or sell everything at the bid now.")
 		menu_dialog.ok_button_text = "Hold and leave"
 	else:
-		lines.append("Your book is cash. Nothing is left overnight in names.")
+		lines.append("Your book is cash. Nothing is left overnight in stocks.")
 		menu_dialog.ok_button_text = "Leave"
 	menu_dialog.dialog_text = "\n\n".join(lines)
 	menu_dialog.popup_centered()
@@ -681,7 +681,8 @@ func _update_ui() -> void:
 			market.stocks[symbol],
 			portfolio.get_shares(symbol),
 			portfolio.get_fade_shares(symbol),
-			portfolio.get_fade_entry(symbol)
+			portfolio.get_fade_entry(symbol),
+			portfolio.get_avg_cost(symbol)
 		)
 		card.set_selected(symbol == selected_symbol)
 
@@ -797,7 +798,7 @@ func _refresh_portfolio() -> void:
 		var fade_pl: float = (portfolio.get_fade_entry(symbol) - fade_stock.price) * float(portfolio.get_fade_shares(symbol))
 		total_pl += fade_pl
 		var fade_row := Label.new()
-		fade_row.text = "FADE %s — %d — $%.2f — %s$%.2f" % [
+		fade_row.text = "SHORT %s — %d — $%.2f — %s$%.2f" % [
 			symbol, portfolio.get_fade_shares(symbol), portfolio.get_fade_entry(symbol), _sign(fade_pl), absf(fade_pl)
 		]
 		fade_row.set_meta("fill_key", "fade:%s" % symbol)
@@ -824,7 +825,7 @@ func _play_fill_feedback(kind: String, symbol: String, shares: int) -> void:
 			from_book = true
 		"fade":
 			accent = FADE_ACCENT
-			chip = "FADE %d %s" % [shares, symbol]
+			chip = "SHORT %d %s" % [shares, symbol]
 		"cover":
 			accent = FADE_ACCENT
 			chip = "COVER %d %s" % [shares, symbol]
@@ -902,9 +903,9 @@ func _refresh_trade_panel() -> void:
 	trade_price_label.text = "$%.2f" % px
 	qty_label.text = str(quantity)
 	if covering:
-		place_order_button.text = "COVER FADE"
+		place_order_button.text = "COVER"
 	elif fade_mode:
-		place_order_button.text = "OPEN FADE"
+		place_order_button.text = "SHORT"
 	elif buy_mode:
 		place_order_button.text = "PLACE BUY ORDER"
 	else:
@@ -925,18 +926,18 @@ func _refresh_trade_panel() -> void:
 	_style_trade_buttons()
 
 	if fade_mode:
-		est_price_label.text = "Last print: $%.2f" % stock.price
+		est_price_label.text = "Last price: $%.2f" % stock.price
 		if covering:
 			var pl: float = (portfolio.get_fade_entry(selected_symbol) - stock.price) * float(portfolio.get_fade_shares(selected_symbol))
-			est_total_label.text = "Open fade: %d @ $%.2f" % [portfolio.get_fade_shares(selected_symbol), portfolio.get_fade_entry(selected_symbol)]
+			est_total_label.text = "Open short: %d @ $%.2f" % [portfolio.get_fade_shares(selected_symbol), portfolio.get_fade_entry(selected_symbol)]
 			commission_label.text = "Marked P/L: %s$%.2f" % [_sign(pl), absf(pl)]
-			final_total_label.text = "Pays if this name printed lower."
+			final_total_label.text = "Pays if the price already fell."
 		else:
 			var estimate: Dictionary = portfolio.estimate(quantity, stock.price)
 			est_total_label.text = "Notional: $%.2f" % float(estimate["trade_value"])
 			commission_label.text = "Commission: $%.2f" % float(estimate["commission"])
-			final_total_label.text = "Pays if this name prints lower. Covers at the close."
-		trade_price_label.tooltip_text = CopyHints.HUD_FADE
+			final_total_label.text = "Pays if the price falls. Covers at the close."
+		trade_price_label.tooltip_text = CopyHints.HUD_SHORT
 		return
 	var estimate: Dictionary = portfolio.estimate(quantity, px)
 	est_price_label.text = "Estimated price: $%.2f" % px
@@ -1089,7 +1090,7 @@ func _build_settings() -> void:
 	stack.add_child(title)
 
 	var hint := Label.new()
-	hint.text = "Tape speed. Headline pauses stay 8–15 real seconds."
+	hint.text = "How fast prices tick. Headline pauses stay 10–14 real seconds."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", Color(0.78, 0.82, 0.88))
@@ -1168,7 +1169,7 @@ func _begin_print_pause(event: NewsEvent) -> void:
 		if market.watchlist.has(symbol):
 			print_pause_symbol = symbol
 	print_pause_headline.text = event.headline
-	print_pause_reaction.text = event.reaction if not event.reaction.is_empty() else "The tape is waiting on your call."
+	print_pause_reaction.text = event.reaction if not event.reaction.is_empty() else "Decide now, or hold."
 	print_pause_ticket_button.visible = not print_pause_symbol.is_empty()
 	print_pause_overlay.visible = true
 	tick_timer.stop()
@@ -1294,9 +1295,9 @@ func _session_story_line() -> String:
 			continue
 		if chain.scope == "company":
 			if portfolio.get_shares(chain.subject) > 0:
-				return "You are still long into tomorrow's binary on %s." % chain.subject
-			return "You are flat into tomorrow's binary on %s." % chain.subject
-		return "You are heading into a binary print."
+				return "You are still long into tomorrow's make-or-break headline on %s." % chain.subject
+			return "You are flat into tomorrow's make-or-break headline on %s." % chain.subject
+		return "You are heading into a make-or-break headline."
 	return "No wipe on the book today."
 
 
@@ -1376,9 +1377,9 @@ func _build_chapter_overlay() -> void:
 	rebalance_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rebalance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rebalance_hint.add_theme_font_size_override("font_size", 14)
-	rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
+	rebalance_hint.text = "Keep these three, or drop one stock and pick a replacement. A dropped stock is sold at the bid."
 	if not forced_drops.is_empty():
-		rebalance_hint.text = "Distressed names must leave the board. Pick a replacement for each. Residual shares sell at the bid."
+		rebalance_hint.text = "Distressed stocks must leave the board. Pick a replacement for each. Residual shares sell at the bid."
 	CopyHints.hover(rebalance_hint, CopyHints.HUD_BID)
 	rebalance_page.add_child(rebalance_hint)
 	keep_book_button = Button.new()
@@ -1522,11 +1523,11 @@ func _refresh_rebalance_state() -> void:
 	if forced:
 		rebalance_title.text = "REPLACE DISTRESSED"
 		drop_header.text = "Must drop"
-		rebalance_hint.text = "Distressed names must leave the board. Pick %d replacement(s). Residual shares sell at the bid." % forced_drops.size()
+		rebalance_hint.text = "Distressed stocks must leave the board. Pick %d replacement(s). Residual shares sell at the bid." % forced_drops.size()
 	else:
 		rebalance_title.text = "ONE SWAP"
 		drop_header.text = "Drop (optional)"
-		rebalance_hint.text = "Keep these three, or drop one name and pick a replacement. A dropped name is sold at the bid."
+		rebalance_hint.text = "Keep these three, or drop one stock and pick a replacement. A dropped stock is sold at the bid."
 	var drop_i := 0
 	for child in drop_list.get_children():
 		var button := child as Button
@@ -1551,7 +1552,7 @@ func _refresh_rebalance_state() -> void:
 	var ready: bool
 	if forced:
 		ready = add_picks.size() == forced_drops.size()
-		confirm_swap_button.text = "Replace distressed names"
+		confirm_swap_button.text = "Replace distressed stocks"
 		if ready:
 			confirm_swap_button.text = "Replace %s → %s" % [", ".join(forced_drops), ", ".join(add_picks)]
 	else:

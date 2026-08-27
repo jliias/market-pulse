@@ -2,25 +2,26 @@ class_name CopyHints
 extends RefCounted
 
 const HUD_PL := "Profit and loss vs the start of this session. Green is up, red is down."
-const HUD_VS := "Your session return minus the average of your three names. That is the score: beat the market."
+const HUD_VS := "Your session return minus the average of your three stocks. That is the score: beat the market."
 const HUD_BOOK := "Your book: cash plus the current value of everything you hold."
 const HUD_ATH := "All-time high for this book — the peak value you have marked."
-const HUD_BID_ASK := "Buy at the ask (sellers' price). Sell at the bid (buyers' price). The last print sits in between."
+const HUD_BID_ASK := "Buy at the ask (sellers' price). Sell at the bid (buyers' price). The last price sits in between."
 const HUD_BID := "Bid: what buyers will pay. You sell at this price."
 const HUD_ASK := "Ask: what sellers want. You buy at this price."
-const HUD_HALTED_RESUME := "Volatility pause. No trading for a few minutes, then this name reopens listed — you can buy and sell again."
-const HUD_HALTED_DISTRESS := "Trading is stopped. This name will reopen distressed: sell-only residual, replaced at week recap."
+const HUD_HALTED_RESUME := "Volatility pause. No trading for a few minutes, then this stock reopens listed — you can buy and sell again."
+const HUD_HALTED_DISTRESS := "Trading is stopped. This stock will reopen distressed: sell-only residual, replaced at week recap."
 const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Replaced at week recap."
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
-const HUD_FADE := "Fade this name: you profit if the last print falls. Caps at 20% of the book. Covers at the close. You cannot fade a name you hold."
-const HUD_MENU := "Book is cash plus holdings. ATH is this book's peak. vs Market is how you did against your three names."
+const HUD_SHORT := "Short this stock: you profit if the last price falls. Caps at 20% of the book. Covers at the close. You cannot short a stock you hold."
+const HUD_LONG := "Shares you hold and profit vs your average cost."
+const HUD_MENU := "Book is cash plus holdings. ATH is this book's peak. vs Market is how you did against your three stocks."
 
 const CHART := {
-	"1M": "Last 20 market minutes. One print per minute — not one month.",
+	"1M": "Last 20 market minutes. One price per minute — not one month.",
 	"5M": "Last 60 market minutes (one hour of the session).",
 	"15M": "Last 120 market minutes (two hours of the session).",
 	"1H": "Last 180 market minutes (three hours of the session).",
-	"1D": "The full session, as far as prices have printed.",
+	"1D": "The full session, as far as prices have gone.",
 }
 
 const _HINTS := {
@@ -48,8 +49,8 @@ const _HINTS := {
 	"bids": "Buyers stepping in. That flow lifts the price.",
 	"Bid": "Buyers stepping in. That flow lifts the price.",
 	"bid": "Buyers stepping in. That flow lifts the price.",
-	"Offered": "Sellers hitting the market. The name is being sold.",
-	"offered": "Sellers hitting the market. The name is being sold.",
+	"Offered": "Sellers hitting the market. This stock is being sold.",
+	"offered": "Sellers hitting the market. This stock is being sold.",
 	"fades": "Trading against the headline — selling good news or buying bad news.",
 	"faded": "Trading against the headline — selling good news or buying bad news.",
 	"Fade": "Trading against the headline — selling good news or buying bad news.",
@@ -62,21 +63,21 @@ const _HINTS := {
 	"dovish": "Policy looking easier — cheaper money, usually a lift for stocks.",
 	"Hawkish": "Policy looking tighter — dearer money, usually a knock for stocks.",
 	"hawkish": "Policy looking tighter — dearer money, usually a knock for stocks.",
-	"high-duration": "How far out the cash is. Growth names swing more when rates move.",
-	"Duration": "How far out the cash is. Growth names swing more when rates move.",
-	"duration": "How far out the cash is. Growth names swing more when rates move.",
+	"high-duration": "How far out the cash is. Growth stocks swing more when rates move.",
+	"Duration": "How far out the cash is. Growth stocks swing more when rates move.",
+	"duration": "How far out the cash is. Growth stocks swing more when rates move.",
 	"offtaker": "A buyer contracted to take the mine's output.",
 	"Offtake": "A buyer contracted to take the mine's output.",
 	"offtake": "A buyer contracted to take the mine's output.",
 	"Guidance": "What the company says it will earn or ship from here.",
 	"guidance": "What the company says it will earn or ship from here.",
-	"Overweight": "Analyst speak for buy — they want more of this name than the typical basket.",
-	"Underweight": "Analyst speak for sell — they want less of this name than the typical basket.",
-	"HALTED": "Trading stopped for a few minutes. It may reopen live, or distressed after a wipe print.",
+	"Overweight": "Analyst speak for buy — they want more of this stock than the typical basket.",
+	"Underweight": "Analyst speak for sell — they want less of this stock than the typical basket.",
+	"HALTED": "Trading stopped for a few minutes. It may reopen live, or distressed after a wipe.",
 	"Distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
 	"distressed": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
 	"DISTRESSED": "A leftover stub after a wipe. Sell-only, then it leaves the board at week recap.",
-	"Binary": "The next print can make or break the name — including a halt and a near-worthless reopen.",
+	"Binary": "The next headline can make or break this stock — including a halt and a near-worthless reopen.",
 }
 
 static var _term_re: RegEx
@@ -88,7 +89,7 @@ static func hover(control: Control, text: String) -> void:
 
 
 static func chart_tooltip(timeframe: String) -> String:
-	return str(CHART.get(timeframe, "Chart window on this name."))
+	return str(CHART.get(timeframe, "Chart window on this stock."))
 
 
 static func annotate(text: String) -> String:

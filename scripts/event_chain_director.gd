@@ -341,6 +341,100 @@ const ARCS := {
 			},
 		},
 	},
+	"nova_fleet": {
+		"scope": "company",
+		"subject": "NOVA",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Nova Mobility says a city fleet program is moving into rate production.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Nova Mobility warns a city fleet program may slip rate production.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Nova Mobility supplier commentary stays constructive.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: a battery partner is said to be the bottleneck at Nova Mobility.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: industrials bid Nova Mobility on the fleet tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Nova Mobility is offered as desks fade the fleet rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: the city is said to have lifted Nova Mobility's near-term slot.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a software hold is said to be hanging over a Nova Mobility lot.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Nova Mobility confirms rate production and holds deliveries.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Nova Mobility trims the delivery guide after the fleet slip.", "category": "earnings", "strength": "major", "lasting": true},
+				],
+			},
+		},
+	},
+	"drft_launch": {
+		"scope": "company",
+		"subject": "DRFT",
+		"industry": "",
+		"stages": {
+			"announcement": {
+				"positive": [
+					{"text": "Drift Interactive teases a flagship launch this month.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Drift Interactive warns the flagship launch may slip.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"follow_up": {
+				"positive": [
+					{"text": "Follow-up: Drift Interactive says beta metrics are tracking ahead of launch.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+				"negative": [
+					{"text": "Follow-up: Drift Interactive trims launch commentary as bugs pile up.", "category": "product", "strength": "moderate", "lasting": true},
+				],
+			},
+			"reaction": {
+				"positive": [
+					{"text": "Market reaction: hot money piles into Drift Interactive on the launch tape.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+				"negative": [
+					{"text": "Market reaction: Drift Interactive is offered as traders fade the launch rumor.", "category": "rumor", "strength": "moderate", "lasting": false},
+				],
+			},
+			"twist": {
+				"positive": [
+					{"text": "Unexpected: a platform partner features the Drift Interactive title on the storefront.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Unexpected: a rival notes holes in the Drift Interactive beta.", "category": "product", "strength": "major", "lasting": true},
+				],
+			},
+			"resolution": {
+				"positive": [
+					{"text": "Resolution: Drift Interactive ships the title and holds the player count.", "category": "product", "strength": "major", "lasting": true},
+				],
+				"negative": [
+					{"text": "Resolution: Drift Interactive postpones the launch — the squeeze unwinds.", "category": "product", "strength": "major", "lasting": true, "existential": true},
+				],
+			},
+		},
+	},
 	"hawkish_tape": {
 		"scope": "market",
 		"subject": "MARKET",
@@ -988,7 +1082,7 @@ func hook_text(chain: EventChain) -> String:
 	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
 		match chain.scope:
 			"company":
-				return "%s — resolution tomorrow. Binary." % CompanyCatalog.display_name(chain.subject)
+				return "%s — resolution tomorrow. Make-or-break." % CompanyCatalog.display_name(chain.subject)
 			_:
 				return "Resolution tomorrow. Binary."
 	match chain.scope:
@@ -1010,7 +1104,7 @@ static func _hook_from_dict(item: Dictionary) -> String:
 	var arc_id: String = str(item.get("arc_id", ""))
 	if pending == "resolution" and float(item.get("polarity", 1.0)) < 0.0 and arc_is_existential(arc_id):
 		if scope == "company":
-			return "%s — resolution tomorrow. Binary." % CompanyCatalog.display_name(str(item.get("subject", "")))
+			return "%s — resolution tomorrow. Make-or-break." % CompanyCatalog.display_name(str(item.get("subject", "")))
 		return "Resolution tomorrow. Binary."
 	match scope:
 		"company":

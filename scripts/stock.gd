@@ -577,21 +577,21 @@ func _ignore_reaction(category: String) -> String:
 	match category:
 		"rumor":
 			if speculation_factor < 0.4:
-				return "Little reaction — this name does not trade on chatter."
+				return "Little reaction — this stock does not trade on chatter."
 			return "Little reaction — traders treat it as already priced in."
 		"earnings":
 			if speculation_factor > 0.7:
-				return "The print is ignored — this name still trades the next rumor."
+				return "The numbers are ignored — this stock still trades the next rumor."
 			return "Little reaction — traders treat it as already priced in."
 		"commodity":
-			return "Muted — commodity names wait for the tape, not the headline."
+			return "Muted — commodity stocks wait for the tape, not the headline."
 		_:
 			return "Little reaction — traders treat it as already priced in."
 
 
 func _fade_reaction(category: String, headline_sign: float) -> String:
 	if category == "earnings" and speculation_factor > 0.7:
-		return "Traders fade the print — this name lives on rumors, not results."
+		return "Traders fade the numbers — this stock lives on rumors, not results."
 	if category == "rumor" and speculation_factor < 0.4:
 		return "Institutions fade the chatter and stay with the longer-term tape."
 	if headline_sign > 0.0:
@@ -604,16 +604,16 @@ func _follow_reaction(category: String, headline_sign: float, alignment: float, 
 		return "Muted reaction amid mixed or cautious sentiment."
 	match category:
 		"product":
-			return "Growth money chases the product cycle." if headline_sign > 0.0 else "Product-cycle names sell the delay."
+			return "Growth money chases the product cycle." if headline_sign > 0.0 else "Product-cycle stocks sell the delay."
 		"commodity":
 			return "The miner tracks the commodity tape."
 		"regulatory":
-			return "Policy-sensitive names swing hard on the headline."
+			return "Policy-sensitive stocks swing hard on the headline."
 		"rumor":
 			return "Speculative flow piles into the rumor." if headline_sign > 0.0 else "Hot money dumps on the whisper."
 		"earnings":
 			if headline_sign > 0.0 and actual_move > 0.0:
-				return "The print lands — buyers follow the numbers."
+				return "The numbers land — buyers follow them."
 			return "Sellers press the stock on the miss."
 		_:
 			if headline_sign > 0.0 and actual_move > 0.0:

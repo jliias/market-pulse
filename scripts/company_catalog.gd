@@ -34,7 +34,7 @@ const RISK_PROFILES := {
 	},
 	"volatile": {
 		"label": "Volatile",
-		"blurb": "Larger gains and losses. Headlines can gap the name.",
+		"blurb": "Larger gains and losses. Headlines can gap the stock.",
 		"typical": "±3–8% / day",
 		"organic_mult": 1.62,
 		"news_mult": 1.95,
@@ -68,64 +68,88 @@ const ALL := {
 		"risk": "growth", "label": "Growth", "volatility": 1.22, "growth": 0.88, "liquidity": 0.72, "popularity": 0.85,
 		"institutional_ownership": 0.55, "speculation_factor": 0.45, "trend_flip": 0.010,
 		"industries": ["Technology", "Growth"], "news": NEWS_GROWTH,
+		"story": "Makes AI chips and cloud silicon. Product cycles and enterprise spend drive the tape.",
 	},
 	"GRNE": {
 		"name": "Green Energy Corp", "price": 34.20, "sector": "Energy", "cap": "Mid Cap",
 		"risk": "volatile", "label": "Volatile", "volatility": 1.38, "growth": 0.58, "liquidity": 0.42, "popularity": 0.70,
 		"institutional_ownership": 0.28, "speculation_factor": 0.92, "trend_flip": 0.024,
 		"industries": ["Energy", "Growth", "Commodities"], "news": NEWS_SPEC,
+		"story": "Grid storage paid by subsidies. Policy windows can make or break a sitting.",
 	},
 	"NMIN": {
 		"name": "North Mining Ltd", "price": 512.80, "sector": "Materials", "cap": "Large Cap",
 		"risk": "safe", "label": "Safe", "volatility": 0.62, "growth": 0.42, "liquidity": 0.88, "popularity": 0.50,
 		"institutional_ownership": 0.78, "speculation_factor": 0.22, "trend_flip": 0.006,
 		"industries": ["Materials", "Commodities"], "news": NEWS_STABLE,
+		"story": "Iron-ore miner with long offtakes. Tonnes and bulk prices move it more than chatter.",
 	},
 	"HELX": {
 		"name": "Helix Biotech", "price": 62.40, "sector": "Healthcare", "cap": "Mid Cap",
 		"risk": "growth", "label": "Growth", "volatility": 1.28, "growth": 0.82, "liquidity": 0.58, "popularity": 0.68,
 		"institutional_ownership": 0.42, "speculation_factor": 0.58, "trend_flip": 0.014,
 		"industries": ["Healthcare", "Growth"], "news": NEWS_GROWTH,
+		"story": "Mid-cap pipeline biotech. Trial readouts and filings can reprice it overnight.",
 	},
 	"RETL": {
 		"name": "Redline Retail", "price": 88.15, "sector": "Consumer", "cap": "Large Cap",
 		"risk": "safe", "label": "Safe", "volatility": 0.72, "growth": 0.48, "liquidity": 0.84, "popularity": 0.62,
 		"institutional_ownership": 0.70, "speculation_factor": 0.28, "trend_flip": 0.007,
 		"industries": ["Consumer"], "news": NEWS_STABLE,
+		"story": "National big-box chain. Same-store sales and holiday traffic set the session.",
 	},
 	"CYBR": {
 		"name": "CyberNest Inc", "price": 41.90, "sector": "Technology", "cap": "Mid Cap",
 		"risk": "volatile", "label": "Volatile", "volatility": 1.42, "growth": 0.74, "liquidity": 0.48, "popularity": 0.72,
 		"institutional_ownership": 0.32, "speculation_factor": 0.88, "trend_flip": 0.022,
 		"industries": ["Technology", "Growth"], "news": NEWS_SPEC,
+		"story": "Sells cyber contracts to governments. Awards and protests whip the stock around.",
 	},
 	"AERO": {
 		"name": "Aether Aerospace", "price": 156.30, "sector": "Industrials", "cap": "Large Cap",
 		"risk": "growth", "label": "Growth", "volatility": 1.12, "growth": 0.78, "liquidity": 0.66, "popularity": 0.60,
 		"institutional_ownership": 0.52, "speculation_factor": 0.42, "trend_flip": 0.011,
 		"industries": ["Industrials", "Growth"], "news": NEWS_GROWTH,
+		"story": "Defense airframes on multi-year programs. Backlog and slips matter more than a quiet day.",
 	},
 	"BANK": {
 		"name": "Bastion Bank", "price": 73.55, "sector": "Financials", "cap": "Large Cap",
 		"risk": "safe", "label": "Safe", "volatility": 0.68, "growth": 0.44, "liquidity": 0.90, "popularity": 0.58,
 		"institutional_ownership": 0.80, "speculation_factor": 0.20, "trend_flip": 0.006,
 		"industries": ["Financials"], "news": NEWS_STABLE,
+		"story": "Regional lender. Deposit costs and credit losses are the swing factors.",
 	},
 	"FOOD": {
 		"name": "Harbor Foods", "price": 29.80, "sector": "Consumer", "cap": "Mid Cap",
 		"risk": "safe", "label": "Safe", "volatility": 0.70, "growth": 0.46, "liquidity": 0.80, "popularity": 0.55,
 		"institutional_ownership": 0.64, "speculation_factor": 0.30, "trend_flip": 0.008,
 		"industries": ["Consumer"], "news": NEWS_STABLE,
+		"story": "Grocery staples. Volume is steady; input costs and shelf space are the risk.",
 	},
 	"QBIT": {
 		"name": "Qubit Labs", "price": 18.65, "sector": "Technology", "cap": "Small Cap",
 		"risk": "volatile", "label": "Volatile", "volatility": 1.50, "growth": 0.90, "liquidity": 0.36, "popularity": 0.64,
 		"institutional_ownership": 0.22, "speculation_factor": 0.95, "trend_flip": 0.026,
 		"industries": ["Technology", "Growth"], "news": NEWS_SPEC,
+		"story": "Early quantum lab. Demos and funding rumors run hotter than published results.",
+	},
+	"NOVA": {
+		"name": "Nova Mobility", "price": 94.70, "sector": "Industrials", "cap": "Mid Cap",
+		"risk": "growth", "label": "Growth", "volatility": 1.18, "growth": 0.80, "liquidity": 0.60, "popularity": 0.62,
+		"institutional_ownership": 0.46, "speculation_factor": 0.48, "trend_flip": 0.012,
+		"industries": ["Industrials", "Growth"], "news": NEWS_GROWTH,
+		"story": "Electric fleet vans for cities. Contracts and battery supply write the next chapter.",
+	},
+	"DRFT": {
+		"name": "Drift Interactive", "price": 21.40, "sector": "Technology", "cap": "Small Cap",
+		"risk": "volatile", "label": "Volatile", "volatility": 1.46, "growth": 0.84, "liquidity": 0.40, "popularity": 0.70,
+		"institutional_ownership": 0.24, "speculation_factor": 0.90, "trend_flip": 0.023,
+		"industries": ["Technology", "Growth", "Consumer"], "news": NEWS_SPEC,
+		"story": "Games studio on one flagship launch. Player counts and delays swing hard.",
 	},
 }
 
-const ORDER: Array[String] = ["NMIN", "RETL", "BANK", "FOOD", "ALPH", "HELX", "AERO", "GRNE", "CYBR", "QBIT"]
+const ORDER: Array[String] = ["NMIN", "RETL", "BANK", "FOOD", "ALPH", "HELX", "AERO", "NOVA", "GRNE", "CYBR", "QBIT", "DRFT"]
 const RISK_SECTIONS: Array[String] = ["safe", "growth", "volatile"]
 const DEFAULT_WATCHLIST: Array[String] = ["ALPH", "GRNE", "NMIN"]
 const ALIASES := {
@@ -139,6 +163,8 @@ const ALIASES := {
 	"BANK": "BANK", "BASTION": "BANK",
 	"FOOD": "FOOD", "HARBOR": "FOOD",
 	"QBIT": "QBIT", "QUBIT": "QBIT",
+	"NOVA": "NOVA", "NOVA MOBILITY": "NOVA",
+	"DRFT": "DRFT", "DRIFT": "DRFT",
 }
 
 
@@ -200,15 +226,15 @@ static func mix_summary(symbols: Array) -> String:
 			"volatile":
 				volatile_n += 1
 	if symbols.size() != 3:
-		return "Pick three names. Safe names move less; volatile names can pay more and lose more."
+		return "Pick three stocks. Safe stocks move less; volatile stocks can pay more and lose more."
 	if safe_n == 3:
 		return "Conservative board — smaller potential gains, fewer blow-ups."
 	if volatile_n == 3:
 		return "Aggressive board — large gains and large losses are both in play."
 	if volatile_n == 2:
-		return "High risk — two volatile names will dominate the market."
+		return "High risk — two volatile stocks will dominate the market."
 	if safe_n == 2:
-		return "Defensive board — two safe names, muted upside unless the third rips."
+		return "Defensive board — two safe stocks, muted upside unless the third rips."
 	if volatile_n == 1 and safe_n == 1:
 		return "Mixed board — one safe, one growth, one volatile."
 	if volatile_n == 1:

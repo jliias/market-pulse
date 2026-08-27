@@ -31,7 +31,7 @@ func set_selected(on: bool) -> void:
 	_apply_style()
 
 
-func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_entry: float = 0.0) -> void:
+func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_entry: float = 0.0, avg_cost: float = 0.0) -> void:
 	symbol = stock.symbol
 	ticker_label.text = stock.symbol
 	risk_label.text = stock.listing_label()
@@ -56,13 +56,15 @@ func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_ent
 	if _fading:
 		var fade_pl: float = (fade_entry - stock.price) * float(fade_shares)
 		var fade_sign := "+" if fade_pl >= 0.0 else "-"
-		owned_label.text = "FADE %d  %s$%.2f" % [fade_shares, fade_sign, absf(fade_pl)]
+		owned_label.text = "SHORT %d  %s$%.2f" % [fade_shares, fade_sign, absf(fade_pl)]
 		owned_label.add_theme_color_override("font_color", Color(0.78, 0.62, 0.98))
-		CopyHints.hover(owned_label, CopyHints.HUD_FADE)
+		CopyHints.hover(owned_label, CopyHints.HUD_SHORT)
 	elif owned_shares > 0:
-		owned_label.text = "Owned: %d" % owned_shares
-		owned_label.add_theme_color_override("font_color", Color(0.9, 0.75, 0.25, 1))
-		owned_label.tooltip_text = ""
+		var pos_pl: float = (stock.price - avg_cost) * float(owned_shares)
+		var pos_sign := "+" if pos_pl >= 0.0 else "-"
+		owned_label.text = "LONG %d  %s$%.2f" % [owned_shares, pos_sign, absf(pos_pl)]
+		owned_label.add_theme_color_override("font_color", Color(0.35, 0.85, 0.45) if pos_pl >= 0.0 else Color(0.95, 0.38, 0.38))
+		CopyHints.hover(owned_label, CopyHints.HUD_LONG)
 	else:
 		owned_label.text = "Owned: 0"
 		owned_label.add_theme_color_override("font_color", Color(0.65, 0.68, 0.74, 1))

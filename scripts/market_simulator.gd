@@ -152,7 +152,7 @@ func apply_away_step(hours: float) -> void:
 		gapped_names.append(symbol)
 	var gap_event := NewsEvent.new(
 		get_time_string(),
-		"OVERNIGHT: while you were away, the watchlist marked — names gapped with the climate.",
+		"OVERNIGHT: while you were away, the watchlist marked — stocks gapped with the climate.",
 		gapped_names,
 		clampf(avg_gap * 8.0, -0.4, 0.4),
 		0.0,
@@ -162,7 +162,7 @@ func apply_away_step(hours: float) -> void:
 		"macro",
 		"market"
 	)
-	gap_event.reaction = "The open will inherit last night's print."
+	gap_event.reaction = "The open will inherit last night's prices."
 	overnight_events.append(gap_event)
 
 	var beat: NewsEvent = chain_director.try_away_beat(get_stock_list(), get_time_string())
@@ -348,7 +348,7 @@ func tick() -> Array[NewsEvent]:
 			new_events.append(settled)
 		var close_event := NewsEvent.new(
 			get_time_string(),
-			"Market closed. Final prints are in — did you beat the tape?",
+			"Market closed. Final prices are in — did you beat the tape?",
 			[],
 			0.0,
 			0.0,
@@ -449,7 +449,7 @@ func _apply_premarket_news(event: NewsEvent) -> void:
 		var actual_move: float = float(result.get("move", 0.0)) + float(result.get("delay_move", 0.0))
 		var reaction_text: String = str(result.get("reaction", ""))
 		if actual_move * event.impact < 0.0:
-			reaction_text = "Futures fade the print — the gap may not hold."
+			reaction_text = "Futures fade the move — the gap may not hold."
 		elif absf(actual_move) < absf(event.impact) * 0.45:
 			reaction_text = "Overnight reaction looks softer than the headline."
 		if not reaction_text.is_empty() and not reactions.has(reaction_text):
@@ -477,7 +477,7 @@ func _apply_existential(event: NewsEvent, premarket: bool) -> void:
 		names.append(stock.company_name)
 	if names.is_empty():
 		return
-	event.reaction = "HALTED: %s — no trading until the name reopens distressed. Sell-only after the gap." % ", ".join(names)
+	event.reaction = "HALTED: %s — no trading until the stock reopens distressed. Sell-only after the gap." % ", ".join(names)
 	_nudge_market_mood(event, -0.35)
 
 
@@ -488,7 +488,7 @@ func _halt_event(stock: Stock, premarket: bool) -> NewsEvent:
 		headline = "HALTED: %s — volatility pause after a fast move." % stock.company_name
 		reaction = "No trading for a few minutes. It should reopen listed."
 	else:
-		headline = "HALTED: %s — trading stopped pending the print." % stock.company_name
+		headline = "HALTED: %s — trading stopped pending the next move." % stock.company_name
 		reaction = "No buys or sells until reopen. This one is set to come back distressed."
 	if premarket and not headline.begins_with("PREMARKET"):
 		headline = "PREMARKET: " + headline
@@ -525,10 +525,10 @@ func _reopen_event(stock: Stock, premarket: bool) -> NewsEvent:
 		headline = "REOPEN: %s marked distressed after a %.0f%% gap. Sell-only until week recap." % [
 			stock.company_name, gap_pct
 		]
-		reaction = "The residual bid is live. You can sell; you cannot buy this name back."
+		reaction = "The residual bid is live. You can sell; you cannot buy this stock back."
 	else:
 		headline = "REOPEN: %s is live again after the volatility halt." % stock.company_name
-		reaction = "Trading is back. The last print stands."
+		reaction = "Trading is back. The last price stands."
 	if premarket and not headline.begins_with("PREMARKET"):
 		headline = "PREMARKET: " + headline
 	var event := NewsEvent.new(
@@ -636,7 +636,7 @@ func _summarize_industry_reaction(applied_moves: PackedFloat32Array, headline_im
 	if fade_count >= follow_count:
 		return "The %s group fades the sector headline." % label
 	if ignore_count > 0 or fade_count > 0:
-		return "Uneven reaction across %s names." % label
+		return "Uneven reaction across %s stocks." % label
 	return "The %s group leans with the headline." % label
 
 

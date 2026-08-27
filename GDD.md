@@ -10,11 +10,11 @@ This is not a pitch for unbuilt features. Where something exists only as a stub,
 
 ## 1. High concept
 
-You are a day trader at a desk. Each sitting is one market session. You pick **three names**. Those three *are* the market. The job is not “make money in a vacuum” — it is **beat that basket**.
+You are a day trader at a desk. Each sitting is one market session. You pick **three stocks**. Those three *are* the market. The job is not “make money in a vacuum” — it is **beat that basket**.
 
 Fantasy: read the tape, sit through weather and stories, size trades through a real spread and commission, and leave a book that still looks good when the week is scored.
 
-Tone: desk language in the feed, taught in place (hover), not a glossary screen.
+Tone: **HUD, ticket, pause, close, pick screen, and tooltips** use plain words — stock, price, headline. The **news feed** may still say *name* or *print*; those stay underlined with hover. Not a glossary screen.
 
 ---
 
@@ -61,7 +61,7 @@ Leave desk → save + timestamp → menu or quit
 | Calendar | **Mon–Fri only.** Day 1 = Monday, day 5 = Friday, day 6 = Monday of week 2 |
 | HUD day | Shows the **open session’s** day while you are in it; after close it stays on the day you just finished until New Day |
 
-A full session is ~6.5 minutes of real time if you sit it out. **End Session** (unlocked at **10:30**, first hour of tape) fast-forwards remaining ticks to the close. News still fires; player-triggered “drama” does not (spectator mode).
+A full session is ~6.5 minutes of real time at **1×** if you sit it out. **Tape speed** (1× / 2× / 3×) only shortens the tick interval; headline pause windows stay wall-clock. **End Session** (unlocked at **10:30**, first hour of tape) fast-forwards remaining ticks to the close. News still fires; player-triggered “drama” does not start (spectator mode). Already-queued drama beats can still print.
 
 Leaving the desk while the market is open **marks to close** the same way, then saves.
 
@@ -83,7 +83,7 @@ Watchlist size is **exactly 3**, chosen at new game and optionally swapped at we
 
 ## 6. Universe
 
-Ten companies. Risk is the player-facing lever.
+Twelve companies. Risk is the player-facing lever.
 
 | Symbol | Name | Sector | Risk |
 | --- | --- | --- | --- |
@@ -94,15 +94,17 @@ Ten companies. Risk is the player-facing lever.
 | ALPH | Alpha Technologies | Technology | Growth |
 | HELX | Helix Biotech | Healthcare | Growth |
 | AERO | Aether Aerospace | Industrials | Growth |
+| NOVA | Nova Mobility | Industrials | Growth |
 | GRNE | Green Energy Corp | Energy | Volatile |
 | CYBR | CyberNest Inc | Technology | Volatile |
 | QBIT | Qubit Labs | Technology | Volatile |
+| DRFT | Drift Interactive | Technology | Volatile |
 
 **Safe** — smaller swings, harder to outrun the basket in a hurry. Typical day roughly ±0.4–1.2%.  
 **Growth** — moderate; news still pays or costs. Typical day ±1–3%.  
 **Volatile** — headlines can gap the name. Typical day ±3–8%.
 
-The pick screen summarizes the **mix** (conservative, mixed, aggressive, etc.). That mix is the risk of the whole run until you rebalance.
+The pick screen is **three columns** (safe / growth / volatile) so all twelve stocks are on one screen. Each card shows ticker, company, sector, cap, typical day, and a **three-line story**. Ticker, name, and the info line share the same height on every card. The mix line summarizes conservative, defensive, mixed, tilted growth / defensive, high risk, or aggressive. That mix is the risk of the whole run until you rebalance.
 
 Prices are clamped between **$1** and **$1000** while listed. Distressed residuals floor at **$0.05**. Spread is a function of liquidity (much wider when distressed): you **buy the ask, sell the bid**. Last print sits in between.
 
@@ -111,34 +113,40 @@ Prices are clamped between **$1** and **$1000** while listed. Distressed residua
 ## 7. Money and orders
 
 - Starting cash: **$10,000**
-- Commission: **$2 + 0.2%** of notional, **every** fill (buy and sell)
-- Quantity: ±1, presets 10 / 20 / 50 / 100, Max (affordable on buy; fade size on fade)
+- Commission: **$2 + 0.2%** of notional, **every** fill (buy, sell, short open, short cover)
+- Quantity: ±1, presets 10 / 20 / 50 / 100, Max (affordable on buy; short size on short)
 - No options, no limit orders — marketable size at current bid/ask
-- **Fade** — synthetic short on one listed name you do not hold. Pays if that last print falls. Cap **20% of book** (cash + longs). Commission on open and cover. Auto-covers at the close. Counts in vs Market. Cannot fade halted/distressed names.
+- **Short** — synthetic intraday short on one listed stock you do not hold. Pays if that last **price** falls. Cap **20% of book** (cash + longs, not including open short P/L). One short per stock; sell the long first. Commission on open and cover. Cover anytime, or auto-cover at the close. Counts in vs Market (book value includes short P/L). Cannot short halted/distressed stocks. Save key is still `fades`.
 - Average cost tracked per name; position P/L vs that cost
 
-HUD shows estimated price, notional, commission, and final debit/credit before you hit Place Order.
+HUD shows estimated price, notional, commission, and final debit/credit before you hit Place Order. A successful fill **pulses** the watchlist card and book, and a chip flies between them (buy/short from card → book; sell/cover the other way).
 
 ---
 
 ## 8. Session HUD (desk)
 
-Three columns (stack on a narrow window):
+Default window **1600×900**. Body is a **trade ticket** column (full height) plus **DeskRows**.
 
-1. **Watchlist** — ticker cards: risk, last, day change, volume, shares owned, mini chart. Click to select.
-2. **Chart + news** — main line chart; **story cards** (up to two open arcs) above the feed; feed of timestamped headlines with a reaction line. Desk terms in the feed are **underlined**; hover for a short definition. Player-triggered tape is tagged **YOUR TAPE** (gift or trap).
-3. **Trade ticket + book** — selected name, bid/ask, buy/sell/**fade**, qty, fills, cash, positions, session P/L.
+**Top row:** watchlist | chart.  
+**Bottom row:** book | news feed.  
+**Narrow** (window width **< 1100**): those rows stack vertically; the ticket still sits in the body column.
 
-Top: book value, cash, session P/L, clock, **vs Market**.  
-Bottom: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, End Session / New Day.
+1. **Watchlist** — ticker cards: risk, last, day change, volume, **LONG n ±$P/L** or **SHORT n ±$P/L** (purple border when short), mini chart. Click to select.
+2. **Chart** — selected name, timeframes, main line chart. **Story cards** (up to two open arcs) sit under the chart: company / sector / TAPE, polarity, stage, hook; **HALTED** / **DISTRESSED** if listed that way. Click a **company** story card to select that watchlist ticker.
+3. **News feed** — timestamped headlines with a reaction line. Tags include ticker, **MARKET**, sector shorts, and **YOUR TAPE** (gift or trap). Desk terms are **underlined**; hover for a short definition.
+4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, Place Order (or Short / Cover), fills.
+5. **Book** — longs and short rows, open P/L.
 
-**Act on the print:** chain beats, major headlines, existential halt/reopen, weather flips, and YOUR TAPE pause the clock **8–15 real seconds**. Hold (or timeout) resumes. To ticket selects the named watchlist name and resumes — you still size the order on the live tape. Circuit volatility pauses do **not** stack this overlay. End Session / leave desk treats a pause as Hold. Fast-forward to close does not pause.
+Top bar: book value, cash, session P/L, clock, **vs Market**.  
+Bottom bar: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, Settings, End Session / New Day, Leave desk.
 
-Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prints**, not calendar months and not OHLC candles. Tooltips say so.
+**Act on this headline:** chain beats, major headlines, existential halt **and** distressed reopen, weather flips, and YOUR TAPE pause the tape **10 real seconds** (major / chain / weather / YOUR TAPE) or **14** (existential wipe). Hold (or timeout) resumes. To ticket selects the named watchlist stock and resumes — you still size the order on the live tape. Circuit volatility halt/reopen does **not** open this overlay. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Hold. Fast-forward to close does not pause.
 
-**Settings:** tape speed **1× / 2× / 3×** (tick interval only). Pause windows stay wall-clock.
+Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prices**, not calendar months and not OHLC candles. Tooltips say so. While the session is **closed**, HALTED / DISTRESSED is **not** drawn as a chart banner — it is folded into the close overlay stamp.
 
-Close overlay: large **vs Market**, Beat / Matched / Lost, streak, one book-vs-story line, tomorrow’s hook, listing stamp if halted/distressed.
+**Settings:** compact centered overlay (dim + panel), not a full-window dialog. Tape speed **1× / 2× / 3×** (tick interval only). Pause windows stay wall-clock. Close or click the dim to dismiss.
+
+**Close overlay:** translucent panel over the chart — large **vs Market**, Beat / Matched / Lost, streak, one book-vs-story line, tomorrow’s hook, listing stamp (`Market closed` / `HALTED` / `DISTRESSED · sell-only residual`).
 
 ---
 
@@ -179,8 +187,8 @@ A name already halted or distressed cannot take a second halt.
 
 A **negative resolution** on a tagged company arc can **wipe the equity stub**, not just print a normal dip.
 
-**Can wipe:** GRNE subsidy dies, HELX trial miss, HELX filing delay, CYBR award loss, QBIT demo collapse.  
-**Cannot wipe:** safe names, ALPH product delays, macro/policy resolutions.
+**Can wipe:** GRNE subsidy dies, HELX trial miss, HELX filing delay, CYBR award loss, QBIT demo collapse, DRFT launch collapse.  
+**Cannot wipe:** safe stocks, ALPH product delays, NOVA fleet slips, macro/policy resolutions.
 
 Sequence:
 
@@ -208,8 +216,8 @@ Implemented arcs (company or tape-wide):
 - GRNE subsidy; GRNE storage
 - NMIN pit; NMIN offtake
 - HELX trial; HELX FDA
-- CYBR contract; QBIT demo
-- RETL holiday; AERO program; BANK credit; FOOD costs
+- CYBR contract; QBIT demo; DRFT launch
+- RETL holiday; AERO program; NOVA fleet; BANK credit; FOOD costs
 - Tape: growth rotation, hawkish tape, consumer traffic, commodities swing, inflation print
 
 ---
@@ -255,7 +263,7 @@ Separate from authored arcs. After a **meaningful** buy or sell (and some hold /
 
 One local save. New game **deletes** it after you lock three names.
 
-Saved: cash, holdings, avg cost, **fades**, watchlist, last prices, days played, commissions, regime climate, event chains, equity ATH, streak and vs-Market stats, week recap pending, leave-desk timestamp, **tape speed**.
+Saved: cash, holdings, avg cost, **fades**, watchlist, last prices, listings, days played, commissions, regime climate, event chains, equity ATH, streak and vs-Market stats, week recap pending, leave-desk timestamp, **tape speed**.
 
 Menu **Continue** card is a cliffhanger: day/week, book, ATH, watchlist, climate (with days left **there** — designer/career info, not the live HUD tooltip), streak, story hook, last close vs Market, overnight-risk line if away is due.
 
@@ -273,13 +281,14 @@ No tutorial mission. Learning is:
 
 ## 16. Explicitly not shipped
 
-- Layout options in Settings (speed is shipped)
+- Layout options in Settings (speed is the only setting)
 - Multiplayer / social
 - Auto-sim of many missed **calendar** days (only the single 8-hour away step)
 - Daily “shop a new watchlist” outside week recap
-- Broker-style shorts (borrow/margin). Fade is the game verb.
+- Broker-style shorts (borrow/margin). Ticket **Short** is a synthetic intraday short; it covers at the close.
 - Limit orders, more than three names
-- Legacy `command_handler.gd` (CLI leftover, not on the desk)
+- `command_handler.gd` — CLI leftover, not wired to the desk
+- Scene stub `%SettingsDialog` (`AcceptDialog`) — unused; settings is the overlay in `main.gd`
 
 ---
 
@@ -303,10 +312,12 @@ No tutorial mission. Learning is:
 | Starting cash | $10,000 |
 | Commission | $2 + 0.2% |
 | Watchlist | 3 names |
-| Fade cap | 20% of cash + longs |
-| Tape speed | 1× / 2× / 3× |
-| Print pause | 10s major / 14s existential |
+| Short cap | 20% of cash + longs |
+| Tape speed | 1× / 2× / 3× (tick wait only) |
+| Print pause | 10s typical / 14s existential |
 | Week length | 5 trading days |
 | Away trigger | 8 real hours |
 | Max active arcs | 2 |
 | Beat threshold | ±0.05% vs Market |
+| Narrow layout | width < 1100 px |
+| Default window | 1600 × 900 |

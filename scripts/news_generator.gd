@@ -199,6 +199,42 @@ const COMPANY_NEWS := {
 			{"text": "Qubit Labs looks crowded after the quantum squeeze.", "category": "rumor", "strength": "minor", "lasting": false},
 		],
 	},
+	"NOVA": {
+		"positive": [
+			{"text": "Nova Mobility wins a city fleet-electrification contract.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Nova Mobility beats a production checkpoint on its van line.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "Analyst raises Nova Mobility on order-book visibility.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Street chatter: Nova Mobility named on a municipal shortlist.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Nova Mobility says a battery partner cleared a cell gate.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Industrial-flow bids Nova Mobility on fleet chatter.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "Nova Mobility flags a battery-supply slip on the van line.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Nova Mobility trims a near-term delivery guide.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "Analyst cuts Nova Mobility after a utilization review.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Whispers of a city contract protest hanging over Nova Mobility.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "A software hold is said to be hanging over a Nova Mobility lot.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Nova Mobility is offered as industrials fade into the close.", "category": "industry", "strength": "minor", "lasting": false},
+		],
+	},
+	"DRFT": {
+		"positive": [
+			{"text": "Street chatter: Drift Interactive named a dark-horse gaming pick.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Drift Interactive posts a surprise player-count milestone.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Hot money piles into Drift Interactive on launch chatter.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Analyst initiates Drift Interactive at Overweight.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "A platform partner is said to be featuring a Drift Interactive title.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Drift Interactive is said to have a cleaner cash window than feared.", "category": "earnings", "strength": "minor", "lasting": true},
+		],
+		"negative": [
+			{"text": "Whispers of a delayed title at Drift Interactive.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Drift Interactive delays a flagship launch window.", "category": "product", "strength": "moderate", "lasting": true},
+			{"text": "Analyst flags user-acquisition costs at Drift Interactive.", "category": "analyst", "strength": "moderate", "lasting": false},
+			{"text": "Traders fade Drift Interactive after the morning squeeze.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "A rival notes bugs in a Drift Interactive beta.", "category": "product", "strength": "major", "lasting": true},
+			{"text": "Drift Interactive looks crowded after the launch squeeze.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+	},
 }
 
 const COMPANY_NEWS_EXTRA := {
@@ -364,6 +400,38 @@ const COMPANY_NEWS_EXTRA := {
 			{"text": "Cash-burn chatter turns mixed at Qubit Labs.", "category": "earnings", "strength": "minor", "lasting": true},
 		],
 	},
+	"NOVA": {
+		"positive": [
+			{"text": "Nova Mobility is bid as industrial ETFs catch a flow day.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "A battery supplier is said to have cleared a pack for Nova Mobility.", "category": "product", "strength": "minor", "lasting": true},
+			{"text": "Charging-grant chatter turns constructive for Nova Mobility.", "category": "regulatory", "strength": "minor", "lasting": false},
+			{"text": "Nova Mobility outperforms a soft industrials tape.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Aftermarket commentary is said to be firm at Nova Mobility.", "category": "earnings", "strength": "minor", "lasting": true},
+		],
+		"negative": [
+			{"text": "A labor note hangs over a Nova Mobility plant with no new guide.", "category": "product", "strength": "minor", "lasting": false},
+			{"text": "Nova Mobility is offered as fleet flow fades into the close.", "category": "industry", "strength": "minor", "lasting": false},
+			{"text": "Charging-grant chatter turns cautious for Nova Mobility.", "category": "regulatory", "strength": "minor", "lasting": false},
+			{"text": "Lithium prices bite — Nova Mobility slips with the group.", "category": "commodity", "strength": "minor", "lasting": false},
+			{"text": "Nova Mobility underperforms on a quiet industrials tape.", "category": "rumor", "strength": "minor", "lasting": false},
+		],
+	},
+	"DRFT": {
+		"positive": [
+			{"text": "A platform feature window is said to have opened for Drift Interactive titles.", "category": "product", "strength": "minor", "lasting": false},
+			{"text": "Drift Interactive is bid as speculative flow returns to the board.", "category": "macro", "strength": "minor", "lasting": false},
+			{"text": "A hiring note is said to look healthier at Drift Interactive than feared.", "category": "earnings", "strength": "minor", "lasting": false},
+			{"text": "Drift Interactive option flow turns bid after a two-day washout.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "A streamer pack is said to be pushing a Drift Interactive title.", "category": "product", "strength": "minor", "lasting": false},
+		],
+		"negative": [
+			{"text": "A platform feature window is said to have slipped for Drift Interactive.", "category": "product", "strength": "minor", "lasting": false},
+			{"text": "Drift Interactive is offered as speculative flow leaves the board.", "category": "macro", "strength": "minor", "lasting": false},
+			{"text": "A lockup-expiry note hangs over Drift Interactive with no company news.", "category": "rumor", "strength": "moderate", "lasting": false},
+			{"text": "Drift Interactive vol spikes on light tape — still no launch date.", "category": "rumor", "strength": "minor", "lasting": false},
+			{"text": "Cash-burn chatter turns mixed at Drift Interactive.", "category": "earnings", "strength": "minor", "lasting": true},
+		],
+	},
 }
 
 const FLOW_POSITIVE: Array[Dictionary] = [
@@ -507,6 +575,30 @@ const PREMARKET_COMPANY := {
 			{"text": "PREMARKET: Qubit Labs misses as a demo slips and costs run hot.", "category": "earnings", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: Qubit Labs flags a tighter funding window.", "category": "earnings", "strength": "major", "lasting": true},
 			{"text": "PREMARKET: Qubit Labs warns a public demo may slip.", "category": "product", "strength": "moderate", "lasting": true},
+		],
+	},
+	"NOVA": {
+		"positive": [
+			{"text": "PREMARKET: Nova Mobility beats on stronger fleet deliveries.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Nova Mobility lifts order-book commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "PREMARKET: Nova Mobility says a city contract is moving into rate production.", "category": "product", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Nova Mobility misses as a fleet program slips.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Nova Mobility cuts a near-term delivery range.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Nova Mobility flags a software hold on a lot.", "category": "product", "strength": "moderate", "lasting": true},
+		],
+	},
+	"DRFT": {
+		"positive": [
+			{"text": "PREMARKET: Drift Interactive beats on a player-count milestone and launch chatter.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Drift Interactive raises cash-runway commentary.", "category": "earnings", "strength": "moderate", "lasting": true},
+			{"text": "PREMARKET: Drift Interactive says beta metrics are tracking ahead of launch.", "category": "product", "strength": "moderate", "lasting": true},
+		],
+		"negative": [
+			{"text": "PREMARKET: Drift Interactive misses as a launch slips and costs run hot.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Drift Interactive flags a tighter funding window.", "category": "earnings", "strength": "major", "lasting": true},
+			{"text": "PREMARKET: Drift Interactive warns a flagship title may slip.", "category": "product", "strength": "moderate", "lasting": true},
 		],
 	},
 }
