@@ -226,6 +226,9 @@ func prepare() -> void:
 		news_feed.append(carried)
 		premarket_events.append(carried)
 	overnight_events.clear()
+	for faded in chain_director.take_faded_rumors():
+		news_feed.append(faded)
+		premarket_events.append(faded)
 
 	var climate_line: String = regime.take_climate_headline()
 	if not climate_line.is_empty():

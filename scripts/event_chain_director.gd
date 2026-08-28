@@ -1004,11 +1004,10 @@ const ARCS := {
 var active: Array[EventChain] = []
 var cooldowns: Dictionary = {}
 var calendar_day: int = 0
-var news_generator: NewsGenerator
-
-
 var last_tick: int = 0
-var skip_premarket_chains: bool = false
+var skip_premarket_chains := false
+var faded_rumors: Array[NewsEvent] = []
+var news_generator: NewsGenerator
 
 
 func _init(p_generator: NewsGenerator) -> void:
@@ -1021,6 +1020,7 @@ func reset() -> void:
 	calendar_day = 0
 	last_tick = 0
 	skip_premarket_chains = false
+	faded_rumors.clear()
 
 
 func serialize() -> Dictionary:
@@ -1101,7 +1101,7 @@ func board_entries() -> Array[Dictionary]:
 	for chain in active:
 		if chain.pending.is_empty():
 			continue
-		var wipe: bool = chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id)
+		var wipe: bool = is_live_wipe_rumor(chain)
 		out.append({
 			"arc_id": chain.arc_id,
 			"subject": chain.subject,
@@ -1122,7 +1122,7 @@ func board_entries() -> Array[Dictionary]:
 func card_hook(chain: EventChain) -> String:
 	if chain.pending.is_empty():
 		return ""
-	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
+	if is_live_wipe_rumor(chain):
 		return "A big headline is rumored in the coming days."
 	if chain.fired.has("twist"):
 		return "The picture looks mixed."
@@ -1133,7 +1133,7 @@ func hook_text(chain: EventChain) -> String:
 	if chain.pending.is_empty():
 		return ""
 	var stage: String = EventChain.display_stage(chain.pending)
-	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
+	if is_live_wipe_rumor(chain):
 		match chain.scope:
 			"company":
 				return "%s — desks expect a major update in the coming days." % CompanyCatalog.display_name(chain.subject)
@@ -1276,15 +1276,21 @@ func on_session_end() -> void:
 		if chain.pending.is_empty():
 			_start_cooldown(chain.arc_id)
 			continue
+		_arm_wipe_rumor(chain)
+		if _wipe_rumor_pending(chain) and chain.rumor_until_day >= 0 and calendar_day >= chain.rumor_until_day:
+			_fizzle_wipe_rumor(chain)
+			continue
 		if chain.due_day <= calendar_day:
 			chain.due_day = calendar_day + 1
 			chain.prefer_premarket = randf() < 0.55
 			chain.due_tick = 0 if chain.prefer_premarket else randi_range(18, 200)
+			_clamp_due_to_rumor(chain)
 		if calendar_day - chain.started_day >= 10 and chain.pending != "resolution":
 			chain.pending = "resolution"
 			chain.due_day = calendar_day + 1
 			chain.prefer_premarket = true
 			chain.due_tick = 0
+			_arm_wipe_rumor(chain)
 		if calendar_day - chain.started_day >= 16:
 			_start_cooldown(chain.arc_id)
 			continue
@@ -1349,6 +1355,7 @@ func _advance(chain: EventChain, fired_stage: String) -> void:
 		active.erase(chain)
 		return
 	chain.pending = next_stage
+	_arm_wipe_rumor(chain)
 	_schedule(chain, fired_stage)
 
 
@@ -1392,6 +1399,73 @@ func _schedule(chain: EventChain, from_stage: String) -> void:
 		chain.due_day = calendar_day + randi_range(1, 5)
 		chain.prefer_premarket = randf() < 0.62
 		chain.due_tick = 0 if chain.prefer_premarket else randi_range(20, 180)
+	_clamp_due_to_rumor(chain)
+
+
+func is_live_wipe_rumor(chain: EventChain) -> bool:
+	if not _wipe_rumor_pending(chain):
+		return false
+	if chain.rumor_until_day < 0:
+		return true
+	return calendar_day <= chain.rumor_until_day
+
+
+func take_faded_rumors() -> Array[NewsEvent]:
+	var out: Array[NewsEvent] = faded_rumors.duplicate()
+	faded_rumors.clear()
+	return out
+
+
+func _wipe_rumor_pending(chain: EventChain) -> bool:
+	return chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id)
+
+
+func _arm_wipe_rumor(chain: EventChain) -> void:
+	if not _wipe_rumor_pending(chain):
+		return
+	if chain.rumor_until_day >= 0:
+		_clamp_due_to_rumor(chain)
+		return
+	chain.rumor_until_day = calendar_day + randi_range(2, 5)
+	_clamp_due_to_rumor(chain)
+
+
+func _clamp_due_to_rumor(chain: EventChain) -> void:
+	if not _wipe_rumor_pending(chain) or chain.rumor_until_day < 0:
+		return
+	if chain.due_day > chain.rumor_until_day:
+		chain.due_day = chain.rumor_until_day
+		chain.prefer_premarket = true
+		chain.due_tick = 0
+
+
+func _fizzle_wipe_rumor(chain: EventChain) -> void:
+	var headline := "The rumored update never landed. Desks move on."
+	if chain.scope == "company" and not chain.subject.is_empty():
+		headline = "The rumored update on %s never landed. Desks move on." % CompanyCatalog.display_name(chain.subject)
+	chain.log_tape(headline, _topic_day(), "16:00")
+	var symbols: Array[String] = []
+	if chain.scope == "company" and not chain.subject.is_empty():
+		symbols.append(chain.subject)
+	var event := NewsEvent.new(
+		"16:00",
+		headline,
+		symbols,
+		0.0,
+		0.0,
+		0,
+		false,
+		true,
+		"general",
+		"company" if chain.scope == "company" else chain.scope,
+		"minor",
+		false,
+		chain.industry
+	)
+	event.skip_act_pause = true
+	event.reaction = "No print. The story goes quiet."
+	faded_rumors.append(event)
+	_start_cooldown(chain.arc_id)
 
 
 func prune_to_universe(watchlist: Array[String], stocks: Array[Stock]) -> void:

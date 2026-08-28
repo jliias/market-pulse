@@ -192,7 +192,7 @@ A **negative resolution** on a tagged company arc can **wipe the equity stub**, 
 
 Sequence:
 
-1. Close hook may read **“desks expect a major update in the coming days”** if polarity is already negative.
+1. Close hook may read **“desks expect a major update in the coming days”** if polarity is already negative. That rumor lasts **2–5** more sessions (rolled when it first appears). If the print does not land by then, the rumor **dies**: the wipe does not fire, the card drops, and the next premarket can say the update never landed.
 2. The print **halts** the name (no buys or sells). Premarket/overnight: halt until the 9:30 bell. Intraday: halt 3–8 market minutes.
 3. **Reopen** gaps **−80% to −95%** (bypasses the usual 12% tick cap). Floor **$0.05**. Card shows **DISTRESSED**.
 4. **Sell-only**, fat spread. Still in the three-name average until week recap.

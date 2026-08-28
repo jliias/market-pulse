@@ -1568,7 +1568,7 @@ func _session_story_line() -> String:
 	for chain in market.chain_director.active:
 		if chain.pending != "resolution":
 			continue
-		if chain.polarity >= 0.0 or not EventChainDirector.arc_is_existential(chain.arc_id):
+		if not market.chain_director.is_live_wipe_rumor(chain):
 			continue
 		if chain.scope == "company":
 			if portfolio.get_shares(chain.subject) > 0:

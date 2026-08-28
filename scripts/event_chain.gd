@@ -24,6 +24,7 @@ var prefer_premarket: bool = false
 var started_day: int = 0
 var log_rev: int = 0
 var seen_rev: int = 0
+var rumor_until_day: int = -1
 
 
 func to_dict() -> Dictionary:
@@ -43,6 +44,7 @@ func to_dict() -> Dictionary:
 		"started_day": started_day,
 		"log_rev": log_rev,
 		"seen_rev": seen_rev,
+		"rumor_until_day": rumor_until_day,
 	}
 
 
@@ -67,6 +69,7 @@ static func from_dict(data: Dictionary) -> EventChain:
 	else:
 		chain.log_rev = _headline_count(chain.beat_log)
 		chain.seen_rev = chain.log_rev
+	chain.rumor_until_day = int(data.get("rumor_until_day", -1))
 	return chain
 
 
