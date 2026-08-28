@@ -1264,6 +1264,9 @@ func _open_story_dossier(arc_id: String) -> void:
 	if entry.is_empty():
 		return
 	entry["beats"] = chain.beat_log.duplicate(true)
+	chain.mark_seen()
+	story_board_sig = ""
+	_refresh_story_board()
 	var subject: String = str(entry.get("subject", ""))
 	var scope: String = str(entry.get("scope", "company"))
 	var title: String = subject
@@ -1277,7 +1280,7 @@ func _open_story_dossier(arc_id: String) -> void:
 			title = "TAPE"
 	var stage: String = str(entry.get("stage", ""))
 	if bool(entry.get("wipe", false)):
-		story_title_label.text = "%s  ·  %s  ·  make-or-break" % [title, stage]
+		story_title_label.text = "%s  ·  %s  ·  rumored" % [title, stage]
 	else:
 		story_title_label.text = "%s  ·  %s" % [title, stage]
 
@@ -1455,13 +1458,14 @@ func _story_board_signature(entries: Array[Dictionary]) -> String:
 			listing = market.stocks[subject].listing_label()
 		var beats: Variant = entry.get("beats", [])
 		var beat_n: int = beats.size() if typeof(beats) == TYPE_ARRAY else 0
-		bits.append("%s|%s|%s|%s|%s|%d" % [
+		bits.append("%s|%s|%s|%s|%s|%d|%s" % [
 			subject,
 			str(entry.get("stage", "")),
 			str(entry.get("wipe", false)),
 			str(entry.get("card_hook", "")),
 			listing,
 			beat_n,
+			str(bool(entry.get("unread", false))),
 		])
 	return "|".join(bits)
 
@@ -1492,13 +1496,16 @@ func _make_story_card(entry: Dictionary) -> Button:
 	var line2: String = str(entry.get("card_hook", ""))
 	if line2.is_empty():
 		line2 = str(entry.get("hook", ""))
+	var unread: bool = bool(entry.get("unread", false))
+	if unread:
+		line1 += " · NEW"
 	var wipe: bool = bool(entry.get("wipe", false))
 	var button := Button.new()
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.clip_contents = true
 	button.custom_minimum_size = Vector2(0, 56)
 	button.pressed.connect(_open_story_dossier.bind(str(entry.get("arc_id", ""))))
-	_apply_button_style(button, UI_ACCENT, UI_BORDER)
+	_apply_button_style(button, SELECTED_ACCENT if unread else UI_ACCENT, UI_BORDER, unread)
 
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1523,7 +1530,10 @@ func _make_story_card(entry: Dictionary) -> Button:
 	title_label.custom_minimum_size = Vector2(0, 20)
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_label.add_theme_font_size_override("font_size", 13)
-	title_label.add_theme_color_override("font_color", Color(0.92, 0.94, 0.98))
+	title_label.add_theme_color_override(
+		"font_color",
+		SELECTED_ACCENT if unread else Color(0.92, 0.94, 0.98)
+	)
 	stack.add_child(title_label)
 
 	var hook_label := Label.new()
@@ -1562,9 +1572,9 @@ func _session_story_line() -> String:
 			continue
 		if chain.scope == "company":
 			if portfolio.get_shares(chain.subject) > 0:
-				return "You are still long into tomorrow's make-or-break headline on %s." % chain.subject
-			return "You sold before tomorrow's make-or-break headline on %s." % chain.subject
-		return "You are heading into a make-or-break headline."
+				return "You are still long into a rumored big headline on %s." % chain.subject
+			return "You sold ahead of a rumored big headline on %s." % chain.subject
+		return "Desks expect a major update tomorrow."
 	return "No wipe on the book today."
 
 

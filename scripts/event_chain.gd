@@ -22,6 +22,8 @@ var due_day: int = 0
 var due_tick: int = 0
 var prefer_premarket: bool = false
 var started_day: int = 0
+var log_rev: int = 0
+var seen_rev: int = 0
 
 
 func to_dict() -> Dictionary:
@@ -39,6 +41,8 @@ func to_dict() -> Dictionary:
 		"due_tick": due_tick,
 		"prefer_premarket": prefer_premarket,
 		"started_day": started_day,
+		"log_rev": log_rev,
+		"seen_rev": seen_rev,
 	}
 
 
@@ -57,6 +61,12 @@ static func from_dict(data: Dictionary) -> EventChain:
 	chain.fired = _string_array(data.get("fired", []))
 	chain.skipped = _string_array(data.get("skipped", []))
 	chain.beat_log = _beat_array(data.get("beat_log", []))
+	if data.has("log_rev"):
+		chain.log_rev = int(data.get("log_rev", 0))
+		chain.seen_rev = int(data.get("seen_rev", 0))
+	else:
+		chain.log_rev = _headline_count(chain.beat_log)
+		chain.seen_rev = chain.log_rev
 	return chain
 
 
@@ -87,8 +97,31 @@ func _append_log(kind: String, stage: String, headline: String, day: int, time: 
 		"day": day,
 		"time": time,
 	})
+	if not headline.is_empty() and kind != "skipped":
+		log_rev += 1
 	if beat_log.size() > 40:
 		beat_log.remove_at(0)
+
+
+func has_unread() -> bool:
+	return log_rev > seen_rev
+
+
+func mark_seen() -> void:
+	seen_rev = log_rev
+
+
+static func _headline_count(rows: Array) -> int:
+	var n := 0
+	for item in rows:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = item
+		if str(row.get("kind", "")) == "skipped":
+			continue
+		if not str(row.get("headline", "")).is_empty():
+			n += 1
+	return n
 
 
 static func _beat_array(value: Variant) -> Array:
