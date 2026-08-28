@@ -1123,7 +1123,7 @@ func card_hook(chain: EventChain) -> String:
 	if chain.pending.is_empty():
 		return ""
 	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
-		return "A big headline is rumored for tomorrow."
+		return "A big headline is rumored in the coming days."
 	if chain.fired.has("twist"):
 		return "The picture looks mixed."
 	return "Further news is still expected."
@@ -1136,9 +1136,9 @@ func hook_text(chain: EventChain) -> String:
 	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
 		match chain.scope:
 			"company":
-				return "%s — desks expect a major update tomorrow." % CompanyCatalog.display_name(chain.subject)
+				return "%s — desks expect a major update in the coming days." % CompanyCatalog.display_name(chain.subject)
 			_:
-				return "Desks expect a major update tomorrow."
+				return "Desks expect a major update in the coming days."
 	match chain.scope:
 		"company":
 			return "%s — %s still unresolved" % [CompanyCatalog.display_name(chain.subject), stage]
@@ -1158,8 +1158,8 @@ static func _hook_from_dict(item: Dictionary) -> String:
 	var arc_id: String = str(item.get("arc_id", ""))
 	if pending == "resolution" and float(item.get("polarity", 1.0)) < 0.0 and arc_is_existential(arc_id):
 		if scope == "company":
-			return "%s — desks expect a major update tomorrow." % CompanyCatalog.display_name(str(item.get("subject", "")))
-		return "Desks expect a major update tomorrow."
+			return "%s — desks expect a major update in the coming days." % CompanyCatalog.display_name(str(item.get("subject", "")))
+		return "Desks expect a major update in the coming days."
 	match scope:
 		"company":
 			return "%s — %s still unresolved" % [CompanyCatalog.display_name(str(item.get("subject", ""))), stage]

@@ -510,7 +510,7 @@ func _end_session() -> void:
 	if hook.is_empty():
 		close_tomorrow = "No open story on the board."
 	else:
-		close_tomorrow = "Tomorrow: " + hook
+		close_tomorrow = "Story: " + hook
 	close_streak = portfolio.streak_line()
 	close_book_line = _session_story_line()
 	trade_message_label.text = "Market is closed."
@@ -1574,7 +1574,7 @@ func _session_story_line() -> String:
 			if portfolio.get_shares(chain.subject) > 0:
 				return "You are still long into a rumored big headline on %s." % chain.subject
 			return "You sold ahead of a rumored big headline on %s." % chain.subject
-		return "Desks expect a major update tomorrow."
+		return "Desks expect a major update in the coming days."
 	return "No wipe on the book today."
 
 

@@ -132,7 +132,7 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 **Narrow** (window width **< 1100**): those rows stack vertically; the ticket still sits in the body column.
 
 1. **Watchlist** — ticker cards: risk, last, day change, volume, **LONG n ±$P/L** or **SHORT n ±$P/L** (purple border when short), mini chart. Click to select.
-2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **PAUSE** / **MAKE-OR-BREAK** / **DISTRESSED** if listed that way. Wipe-path cards say **A big headline is rumored for tomorrow.** (not a confirmed wipe). A **NEW** stamp (gold) means headlines landed on that card since you last opened it. Click a card for a short overlay of that arc’s **topic log** — authored beats plus related tape on the same name/sector/market, kept across days (the session feed still clears at New Day). Opening the card clears **NEW**. **Select TICKER** if it is on the watchlist.
+2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **PAUSE** / **MAKE-OR-BREAK** / **DISTRESSED** if listed that way. Wipe-path cards say **A big headline is rumored in the coming days.** (not a confirmed wipe, and not a date). A **NEW** stamp (gold) means headlines landed on that card since you last opened it. Click a card for a short overlay of that arc’s **topic log** — authored beats plus related tape on the same name/sector/market, kept across days (the session feed still clears at New Day). Opening the card clears **NEW**. **Select TICKER** if it is on the watchlist.
 3. **News feed** — timestamped headlines with a reaction line. Tags include ticker, **MARKET**, sector shorts, and **YOUR TAPE** (gift or trap). Desk terms are **underlined**; hover for a short definition.
 4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, **Buy / Sell / Short / Cover**. Message line is fills and blocks only (halted, closed, pause). Headlines stay in the feed / pause overlay; the day result stays on the close panel.
 5. **Book** — longs and short rows, open P/L.
@@ -192,7 +192,7 @@ A **negative resolution** on a tagged company arc can **wipe the equity stub**, 
 
 Sequence:
 
-1. Close hook may read **“desks expect a major update tomorrow”** if polarity is already negative.
+1. Close hook may read **“desks expect a major update in the coming days”** if polarity is already negative.
 2. The print **halts** the name (no buys or sells). Premarket/overnight: halt until the 9:30 bell. Intraday: halt 3–8 market minutes.
 3. **Reopen** gaps **−80% to −95%** (bypasses the usual 12% tick cap). Floor **$0.05**. Card shows **DISTRESSED**.
 4. **Sell-only**, fat spread. Still in the three-name average until week recap.
