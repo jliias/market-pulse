@@ -534,7 +534,6 @@ theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
 horizontal_alignment = 1
 
 [node name="PrintPauseReaction" type="RichTextLabel" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363000]
@@ -546,7 +545,6 @@ theme_override_font_sizes/normal_font_size = 15
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
 horizontal_alignment = 1
 
 [node name="PrintPauseTimer" type="Label" parent="PrintPauseOverlay/PrintPauseCenter/PrintPauseStack" unique_id=847363001]

@@ -1123,7 +1123,9 @@ func card_hook(chain: EventChain) -> String:
 		return ""
 	if chain.pending == "resolution" and chain.polarity < 0.0 and arc_is_existential(chain.arc_id):
 		return "Make-or-break tomorrow."
-	return "Not finished yet."
+	if chain.fired.has("twist"):
+		return "The picture looks mixed."
+	return "Further news is still expected."
 
 
 func hook_text(chain: EventChain) -> String:

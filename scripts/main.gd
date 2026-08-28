@@ -1308,22 +1308,17 @@ func _open_story_dossier(arc_id: String) -> void:
 			story_beats.add_child(line)
 
 	var now_bits: PackedStringArray = []
-	if float(entry.get("polarity", 1.0)) >= 0.0:
-		match scope:
-			"company":
-				now_bits.append("News on this story is good for this stock.")
-			"industry":
-				now_bits.append("News on this story is good for this sector.")
-			_:
-				now_bits.append("News on this story is good for the market.")
+	if chain.fired.has("twist"):
+		now_bits.append("So far, the news on this story looks mixed.")
 	else:
+		var lean: String = "better" if float(entry.get("polarity", 1.0)) >= 0.0 else "worse"
+		var target: String = "this stock"
 		match scope:
-			"company":
-				now_bits.append("News on this story is bad for this stock.")
 			"industry":
-				now_bits.append("News on this story is bad for this sector.")
-			_:
-				now_bits.append("News on this story is bad for the market.")
+				target = "this sector"
+			"market":
+				target = "the market"
+		now_bits.append("So far, the news on this story looks %s for %s." % [lean, target])
 	var hook: String = str(entry.get("card_hook", ""))
 	if hook.is_empty():
 		hook = str(entry.get("hook", ""))
