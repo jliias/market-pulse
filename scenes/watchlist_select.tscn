@@ -34,44 +34,45 @@ theme_override_constants/margin_bottom = 20
 
 [node name="Panel" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="Margin/Panel"]
+[node name="Header" type="VBoxContainer" parent="Margin/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Margin/Panel/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
 theme_override_font_sizes/font_size = 28
 text = "BUILD YOUR WATCHLIST"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="Margin/Panel"]
+[node name="Subtitle" type="Label" parent="Margin/Panel/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.78, 0.84, 1)
 theme_override_font_sizes/font_size = 15
 text = "Pick three stocks. That mix is the risk for the whole run."
 horizontal_alignment = 1
 
-[node name="HintLabel" type="Label" parent="Margin/Panel"]
+[node name="StatusLabel" type="Label" parent="Margin/Panel/Header"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.68, 0.74, 1)
+theme_override_colors/font_color = Color(0.78, 0.82, 0.9, 1)
 theme_override_font_sizes/font_size = 14
-text = "Choose exactly 3 stocks. 0 of 3 selected."
-horizontal_alignment = 1
-
-[node name="PickedLabel" type="Label" parent="Margin/Panel"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 1)
-theme_override_font_sizes/font_size = 15
-text = "Watchlist: —"
+text = "0 of 3 selected"
 horizontal_alignment = 1
 autowrap_mode = 2
+
+[node name="Rule" type="ColorRect" parent="Margin/Panel"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.78, 0.82, 0.9, 0.22)
 
 [node name="Board" type="HBoxContainer" parent="Margin/Panel"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 14
 
 [node name="Buttons" type="HBoxContainer" parent="Margin/Panel"]
 layout_mode = 2

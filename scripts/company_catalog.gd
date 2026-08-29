@@ -226,7 +226,12 @@ static func mix_summary(symbols: Array) -> String:
 			"volatile":
 				volatile_n += 1
 	if symbols.size() != 3:
-		return "Pick three stocks. Safe stocks move less; volatile stocks can pay more and lose more."
+		if symbols.is_empty():
+			return "—"
+		var names: PackedStringArray = []
+		for item in symbols:
+			names.append(str(item))
+		return ", ".join(names)
 	if safe_n == 3:
 		return "Conservative board — smaller potential gains, fewer blow-ups."
 	if volatile_n == 3:

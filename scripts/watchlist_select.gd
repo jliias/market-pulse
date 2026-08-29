@@ -30,19 +30,40 @@ func _build_list() -> void:
 		child.free()
 	row_buttons.clear()
 	for key in CompanyCatalog.RISK_SECTIONS:
+		var accent: Color = CompanyCatalog.risk_color(key)
+		var wrap := PanelContainer.new()
+		wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var panel := StyleBoxFlat.new()
+		panel.bg_color = Color(0.1, 0.11, 0.14, 1)
+		panel.border_color = Color(accent.r, accent.g, accent.b, 0.35)
+		panel.set_border_width_all(1)
+		panel.set_corner_radius_all(10)
+		panel.content_margin_left = 10
+		panel.content_margin_right = 10
+		panel.content_margin_top = 10
+		panel.content_margin_bottom = 10
+		wrap.add_theme_stylebox_override("panel", panel)
+		%Board.add_child(wrap)
+
 		var column := VBoxContainer.new()
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		column.add_theme_constant_override("separation", 6)
-		%Board.add_child(column)
+		column.add_theme_constant_override("separation", 8)
+		wrap.add_child(column)
 
 		var header := Label.new()
 		header.text = str(SECTION_COPY.get(key, key.to_upper()))
 		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		header.custom_minimum_size = Vector2(0, 22)
-		header.add_theme_color_override("font_color", CompanyCatalog.risk_color(key))
+		header.add_theme_color_override("font_color", accent)
 		header.add_theme_font_size_override("font_size", 16)
 		column.add_child(header)
+
+		var underline := ColorRect.new()
+		underline.custom_minimum_size = Vector2(0, 2)
+		underline.color = Color(accent.r, accent.g, accent.b, 0.7)
+		column.add_child(underline)
 
 		var profile: Dictionary = CompanyCatalog.RISK_PROFILES[key]
 		var blurb := Label.new()
@@ -149,8 +170,11 @@ func _refresh_state() -> void:
 		button.button_pressed = on
 		_style_row(button, CompanyCatalog.risk_key(symbol), on)
 	var count: int = selected.size()
-	%HintLabel.text = "Choose exactly 3 stocks. Your mix is the risk for this whole run. %d of 3 selected." % count
-	%PickedLabel.text = CompanyCatalog.mix_summary(selected)
+	var mix: String = CompanyCatalog.mix_summary(selected)
+	if count == 0:
+		%StatusLabel.text = "0 of 3 selected"
+	else:
+		%StatusLabel.text = "%d of 3 selected  ·  %s" % [count, mix]
 	%StartButton.disabled = count != 3
 	_style_button(%StartButton, BUY_ACCENT, count == 3)
 
