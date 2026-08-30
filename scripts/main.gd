@@ -117,7 +117,7 @@ var cash_out_button: Button
 @onready var settings_dialog: AcceptDialog = %SettingsDialog
 @onready var menu_dialog: ConfirmationDialog = %MenuDialog
 @onready var end_session_dialog: ConfirmationDialog = %EndSessionDialog
-@onready var open_countdown_overlay: CenterContainer = %OpenCountdownOverlay
+@onready var open_countdown_overlay: Control = %OpenCountdownOverlay
 @onready var open_countdown_label: Label = %OpenCountdownLabel
 @onready var closed_overlay: CenterContainer = %ClosedOverlay
 @onready var close_hero_label: Label = %CloseHeroLabel
