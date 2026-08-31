@@ -40,9 +40,9 @@ You can go broke in practice (cash + positions near zero) but there is no explic
 
 ```
 Menu → (new) pick 3 names → session
-  10s preopen overlay (headlines already on the feed)
+  10s preopen; countdown sits on the price chart (headlines already on the feed)
   9:30 open bell → trade until 16:00 or End Session (after 10:30)
-  Close overlay: result, streak, tomorrow’s story hook
+  Close overlay: result, streak, story hook
   New Day  (or Week Recap every 5 days)
 Leave desk → save + timestamp → menu or quit
 ```
@@ -104,7 +104,7 @@ Twelve companies. Risk is the player-facing lever.
 **Growth** — moderate; news still pays or costs. Typical day ±1–3%.  
 **Volatile** — headlines can gap the name. Typical day ±3–8%.
 
-The pick screen is **three columns** (safe / growth / volatile) so all twelve stocks are on one screen. Each card shows ticker, company, sector, cap, typical day, and a **three-line story**. Ticker, name, and the info line share the same height on every card. The mix line summarizes conservative, defensive, mixed, tilted growth / defensive, high risk, or aggressive. That mix is the risk of the whole run until you rebalance.
+The pick screen is **three columns** (safe / growth / volatile) so all twelve stocks are on one screen. A header (title, one instruction, **n of 3** plus mix) is separated from the board by a rule; each risk group is its own panel. Each card shows ticker, company, sector, cap, typical day, and a **three-line story**. Ticker, name, and the info line share the same height on every card. The mix line summarizes conservative, defensive, mixed, tilted growth / defensive, high risk, or aggressive. That mix is the risk of the whole run until you rebalance.
 
 Prices are clamped between **$1** and **$1000** while listed. Distressed residuals floor at **$0.05**. Spread is a function of liquidity (much wider when distressed): you **buy the ask, sell the bid**. Last print sits in between.
 
@@ -132,13 +132,13 @@ Default window **1600×900**. Body is a **trade ticket** column (full height) pl
 **Narrow** (window width **< 1100**): those rows stack vertically; the ticket still sits in the body column.
 
 1. **Watchlist** — ticker cards: risk, last with a **green ▲ / red ▼** for the last minute’s tick, day change, **L / H** (session low and high), **LONG n ±$P/L** or **SHORT n ±$P/L** (purple border when short), mini chart. Session **volume** is the number on the main chart’s volume pane (`VOL 1.24M`). Click to select.
-2. **Chart** — selected stock, timeframes, main line chart. **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook; **PAUSE** / **MAKE-OR-BREAK** / **DISTRESSED** if listed that way. Wipe-path cards say **A big headline is rumored in the coming days.** (not a confirmed wipe, and not a date). A **NEW** stamp (gold) means headlines landed on that card since you last opened it. Click a card for a short overlay of that arc’s **topic log** — authored beats plus related tape on the same name/sector/market, kept across days (the session feed still clears at New Day). Opening the card clears **NEW**. **Select TICKER** if it is on the watchlist.
+2. **Chart** — selected stock, timeframes, main line chart (volume pane labeled **VOL** plus session total). **Story cards** sit under the chart like pick cards: **ticker · stage** (or sector / TAPE), then a two-line hook (**Further news is still expected.** / after a twist **The picture looks mixed.** / wipe-path **A big headline is rumored in the coming days.**); **PAUSE** / **MAKE-OR-BREAK** / **DISTRESSED** if listed that way. A **NEW** stamp (gold) means headlines landed on that card since you last opened it. Click a card for a short overlay of that arc’s **topic log** (day · time · headline) plus a lean line (**looks better / worse** for the stock, sector, or market — or **looks mixed** after a twist). Company cards log that name’s tape; sector cards log that sector’s tagged tape only; market cards log MARKET prints. The session feed still clears at New Day. Opening the card clears **NEW**. **Select TICKER** if it is on the watchlist.
 3. **News feed** — timestamped headlines with a reaction line. Tags include ticker, **MARKET**, sector shorts, and **YOUR TAPE** (gift or trap). Desk terms are **underlined**; hover for a short definition.
 4. **Trade ticket** — selected stock, bid/ask, buy/sell/**short**, qty, **Buy / Sell / Short / Cover**. Message line is fills and blocks only (halted, closed, pause). Headlines stay in the feed / pause overlay; the day result stays on the close panel.
 5. **Book** — longs and short rows, open P/L.
 
-Top bar: book value, cash, session P/L, clock, **vs Market**.  
-Bottom bar: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, Settings, End Session / New Day, Leave desk.
+Top bar: book value, cash, session P/L, clock, **vs Market**, Settings, Menu.  
+Bottom bar: calendar heading (`DAY n (Weekday, Week w)`), **MARKET STATUS**, End Session / New Day. Leave desk is **Menu**.
 
 **Act on this headline:** pause the tape **10 real seconds** (YOUR TAPE, weather flip, story **resolution** on a watchlist stock, or a **major** company headline on a watchlist stock) or **14** (existential halt / distressed reopen). Follow-ups, twists, sector tape, and market-wide filler stay in the feed only. Circuit volatility halt/reopen does **not** open this overlay. **Continue** (or timeout) resumes. **Select TICKER** selects that watchlist stock and resumes. Pause headline and reaction use the same underlined hover terms as the feed. Premarket and open/close system lines skip it. End Session / leave desk treats a pause as Continue. Fast-forward to close does not pause.
 
@@ -146,7 +146,7 @@ Chart windows **1M / 5M / 15M / 1H / 1D** are **last N one-minute prices**, not 
 
 **Settings:** compact centered overlay (dim + panel), not a full-window dialog. Tape speed **1× / 2× / 3×** (tick interval only). Pause windows stay wall-clock. Close or click the dim to dismiss.
 
-**Close overlay:** translucent panel over the chart — large **vs Market**, Beat / Matched / Lost, streak, one book-vs-story line, tomorrow’s hook, listing stamp (`Market closed` / `HALTED` / `DISTRESSED · sell-only residual`).
+**Close overlay:** translucent panel over the chart — large **vs Market**, Beat / Matched / Lost, streak, one book-vs-story line, **Story:** hook (not dated to tomorrow), listing stamp (`Market closed` / `HALTED` / `DISTRESSED · sell-only residual`).
 
 ---
 
@@ -208,7 +208,7 @@ Feed is capped (~50). Premarket pack is a few items so the open is not a wall of
 
 ### Authored arcs (event chains)
 
-Up to **two** stories active. At most **one** tape-wide (sector / market) story; the other slot prefers a **company** arc when one is available. Stages: announcement → follow-up → reaction → twist → resolution. Stages can **skip**. Beats can prefer premarket. Close screen (and menu) surface a **hook** for tomorrow. Each open card keeps a **topic log** (day · time · headline) for the life of the arc. Company cards log that name’s tape; sector cards log that sector’s tape only (not every company headline on a name in the group); market cards log MARKET prints.
+Up to **two** stories active. At most **one** tape-wide (sector / market) story; the other slot prefers a **company** arc when one is available. Stages: announcement → follow-up → reaction → twist → resolution. Stages can **skip**. Beats can prefer premarket. Close screen (and menu) surface a **story hook** (wipe-path: major update in the coming days). Each open card keeps a **topic log** (day · time · headline) for the life of the arc. Company cards log that name’s tape; sector cards log that sector’s tape only (not every company headline on a name in the group); market cards log MARKET prints. After a **twist** prints, the card hook is **The picture looks mixed.** otherwise **Further news is still expected.** (wipe rumor excepted).
 
 Implemented arcs (company or tape-wide):
 
@@ -282,6 +282,7 @@ No tutorial mission. Learning is:
 ## 16. Explicitly not shipped
 
 - Layout options in Settings (speed is the only setting)
+- Audio / soundtrack
 - Multiplayer / social
 - Auto-sim of many missed **calendar** days (only the single 8-hour away step)
 - Daily “shop a new watchlist” outside week recap
