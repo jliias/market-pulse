@@ -4,6 +4,7 @@ extends Control
 var prices: PackedFloat32Array = PackedFloat32Array()
 var volumes: PackedInt32Array = PackedInt32Array()
 var compact: bool = false
+var session_volume: int = 0
 var line_color: Color = Color(0.35, 0.82, 0.5)
 var status_banner: String = ""
 var status_sub: String = ""
@@ -15,9 +16,10 @@ func _ready() -> void:
 	resized.connect(queue_redraw)
 
 
-func set_series(p_prices: Variant, p_volumes: Variant = PackedInt32Array()) -> void:
+func set_series(p_prices: Variant, p_volumes: Variant = PackedInt32Array(), p_session_volume: int = 0) -> void:
 	prices = PackedFloat32Array(p_prices)
 	volumes = PackedInt32Array(p_volumes)
+	session_volume = p_session_volume
 	if prices.size() >= 2:
 		if prices[prices.size() - 1] >= prices[0]:
 			line_color = Color(0.35, 0.82, 0.5)
@@ -110,7 +112,7 @@ func _draw() -> void:
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(pad, vol_top + 12.0),
-		"VOL",
+		"VOL %s" % Stock.format_volume(maxi(session_volume, 0)),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		12,

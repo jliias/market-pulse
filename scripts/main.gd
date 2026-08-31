@@ -744,7 +744,7 @@ func _refresh_chart() -> void:
 	var points: int = int(TF_POINTS[timeframe])
 	var slice: Dictionary = stock.get_chart_slice(points, 1)
 	main_chart.compact = false
-	main_chart.set_series(slice["prices"], slice["volumes"])
+	main_chart.set_series(slice["prices"], slice["volumes"], stock.volume)
 	var session_over: bool = closed_overlay.visible or market.is_closed
 	if session_over:
 		main_chart.set_status_banner("")

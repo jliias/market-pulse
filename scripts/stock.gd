@@ -68,6 +68,9 @@ var lasting_ticks: int = 0
 var digest_queue: Array = []
 
 var previous_close: float
+var day_high: float = 0.0
+var day_low: float = 0.0
+var last_tick_delta: float = 0.0
 var last_tick_volume: int = 0
 var price_history: PackedFloat32Array = PackedFloat32Array()
 var volume_history: PackedInt32Array = PackedInt32Array()
@@ -98,6 +101,8 @@ func _init(
 	market_cap_label = p_cap
 	price = clampf(start_price, floor_price(), MAX_PRICE)
 	previous_close = price
+	day_high = price
+	day_low = price
 	volatility = p_volatility
 	volume = randi_range(800000, 2500000)
 	sentiment = randf_range(-0.2, 0.2)
@@ -266,7 +271,9 @@ func reopen_listed() -> void:
 	just_reopened = true
 	just_halted = false
 	last_reopen = OUTCOME_RESUME
+	var before: float = price
 	price = clampf(price * (1.0 + randf_range(-0.008, 0.008)), floor_price(), MAX_PRICE)
+	last_tick_delta = price - before
 	halt_reason = ""
 	reopen_price = 0.0
 	last_tick_volume = randi_range(90000, 180000)
@@ -286,7 +293,9 @@ func reopen_distressed() -> void:
 	last_reopen = OUTCOME_DISTRESS
 	halt_reason = HALT_EXISTENTIAL
 	halt_outcome = OUTCOME_DISTRESS
+	var before: float = price
 	price = clampf(reopen_price if reopen_price > 0.0 else price * 0.1, DISTRESSED_FLOOR, MAX_PRICE)
+	last_tick_delta = price - before
 	trend = Trend.BEARISH
 	sentiment = -1.0
 	momentum = -0.002
@@ -633,6 +642,9 @@ func _follow_reaction(category: String, headline_sign: float, alignment: float, 
 
 func roll_to_next_day() -> void:
 	previous_close = price
+	day_high = price
+	day_low = price
+	last_tick_delta = 0.0
 	news_move_remaining = 0.0
 	news_move_ticks = 0
 	news_initial_ticks = 0
@@ -661,7 +673,9 @@ func apply_saved_close(close_price: float) -> void:
 func apply_overnight_gap(gap_pct: float, is_major: bool = true, lasting: bool = true) -> void:
 	if not is_listed():
 		return
+	var before: float = price
 	price = clampf(price * (1.0 + gap_pct), floor_price(), MAX_PRICE)
+	last_tick_delta = price - before
 	momentum = clampf(gap_pct * 0.4, -0.002, 0.002)
 	sentiment = clampf(sentiment + gap_pct * (6.0 if lasting else 3.0), -1.0, 1.0)
 	if gap_pct > 0.01:
@@ -773,6 +787,7 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}, allow_circ
 			if halt_ticks <= 0:
 				reopen()
 				return
+		last_tick_delta = 0.0
 		last_tick_volume = randi_range(8000, 18000)
 		_update_spread()
 		_record_history()
@@ -825,7 +840,10 @@ func tick(p_market_sentiment: float = 0.0, p_regime: Dictionary = {}, allow_circ
 		total_change = clampf(total_change, -organic_cap, organic_cap)
 
 	momentum = clampf(momentum * 0.82 + total_change * 1.5, -0.002, 0.002)
+	var before: float = price
 	price = clampf(price * (1.0 + total_change), floor_price(), MAX_PRICE)
+	last_tick_delta = price - before
+	_note_session_range()
 
 	var tick_volume: int = int(float(randi_range(25000, 70000) + int(abs(total_change) * 9000000.0 * popularity)) * volume_mult)
 	last_tick_volume = tick_volume
@@ -941,10 +959,35 @@ func _get_trend_drift() -> float:
 func _record_history() -> void:
 	price_history.append(price)
 	volume_history.append(last_tick_volume)
+	_note_session_range()
 	if price_history.size() > 500:
 		price_history.remove_at(0)
 	if volume_history.size() > 500:
 		volume_history.remove_at(0)
+
+
+func _note_session_range() -> void:
+	if day_high <= 0.0 or day_low <= 0.0:
+		day_high = price
+		day_low = price
+		return
+	day_high = maxf(day_high, price)
+	day_low = minf(day_low, price)
+
+
+func sync_session_range() -> void:
+	_note_session_range()
+	for p in price_history:
+		day_high = maxf(day_high, p)
+		day_low = minf(day_low, p)
+
+
+static func format_volume(vol: int) -> String:
+	if vol >= 1000000:
+		return "%.2fM" % (float(vol) / 1000000.0)
+	if vol >= 1000:
+		return "%.1fK" % (float(vol) / 1000.0)
+	return str(vol)
 
 
 func get_chart_slice(max_points: int, stride: int = 1) -> Dictionary:

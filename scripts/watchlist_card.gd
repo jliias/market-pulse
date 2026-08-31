@@ -12,6 +12,7 @@ var _pulse_tween: Tween
 @onready var risk_label: Label = %RiskLabel
 @onready var name_label: Label = %NameLabel
 @onready var price_label: Label = %PriceLabel
+@onready var tick_arrow_label: Label = %TickArrowLabel
 @onready var change_label: Label = %ChangeLabel
 @onready var volume_label: Label = %VolumeLabel
 @onready var owned_label: Label = %OwnedLabel
@@ -46,12 +47,16 @@ func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_ent
 		risk_label.tooltip_text = ""
 	name_label.text = stock.company_name
 	price_label.text = "$%.2f" % stock.price
+	_refresh_tick_arrow(stock.last_tick_delta)
 	var change: float = stock.get_day_change()
 	var pct: float = stock.get_day_change_pct()
 	var sign := "+" if change >= 0.0 else "-"
 	change_label.text = "%s$%.2f (%s%.2f%%)" % [sign, absf(change), sign, absf(pct)]
 	change_label.add_theme_color_override("font_color", Color(0.35, 0.85, 0.45) if change >= 0.0 else Color(0.95, 0.38, 0.38))
-	volume_label.text = "Volume: %s" % _format_volume(stock.volume)
+	stock.sync_session_range()
+	volume_label.text = "L $%.2f  H $%.2f" % [stock.day_low, stock.day_high]
+	if volume_label.tooltip_text.is_empty():
+		CopyHints.hover(volume_label, CopyHints.HUD_RANGE)
 	_fading = fade_shares > 0
 	if _fading:
 		var fade_pl: float = (fade_entry - stock.price) * float(fade_shares)
@@ -73,6 +78,18 @@ func refresh(stock: Stock, owned_shares: int = 0, fade_shares: int = 0, fade_ent
 	mini_chart.compact = true
 	mini_chart.set_series(slice["prices"], slice["volumes"])
 	_apply_style()
+
+
+func _refresh_tick_arrow(delta: float) -> void:
+	if delta > 0.0000005:
+		tick_arrow_label.text = "▲"
+		tick_arrow_label.add_theme_color_override("font_color", Color(0.35, 0.85, 0.45))
+	elif delta < -0.0000005:
+		tick_arrow_label.text = "▼"
+		tick_arrow_label.add_theme_color_override("font_color", Color(0.95, 0.38, 0.38))
+	else:
+		tick_arrow_label.text = "·"
+		tick_arrow_label.add_theme_color_override("font_color", Color(0.65, 0.68, 0.74, 1))
 
 
 func pulse_fill(accent: Color) -> void:
@@ -110,11 +127,3 @@ func _apply_style() -> void:
 	box.content_margin_top = 8
 	box.content_margin_bottom = 8
 	add_theme_stylebox_override("panel", box)
-
-
-func _format_volume(vol: int) -> String:
-	if vol >= 1000000:
-		return "%.2fM" % (float(vol) / 1000000.0)
-	if vol >= 1000:
-		return "%.1fK" % (float(vol) / 1000.0)
-	return str(vol)

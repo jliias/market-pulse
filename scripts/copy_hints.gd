@@ -15,6 +15,8 @@ const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You c
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
 const HUD_SHORT := "You profit if the last price falls. Caps at 20% of the book. Covers at the close. You cannot short a stock you hold, or one that is halted or distressed. An open short can still be covered during a halt."
 const HUD_LONG := "Shares you hold and profit vs your average cost."
+const HUD_RANGE := "Lowest and highest last price so far today, including the open gap."
+const HUD_TICK := "Direction of the last market minute vs the minute before. Not the same as the day change."
 const HUD_MENU := "Book is cash, longs, and open short P/L. ATH is this book's peak. vs Market is how you did against your three stocks."
 
 const CHART := {
