@@ -32,7 +32,7 @@ var player_portfolio: Portfolio
 
 
 func _init() -> void:
-	set_watchlist(CompanyCatalog.DEFAULT_WATCHLIST)
+	set_watchlist(CompanyCatalog.ORDER)
 	chain_director = EventChainDirector.new(news_generator)
 
 
@@ -152,7 +152,7 @@ func apply_away_step(hours: float) -> void:
 		gapped_names.append(symbol)
 	var gap_event := NewsEvent.new(
 		get_time_string(),
-		"OVERNIGHT: while you were away, the watchlist marked — stocks gapped with the climate.",
+		"OVERNIGHT: while you were away, the tape marked — stocks gapped with the climate.",
 		gapped_names,
 		clampf(avg_gap * 8.0, -0.4, 0.4),
 		0.0,
@@ -254,7 +254,7 @@ func prepare() -> void:
 	for event in chain_briefing:
 		combined.append(event)
 	for event in briefing:
-		if combined.size() >= 4:
+		if combined.size() >= 6:
 			break
 		combined.append(event)
 	for event in combined:
@@ -425,13 +425,25 @@ func get_alpha_pct(player_return_pct: float) -> float:
 	return player_return_pct - get_market_return_pct()
 
 
-func _current_index() -> float:
-	var total := 0.0
-	var count := 0
+func _index_symbols() -> Array[String]:
+	var names: Array[String] = []
 	for symbol in watchlist:
+		if not stocks.has(symbol):
+			continue
+		if stocks[symbol].is_distressed():
+			continue
+		names.append(symbol)
+	if names.is_empty():
+		return watchlist.duplicate()
+	return names
+
+
+func _current_index() -> float:
+	var names: Array[String] = _index_symbols()
+	var total := 0.0
+	for symbol in names:
 		total += stocks[symbol].price
-		count += 1
-	return total / float(count)
+	return total / float(maxi(names.size(), 1))
 
 
 func _apply_premarket_news(event: NewsEvent) -> void:

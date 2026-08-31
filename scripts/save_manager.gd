@@ -37,7 +37,7 @@ static func save_game(portfolio: Portfolio, market: MarketSimulator) -> void:
 			prices[symbol] = market.stocks[symbol].price
 
 	var data := {
-		"version": 9,
+		"version": 10,
 		"watchlist": market.watchlist.duplicate(),
 		"cash": portfolio.cash,
 		"holdings": holdings,
@@ -154,12 +154,8 @@ static func _listings_from_market(market: MarketSimulator) -> Dictionary:
 	return listings
 
 
-static func watchlist_from_save(data: Dictionary) -> Array[String]:
-	if data.has("watchlist") and typeof(data["watchlist"]) == TYPE_ARRAY:
-		return CompanyCatalog.sanitize_watchlist(data["watchlist"])
-	if data.has("stock_prices") and typeof(data["stock_prices"]) == TYPE_DICTIONARY:
-		return CompanyCatalog.sanitize_watchlist((data["stock_prices"] as Dictionary).keys())
-	return CompanyCatalog.DEFAULT_WATCHLIST.duplicate()
+static func watchlist_from_save(_data: Dictionary) -> Array[String]:
+	return CompanyCatalog.ORDER.duplicate()
 
 
 static func summary_text() -> String:
@@ -194,10 +190,7 @@ static func cliffhanger_lines(data: Dictionary) -> PackedStringArray:
 
 	var watch: Variant = data.get("watchlist", [])
 	if typeof(watch) == TYPE_ARRAY and not (watch as Array).is_empty():
-		var names: PackedStringArray = []
-		for item in watch:
-			names.append(str(item))
-		lines.append("Watchlist  %s" % ", ".join(names))
+		lines.append("Board  all %d listed" % CompanyCatalog.ORDER.size())
 
 	var climate_bit: String = _climate_line(data)
 	var streak_bit: String = _streak_line(data)

@@ -269,7 +269,7 @@ func recap_text(climate_line: String, watchlist: Array[String]) -> String:
 	if not climate.is_empty():
 		lines.append(climate)
 	lines.append(str(bits.get("streak", "")))
-	lines.append("Watchlist  %s" % ", ".join(names))
+	lines.append("Board  %s" % ", ".join(names))
 	return "\n".join(lines)
 
 

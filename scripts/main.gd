@@ -55,7 +55,7 @@ var recap_vs_label: Label
 var recap_climate_label: Label
 var recap_streak_label: Label
 var recap_distress_label: Label
-var recap_watch_row: HBoxContainer
+var recap_watch_row: HFlowContainer
 var rebalance_page: VBoxContainer
 var rebalance_hint: Label
 var rebalance_title: Label
@@ -220,8 +220,7 @@ func _apply_launch_mode() -> void:
 		if not data.is_empty():
 			SaveManager.apply_to(portfolio, market, data)
 	else:
-		var names: Array[String] = CompanyCatalog.sanitize_watchlist(SaveManager.pending_watchlist)
-		market.set_watchlist(names)
+		market.set_watchlist(CompanyCatalog.ORDER)
 		SaveManager.pending_watchlist.clear()
 		portfolio.reset_new_game()
 		market.chain_director.reset()
@@ -261,9 +260,14 @@ func _build_watchlist() -> void:
 		watchlist_list.add_child(card)
 		card.selected.connect(_select_stock)
 		watchlist_cards[symbol] = card
+	var listed: int = market.watchlist.size()
+	%WatchlistHeader.text = "BOARD  ·  %d listed" % listed
+	%BoardHint.text = "All %d stocks on the tape  ·  click a row to trade" % listed
 
 
 func _apply_hud_tooltips() -> void:
+	CopyHints.hover(%WatchlistHeader, CopyHints.HUD_BOARD)
+	CopyHints.hover(%BoardHint, CopyHints.HUD_BOARD)
 	CopyHints.hover(daily_pl_label, CopyHints.HUD_PL)
 	CopyHints.hover(portfolio_total_label, CopyHints.HUD_OPEN_PL)
 	CopyHints.hover(vs_market_label, CopyHints.HUD_VS)
@@ -292,7 +296,7 @@ func _begin_session() -> void:
 	_close_story_dossier()
 	news_feed.clear()
 	selected_symbol = market.watchlist[0]
-	_set_trade_mode("buy")
+	_set_trade_mode(_ticket_mode_for(selected_symbol))
 	_set_quantity(20)
 	trade_message_label.text = "Premarket is out. Read the headlines — the open is in 10 seconds."
 	if market.away_applied:
@@ -351,8 +355,19 @@ func _on_market_tick() -> void:
 func _select_stock(symbol: String) -> void:
 	if not market.stocks.has(symbol):
 		return
+	var switched: bool = symbol != selected_symbol
 	selected_symbol = symbol
+	if switched:
+		_set_trade_mode(_ticket_mode_for(symbol))
 	_update_ui()
+
+
+func _ticket_mode_for(symbol: String) -> String:
+	if portfolio.get_fade_shares(symbol) > 0:
+		return "fade"
+	if portfolio.get_shares(symbol) > 0:
+		return "sell"
+	return "buy"
 
 
 func _set_trade_mode(mode: String) -> void:
@@ -659,9 +674,9 @@ func _apply_responsive_layout() -> void:
 	body_columns.vertical = narrow
 	top_row.vertical = narrow
 	bottom_row.vertical = narrow
-	watchlist_column.custom_minimum_size.x = 0.0 if narrow else 280.0
-	portfolio_column.custom_minimum_size.x = 0.0 if narrow else 280.0
-	trade_column.custom_minimum_size.x = 0.0 if narrow else 300.0
+	watchlist_column.custom_minimum_size.x = 0.0 if narrow else 380.0
+	portfolio_column.custom_minimum_size.x = 0.0
+	trade_column.custom_minimum_size.x = 0.0 if narrow else 280.0
 	watchlist_column.size_flags_vertical = SIZE_EXPAND_FILL
 	trade_column.size_flags_vertical = SIZE_EXPAND_FILL if narrow else SIZE_FILL
 
@@ -728,7 +743,7 @@ func _refresh_selected_stock() -> void:
 		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.28))
 		CopyHints.hover(selected_meta_label, stock.halt_tooltip())
 	elif stock.is_distressed():
-		selected_meta_label.text = "DISTRESSED · sell-only residual · replaced at week recap"
+		selected_meta_label.text = "DISTRESSED · sell-only residual · out of vs Market"
 		selected_meta_label.add_theme_color_override("font_color", Color(0.95, 0.38, 0.38))
 		CopyHints.hover(selected_meta_label, CopyHints.HUD_DISTRESSED)
 	else:
@@ -1381,9 +1396,20 @@ func _consider_act_pauses(events: Array[NewsEvent]) -> void:
 	if market.drama.spectator:
 		return
 	for event in events:
-		if event.should_act_pause(market.watchlist):
+		if event.should_act_pause(_pause_focus_symbols()):
 			_begin_print_pause(event)
 			return
+
+
+func _pause_focus_symbols() -> Array[String]:
+	var names: Array[String] = []
+	if not selected_symbol.is_empty():
+		names.append(selected_symbol)
+	for symbol in market.watchlist:
+		if portfolio.get_shares(symbol) > 0 or portfolio.get_fade_shares(symbol) > 0:
+			if not names.has(symbol):
+				names.append(symbol)
+	return names
 
 
 func _begin_print_pause(event: NewsEvent) -> void:
@@ -1641,14 +1667,15 @@ func _build_chapter_overlay() -> void:
 	recap_page.add_child(recap_streak_label)
 	recap_distress_label = _overlay_line(15, Color(0.95, 0.38, 0.38))
 	recap_page.add_child(recap_distress_label)
-	recap_watch_row = HBoxContainer.new()
-	recap_watch_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	recap_watch_row.add_theme_constant_override("separation", 8)
+	recap_watch_row = HFlowContainer.new()
+	recap_watch_row.alignment = FlowContainer.ALIGNMENT_CENTER
+	recap_watch_row.add_theme_constant_override("h_separation", 8)
+	recap_watch_row.add_theme_constant_override("v_separation", 6)
 	recap_page.add_child(recap_watch_row)
 	var recap_next := Button.new()
-	recap_next.text = "Rebalance Watchlist"
+	recap_next.text = "Continue"
 	recap_next.custom_minimum_size = Vector2(0, 44)
-	recap_next.pressed.connect(_show_chapter_rebalance)
+	recap_next.pressed.connect(_finish_week_recap)
 	recap_page.add_child(recap_next)
 	_apply_button_style(recap_next, SELECTED_ACCENT, UI_BORDER, true)
 
@@ -1739,7 +1766,7 @@ func _show_chapter_recap() -> void:
 		recap_distress_label.text = ""
 	else:
 		recap_distress_label.visible = true
-		recap_distress_label.text = "%s distressed — must replace. Residual shares sell at the bid." % ", ".join(wrecked)
+		recap_distress_label.text = "%s distressed — leftover shares sell at the bid. Still on the board, sell-only, out of vs Market." % ", ".join(wrecked)
 	for child in recap_watch_row.get_children():
 		recap_watch_row.remove_child(child)
 		child.queue_free()
@@ -1752,6 +1779,15 @@ func _show_chapter_recap() -> void:
 		chip.add_theme_color_override("font_color", CompanyCatalog.risk_color(CompanyCatalog.risk_key(symbol)))
 		recap_watch_row.add_child(chip)
 	chapter_overlay.visible = true
+
+
+func _finish_week_recap() -> void:
+	for symbol in market.distressed_symbols():
+		_flatten_symbol(symbol)
+	portfolio.begin_next_chapter()
+	SaveManager.save_game(portfolio, market)
+	chapter_overlay.visible = false
+	_start_next_trading_day()
 
 
 func _show_chapter_rebalance() -> void:

@@ -3,21 +3,22 @@ extends RefCounted
 
 const HUD_PL := "Profit and loss vs the start of this session. Green is up, red is down."
 const HUD_OPEN_PL := "Open P/L on longs and shorts vs the price you got in. Not the same as session P/L in the header."
-const HUD_VS := "Your session return minus the average of your three stocks. That is the score: beat the market."
+const HUD_VS := "Your session return minus the equal-weight average of listed stocks on the board. Distressed names are out of that average. That is the score: beat the market."
 const HUD_BOOK := "Your book: cash, plus longs at the last price, plus open short P/L."
 const HUD_ATH := "All-time high for this book — the peak value you have marked."
 const HUD_BID_ASK := "Buy at the ask (sellers' price). Sell at the bid (buyers' price). The last price sits in between."
 const HUD_BID := "Bid: what buyers will pay. You sell at this price."
 const HUD_ASK := "Ask: what sellers want. You buy at this price."
 const HUD_HALTED_RESUME := "Volatility pause. No trading for a few minutes, then this stock reopens listed — you can buy and sell again."
-const HUD_HALTED_DISTRESS := "Make-or-break halt. This stock will reopen distressed: sell-only residual, replaced at week recap. Not a short volatility pause."
-const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Replaced at week recap."
+const HUD_HALTED_DISTRESS := "Make-or-break halt. This stock will reopen distressed: sell-only residual, out of the vs-Market average. Not a short volatility pause."
+const HUD_DISTRESSED := "Near-worthless residual. You can sell at the bid. You cannot buy. Out of the vs-Market average. Week recap sells leftover shares at the bid."
 const HUD_COMMISSION := "A $2 fee plus 0.2% of the trade, taken on every order."
 const HUD_SHORT := "You profit if the last price falls. Caps at 20% of the book. Covers at the close. You cannot short a stock you hold, or one that is halted or distressed. An open short can still be covered during a halt."
 const HUD_LONG := "Shares you hold and profit vs your average cost."
+const HUD_BOARD := "Every listed stock. Click a row to put it on the ticket and the chart. You can switch anytime. Hover a ticker for the company, typical day, and session high/low."
 const HUD_RANGE := "Lowest and highest last price so far today, including the open gap."
 const HUD_TICK := "Direction of the last market minute vs the minute before. Not the same as the day change."
-const HUD_MENU := "Book is cash, longs, and open short P/L. ATH is this book's peak. vs Market is how you did against your three stocks."
+const HUD_MENU := "Book is cash, longs, and open short P/L. ATH is this book's peak. vs Market is how you did against the listed board."
 
 const CHART := {
 	"1M": "Last 20 market minutes. One price per minute — not one month.",

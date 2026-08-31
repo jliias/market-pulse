@@ -120,39 +120,106 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
+[node name="WatchlistColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=1827180769]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.05
+theme_override_constants/separation = 4
+
+[node name="WatchlistHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1989078665]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 1)
+theme_override_font_sizes/font_size = 16
+text = "BOARD  ·  12 listed"
+
+[node name="BoardHint" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1989078666]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.74, 1)
+theme_override_font_sizes/font_size = 12
+text = "All stocks on the tape  ·  click a row to trade"
+
+[node name="BoardCols" type="HBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1989078667]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ColBar" type="Control" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(7, 0)
+layout_mode = 2
+
+[node name="ColSym" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_font_sizes/font_size = 11
+text = "SYMB"
+
+[node name="ColRisk" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_font_sizes/font_size = 11
+text = "RISK"
+
+[node name="ColPad" type="Control" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(14, 0)
+layout_mode = 2
+
+[node name="ColLast" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_font_sizes/font_size = 11
+text = "LAST"
+horizontal_alignment = 2
+
+[node name="ColChg" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(62, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_font_sizes/font_size = 11
+text = "DAY"
+horizontal_alignment = 2
+
+[node name="ColPos" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_font_sizes/font_size = 11
+text = "POS"
+horizontal_alignment = 2
+
+[node name="ColPl" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/BoardCols"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.66, 1)
+theme_override_font_sizes/font_size = 11
+text = "P/L"
+horizontal_alignment = 2
+
+[node name="WatchlistList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=1967248601]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
 [node name="DeskRows" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns" unique_id=737906703]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 2.7
+size_flags_stretch_ratio = 2.4
 theme_override_constants/separation = 8
 
 [node name="TopRow" type="BoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows" unique_id=737906704]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.6
-theme_override_constants/separation = 8
-
-[node name="WatchlistColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow" unique_id=1827180769]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 0.9
-theme_override_constants/separation = 8
-
-[node name="WatchlistHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/WatchlistColumn" unique_id=1989078665]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
-text = "WATCHLIST"
-
-[node name="WatchlistList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow/WatchlistColumn" unique_id=1967248601]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
+size_flags_stretch_ratio = 2.2
 theme_override_constants/separation = 8
 
 [node name="ChartColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/TopRow" unique_id=276356270]
@@ -306,42 +373,40 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BottomRow" type="BoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows" unique_id=737906705]
+[node name="PortfolioColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn" unique_id=737906706]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 8
-
-[node name="PortfolioColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow" unique_id=737906706]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 0.9
 theme_override_constants/separation = 4
 
-[node name="PortfolioHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/PortfolioColumn" unique_id=529352896]
+[node name="PortfolioHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/PortfolioColumn" unique_id=529352896]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "BOOK"
 
-[node name="PortfolioList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/PortfolioColumn" unique_id=1877519657]
+[node name="PortfolioList" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/PortfolioColumn" unique_id=1877519657]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="PortfolioTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/PortfolioColumn" unique_id=1342024128]
+[node name="PortfolioTotalLabel" type="Label" parent="MarginContainer/RootVBox/BodyColumns/WatchlistColumn/PortfolioColumn" unique_id=1342024128]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Open P/L: +$0.00"
 
+[node name="BottomRow" type="BoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows" unique_id=737906705]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.85
+theme_override_constants/separation = 8
+
 [node name="NewsColumn" type="VBoxContainer" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow" unique_id=737906707]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 1.8
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="NewsHeader" type="Label" parent="MarginContainer/RootVBox/BodyColumns/DeskRows/BottomRow/NewsColumn" unique_id=1346972357]

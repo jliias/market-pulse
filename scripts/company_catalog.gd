@@ -151,7 +151,7 @@ const ALL := {
 
 const ORDER: Array[String] = ["NMIN", "RETL", "BANK", "FOOD", "ALPH", "HELX", "AERO", "NOVA", "GRNE", "CYBR", "QBIT", "DRFT"]
 const RISK_SECTIONS: Array[String] = ["safe", "growth", "volatile"]
-const DEFAULT_WATCHLIST: Array[String] = ["ALPH", "GRNE", "NMIN"]
+const DEFAULT_WATCHLIST: Array[String] = ["NMIN", "RETL", "BANK", "FOOD", "ALPH", "HELX", "AERO", "NOVA", "GRNE", "CYBR", "QBIT", "DRFT"]
 const ALIASES := {
 	"ALPH": "ALPH", "ALPHA": "ALPH",
 	"GRNE": "GRNE", "GREEN": "GRNE",
@@ -259,17 +259,8 @@ static func make_stock(symbol: String) -> Stock:
 	)
 
 
-static func sanitize_watchlist(symbols: Array) -> Array[String]:
-	var out: Array[String] = []
-	for item in symbols:
-		var symbol: String = str(item)
-		if has_symbol(symbol) and not out.has(symbol):
-			out.append(symbol)
-		if out.size() == 3:
-			break
-	if out.size() != 3:
-		return DEFAULT_WATCHLIST.duplicate()
-	return out
+static func sanitize_watchlist(_symbols: Array) -> Array[String]:
+	return ORDER.duplicate()
 
 
 static func bench_symbols(watchlist: Array) -> Array[String]:
